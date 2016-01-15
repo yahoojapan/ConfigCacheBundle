@@ -1,0 +1,5 @@
+test_service:
+    aaa: bbb
+    ccc: __REPLACE__
+    zzz: www
+    xxx: yyy

@@ -1,0 +1,36 @@
+yahoo_japan_config_cache:
+    aaa:
+        bbb:
+            ccc:
+                ddd: zzz
+        eee: fff
+        ggg: []
+        hhh: iii
+        jjj: [aaa, bbb, ccc]
+        kkk: lll
+    bbb:
+        -
+            key1:
+                - { sub_key1: a, sub_key2: b }
+                - { sub_key1: c, sub_key2: d }
+            key2: [z, x, w]
+            key3: val3
+        -
+            key1:
+                - { sub_key1: aa, sub_key2: bb }
+                - { sub_key1: cc, sub_key2: dd }
+            key2: [zz, xx, ww]
+            key3: val6
+        -
+            key1:
+                - { sub_key1: aaa, sub_key2: bbb }
+                - { sub_key1: ccc, sub_key2: ddd }
+            key2: [zzz, xxx, www]
+            key3: val9
+        -
+            key1:
+                - { sub_key1: aaaa, sub_key2: bbbb }
+                - { sub_key1: cccc, sub_key2: dddd }
+            key2: [zzzz, xxxx, wwww]
+            key3: val12
+    ccc: ddd

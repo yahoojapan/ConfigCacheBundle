@@ -1,0 +1,36 @@
+services:
+    yahoo_japan_config_cache.array_loader:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader
+        arguments: [@translator.default]
+
+    yahoo_japan_config_cache.yaml_file_loader:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\YamlFileLoader
+        calls:
+            - [addLoader, [@yahoo_japan_config_cache.array_loader]]
+
+    yahoo_japan_config_cache.config_cache_listener:
+        class: YahooJapan\ConfigCacheBundle\EventListener\ConfigCacheListener
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: %yahoo_japan_config_cache.listener_priority% }
+
+    # for ConfigurationCommand
+    yahoo_japan_config_cache.command.delegating_loader:
+        class: Symfony\Component\Config\Loader\DelegatingLoader
+        arguments:
+            - @yahoo_japan_config_cache.command.resolver
+
+    yahoo_japan_config_cache.command.resolver:
+        class: Symfony\Component\Config\Loader\LoaderResolver
+        arguments:
+            -
+                - @yahoo_japan_config_cache.command.yaml_file_loader
+                - @yahoo_japan_config_cache.command.xml_file_loader
+        public: false
+
+    yahoo_japan_config_cache.command.yaml_file_loader:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader
+        public: false
+
+    yahoo_japan_config_cache.command.xml_file_loader:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader
+        public: false

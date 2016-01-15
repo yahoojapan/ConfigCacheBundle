@@ -1,0 +1,8 @@
+test_service:
+    aaa: bbb
+    ccc:
+        ccc_aaa: bbb
+        ccc_ccc:
+            ccc_ccc_aaa: bbb
+            ccc_ccc_ccc: ddd
+    eee: fff
