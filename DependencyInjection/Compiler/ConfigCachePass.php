@@ -21,6 +21,7 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache;
  */
 class ConfigCachePass implements CompilerPassInterface
 {
+    protected $loaderParameter  = 'yahoo_japan_config_cache.loader';
     protected $localesParameter = 'yahoo_japan_config_cache.locales';
     protected $listenerId       = 'yahoo_japan_config_cache.config_cache_listener';
 
@@ -43,6 +44,14 @@ class ConfigCachePass implements CompilerPassInterface
             if ($container->hasDefinition($this->listenerId)) {
                 $listenerDefinition = $container->getDefinition($this->listenerId);
                 $listenerDefinition->addMethodCall('addConfig', array(new Reference($configId)));
+                if ($container->hasParameter($this->loaderParameter)
+                    && $container->hasDefinition($loaderId = $container->getParameter($this->loaderParameter))
+                ) {
+                    $cacheDefinition
+                        ->removeMethodCall('setLoader')
+                        ->addMethodCall('setLoader', array(new Reference($loaderId)))
+                        ;
+                }
             }
         }
     }
