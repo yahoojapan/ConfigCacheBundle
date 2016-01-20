@@ -22,9 +22,18 @@ class ConfigCachePassTest extends \PHPUnit_Framework_TestCase
     /**
      * @dataProvider processProvider
      */
-    public function testProcess($hasLocales, $locales, $hasListener, $configIds)
-    {
-        $listenerId = 'yahoo_japan_config_cache.config_cache_listener';
+    public function testProcess(
+        $hasLocales,
+        $locales,
+        $hasListener,
+        $configIds,
+        $hasLoaderParameter,
+        $hasLoaderDefinition,
+        $replaceLoader
+    ) {
+        $listenerId       = 'yahoo_japan_config_cache.config_cache_listener';
+        $defaultLoaderId  = 'yahoo_japan_config_cache.loader';
+        $replacedLoaderId = 'test_loader';
 
         $container = new ContainerBuilder();
         if ($hasLocales) {
@@ -32,12 +41,22 @@ class ConfigCachePassTest extends \PHPUnit_Framework_TestCase
         }
         foreach ($configIds as $configId) {
             $definition = new Definition($configId);
-            $definition->addTag(ConfigCache::TAG_LOCALE);
+            $definition
+                ->addTag(ConfigCache::TAG_LOCALE)
+                ->addMethodCall('setLoader', array(new Reference($defaultLoaderId)))
+                ;
             $container->setDefinition($configId, $definition);
         }
         if ($hasListener) {
             $definition = new Definition($listenerId);
             $container->setDefinition($listenerId, $definition);
+            if ($hasLoaderParameter) {
+                $container->setParameter('yahoo_japan_config_cache.loader', $replacedLoaderId);
+            }
+            if ($hasLoaderDefinition) {
+                $definition = new Definition($replacedLoaderId);
+                $container->setDefinition($replacedLoaderId, $definition);
+            }
         }
 
         $pass = new ConfigCachePass();
@@ -45,16 +64,32 @@ class ConfigCachePassTest extends \PHPUnit_Framework_TestCase
 
         foreach ($configIds as $index => $configId) {
             $calls = $container->getDefinition($configId)->getMethodCalls();
+
+            // locale
             if ($hasLocales) {
-                $this->assertTrue(isset($calls[0][0])); // method name
-                $this->assertSame('setReferableLocales', $calls[0][0]);
-                $this->assertTrue(isset($calls[0][1][0])); // argument
-                $this->assertSame($locales, $calls[0][1][0]);
+                $this->assertTrue(isset($calls[1][0])); // method name
+                $this->assertSame('setReferableLocales', $calls[1][0]);
+                $this->assertTrue(isset($calls[1][1][0])); // argument
+                $this->assertSame($locales, $calls[1][1][0]);
             } else {
-                $this->assertFalse(isset($calls[0][0])); // method name
-                $this->assertFalse(isset($calls[0][1][0])); // argument
+                $this->assertFalse(isset($calls[1][0])); // method name
+                $this->assertFalse(isset($calls[1][1][0])); // argument
             }
 
+            // loader
+            if ($replaceLoader) {
+                $loaderIndex = 2;
+                $loaderId    = $replacedLoaderId;
+            } else {
+                $loaderIndex = 0;
+                $loaderId    = $defaultLoaderId;
+            }
+            $this->assertTrue(isset($calls[$loaderIndex][0])); // method name
+            $this->assertSame('setLoader', $calls[$loaderIndex][0]);
+            $this->assertTrue(isset($calls[$loaderIndex][1][0])); // argument
+            $this->assertEquals(new Reference($loaderId), $calls[$loaderIndex][1][0]);
+
+            // listener
             if ($hasListener) {
                 $calls = $container->getDefinition($listenerId)->getMethodCalls();
                 $this->assertTrue(isset($calls[$index][0])); // method name
@@ -68,17 +103,24 @@ class ConfigCachePassTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @return array($hasLocales, $locales, $hasListener, $configIds)
+     * @return array($hasLocales, $locales, $hasListener, $configIds, $hasLoaderParameter, $hasLoaderDefinition, $replaceLoader)
      */
     public function processProvider()
     {
+        $locales   = array('en', 'uk');
+        $configIds = array('config.test1', 'config.test2');
+
         return array(
             // has no listener
-            array(true, array('en', 'uk'), false, array('config.test1', 'config.test2')),
+            array(true, $locales, false, $configIds, false, false, false),
             // has listener
-            array(true, array('en', 'uk'), true, array('config.test1', 'config.test2')),
+            array(true, $locales, true, $configIds, false, false, false),
             // has no parameters
-            array(false, array('en', 'uk'), false, array('config.test1', 'config.test2')),
+            array(false, $locales, false, $configIds, false, false, false),
+            // has loader parameter, has no definition (not replaced)
+            array(true, $locales, true, $configIds, true, false, false),
+            // has loader parameter, has definition (replaced)
+            array(true, $locales, true, $configIds, true, true, true),
         );
     }
 }
