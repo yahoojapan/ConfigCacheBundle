@@ -48,6 +48,7 @@ class Configuration implements ConfigurationInterface
                                 ->thenInvalid('ConfigCacheListener priority[%s] must be less than LocaleListener priority['.Configuration::getPriorityMax().']')
                             ->end()
                         ->end()
+                        ->scalarNode('loader')->defaultValue(null)->end()
                     ->end()
                     ->validate()
                         ->ifTrue(function ($locale) {
