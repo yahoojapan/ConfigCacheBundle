@@ -69,7 +69,7 @@ class XmlFileLoaderTest extends \PHPUnit_Framework_TestCase
     {
         return array(
             // normal
-            array(__DIR__.'/../../Fixtures/test_loader.xml', 'Symfony\Component\DependencyInjection\SimpleXMLElement'),
+            array(__DIR__.'/../../Fixtures/test_loader.xml', '\SimpleXMLElement'),
             // not exist file
             array(__DIR__.'/../../Fixtures/no_exists.xml', '\Exception'),
             // failed parse

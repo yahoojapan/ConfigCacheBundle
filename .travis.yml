@@ -25,8 +25,9 @@ env:
     - SYMFONY_VERSION=""
 
 before_install:
+  - phpenv config-rm xdebug.ini
   - composer self-update
   - if [ "$SYMFONY_VERSION" != "" ]; then composer require "symfony/symfony:${SYMFONY_VERSION}" --no-update; fi;
 
 install:
-  - composer update --prefer-dist $COMPOSER_FLAGS
+  - composer update --prefer-source $COMPOSER_FLAGS
