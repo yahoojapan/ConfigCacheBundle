@@ -1135,8 +1135,19 @@ class RegisterTest extends RegisterTestCase
     /**
      * @dataProvider validateCacheIdProvider
      */
-    public function testValidateCacheId($container, $expected)
+    public function testValidateCacheId(array $bundles, $expected)
     {
+        $container = $this->getMockBuilder('Symfony\Component\DependencyInjection\ContainerBuilder')
+            ->disableOriginalConstructor()
+            ->getMock()
+            ;
+        $container
+            ->expects($this->once())
+            ->method('getParameter')
+            ->with('kernel.bundles')
+            ->willReturn($bundles)
+            ;
+
         $register = $this->getRegisterMock();
         $property = new \ReflectionProperty($register, 'container');
         $property->setAccessible(true);
@@ -1154,34 +1165,27 @@ class RegisterTest extends RegisterTestCase
     }
 
     /**
-     * @return array ($container, $expected)
+     * @return array ($bundles, $expected)
      */
     public function validateCacheIdProvider()
     {
-        $container = $this->getMockBuilder('Symfony\Component\DependencyInjection\ContainerBuilder')
-            ->disableOriginalConstructor()
-            ->getMock()
-            ;
-        $container
-            ->expects($this->exactly(2))
-            ->method('getParameter')
-            ->with('kernel.bundles')
-            ->willReturnOnConsecutiveCalls(
+        return array(
+            // normal
+            array(
                 array(
                     'FrameworkBundle'             => 'Symfony\\Bundle\\FrameworkBundle\\FrameworkBundle',
                     'YahooJapanConfigCacheBundle' => 'YahooJapan\\ConfigCacheBundle\\YahooJapanConfigCacheBundle',
                 ),
+                true,
+            ),
+            // dupliated cacheId
+            array(
                 array(
                     'FrameworkBundle' => 'Symfony\\Bundle\\FrameworkBundle\\FrameworkBundle',
                     'ConfigBundle'    => 'YahooJapan\\ConfigBundle\\YahooJapanConfigBundle',
-                )
-            )
-            ;
-        return array(
-            // normal
-            array($container, true),
-            // dupliated cacheId
-            array($container, '\Exception'),
+                ),
+                '\Exception',
+            ),
         );
     }
 
