@@ -37,7 +37,7 @@ class XmlFileLoader extends Loader
      *
      * @param string $file
      *
-     * @return SimpleXMLElement
+     * @return \SimpleXMLElement
      */
     protected function loadFile($file)
     {
@@ -47,6 +47,6 @@ class XmlFileLoader extends Loader
             throw new \Exception(sprintf('Unable to parse file "%s".', $file), $e->getCode());
         }
 
-        return simplexml_import_dom($dom, 'Symfony\\Component\\DependencyInjection\\SimpleXMLElement');
+        return simplexml_import_dom($dom);
     }
 }
