@@ -39,6 +39,8 @@ class Register
     protected $container;
     protected $resources;
     protected $excludes;
+    protected $dirs  = array();
+    protected $files = array();
     // bundle ID
     protected $bundleId;
     // ConfigCache service ID
@@ -136,13 +138,10 @@ class Register
      */
     protected function registerInternal($all = false)
     {
-        $dirs    = array();
-        $files   = array();
-
         if ($all) {
-            list($dirs, $files) = $this->registerAllInternal($this->container->getParameter('kernel.bundles'));
+            $this->registerAllInternal($this->container->getParameter('kernel.bundles'));
         } else {
-            list($dirs, $files) = $this->registerOneInternal();
+            $this->registerOneInternal();
         }
 
         // only if container has ConfigCache service Definition
@@ -150,72 +149,57 @@ class Register
         if ($this->container->hasDefinition($cacheId)) {
             $definition = $this->container->findDefinition($cacheId);
 
-            if ($dirs) {
-                foreach ($dirs as $resource) {
-                    $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
+            foreach ($this->dirs as $resource) {
+                $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
 
-                    // private configuration definition, finally discarded because of private service
-                    $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
-                    $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
+                // private configuration definition, finally discarded because of private service
+                $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
+                $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
 
-                    // find files under directories
-                    $finder = $this->findFilesByDirectory($resource, $this->excludes);
-                    foreach ($finder as $file) {
-                        $definition->addMethodCall('addResource', array((string) $file, new Reference($privateId)));
-                    }
+                // find files under directories
+                $finder = $this->findFilesByDirectory($resource, $this->excludes);
+                foreach ($finder as $file) {
+                    $definition->addMethodCall('addResource', array((string) $file, new Reference($privateId)));
                 }
             }
 
-            if ($files) {
-                foreach ($files as $resource) {
-                    $this->container->addResource(new BaseFileResource($resource->getResource()));
+            foreach ($this->files as $resource) {
+                $this->container->addResource(new BaseFileResource($resource->getResource()));
 
-                    // private configuration definition, finally discarded because of private service
-                    $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
-                    $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
+                // private configuration definition, finally discarded because of private service
+                $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
+                $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
 
-                    $definition->addMethodCall(
-                        'addResource',
-                        array((string) $resource->getResource(), new Reference($privateId))
-                    );
-                }
+                $definition->addMethodCall(
+                    'addResource',
+                    array((string) $resource->getResource(), new Reference($privateId))
+                );
             }
         }
     }
 
     /**
      * Registers by a bundle internal processing.
-     *
-     * @return array list of $dirs, $files
      */
     protected function registerOneInternal()
     {
-        $dirs  = array();
-        $files = array();
-
         foreach ($this->resources as $resource) {
             if ($resource->exists()) {
                 if ($resource instanceof DirectoryResource) {
-                    $dirs[]  = $resource;
+                    $this->addDirectory($resource);
                 } elseif ($resource instanceof FileResource) {
-                    $files[] = $resource;
+                    $this->addFile($resource);
                 }
             }
         }
         $this->setCacheDefinition();
-
-        return array($dirs, $files);
     }
 
     /**
      * Registers by all bundles internal processing.
-     *
-     * @return array list of $dirs, $files
      */
     protected function registerAllInternal($bundles)
     {
-        $dirs     = array();
-        $files    = array();
         $register = false;
 
         foreach ($bundles as $fqcn) {
@@ -224,10 +208,10 @@ class Register
                 $path = dirname($reflection->getFilename()).$resource->getResource();
                 if (is_dir($path)) {
                     $register = true;
-                    $dirs[]   = new DirectoryResource($path, $this->findConfigurationByResource($resource));
+                    $this->addDirectory(new DirectoryResource($path, $this->findConfigurationByResource($resource)));
                 } elseif (file_exists($path)) {
                     $register = true;
-                    $files[]  = new FileResource($path, $this->findConfigurationByResource($resource));
+                    $this->addFile(new FileResource($path, $this->findConfigurationByResource($resource)));
                 }
             }
         }
@@ -235,8 +219,6 @@ class Register
         if ($register) {
             $this->setCacheDefinition();
         }
-
-        return array($dirs, $files);
     }
 
     /**
@@ -539,6 +521,34 @@ class Register
         }
 
         return $this->configuration;
+    }
+
+    /**
+     * Adds a directory resource.
+     *
+     * @param DirectoryResource $dir
+     *
+     * @return Register
+     */
+    protected function addDirectory(DirectoryResource $dir)
+    {
+        $this->dirs[] = $dir;
+
+        return $this;
+    }
+
+    /**
+     * Adds a file resource.
+     *
+     * @param FileResource $file
+     *
+     * @return Register
+     */
+    protected function addFile(FileResource $file)
+    {
+        $this->files[] = $file;
+
+        return $this;
     }
 
     /**

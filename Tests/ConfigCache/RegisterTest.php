@@ -464,9 +464,9 @@ class RegisterTest extends RegisterTestCase
 
         $method = new \ReflectionMethod($register, 'registerOneInternal');
         $method->setAccessible(true);
-        list($dirs, $files) = $method->invoke($register);
-        $this->assertSame($expectedDirs, $dirs);
-        $this->assertSame($expectedFiles, $files);
+        $method->invoke($register);
+        $this->assertSame($expectedDirs, $this->getProperty($register, 'dirs'));
+        $this->assertSame($expectedFiles, $this->getProperty($register, 'files'));
     }
 
     /**
@@ -545,7 +545,9 @@ class RegisterTest extends RegisterTestCase
         // $register->registerAllInternal()
         $method = new \ReflectionMethod($register, 'registerAllInternal');
         $method->setAccessible(true);
-        list($dirs, $files) = $method->invoke($register, $bundles);
+        $method->invoke($register, $bundles);
+        $dirs  = $this->getProperty($register, 'dirs');
+        $files = $this->getProperty($register, 'files');
 
         // regard OK as asserting according with count(), getResource(), getConfiguration()
         $this->assertSame(count($expectedDirs), count($dirs));
@@ -1359,5 +1361,13 @@ class RegisterTest extends RegisterTestCase
             array('getLoaderResolverClass',   'buildClassId', 'loader_resolver',   'config.loader_resolver.class'),
             array('getDelegatingLoaderClass', 'buildClassId', 'delegating_loader', 'config.delegatingloader.class'),
         );
+    }
+
+    protected function getProperty($instance, $name)
+    {
+        $property = new \ReflectionProperty($instance, $name);
+        $property->setAccessible(true);
+
+        return $property->getValue($instance);
     }
 }
