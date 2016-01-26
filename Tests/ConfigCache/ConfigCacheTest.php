@@ -367,9 +367,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
         foreach ($resources as $resource) {
             self::$cache->addResource($resource, $configuration);
         }
-        $property = new \ReflectionProperty(self::$cache, 'config');
-        $property->setAccessible(true);
-        $property->setValue(self::$cache, $config);
+        $this->setProperty(self::$cache, 'config', $config);
         if (!is_null($masterConfiguration)) {
             self::$cache->setConfiguration($masterConfiguration);
         }
@@ -524,9 +522,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testCreateMasterNode($configuration, $expected)
     {
         // use reflection to set null
-        $property = new \ReflectionProperty(self::$cache, 'configuration');
-        $property->setAccessible(true);
-        $property->setValue(self::$cache, $configuration);
+        $this->setProperty(self::$cache, 'configuration', $configuration);
 
         $method = new \ReflectionMethod(self::$cache, 'createMasterNode');
         $method->setAccessible(true);
@@ -570,13 +566,5 @@ class ConfigCacheTest extends ConfigCacheTestCase
             return;
         }
         $this->fail('Expected exception does not occurred.');
-    }
-
-    protected function getProperty($instance, $name)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-
-        return $property->getValue($instance);
     }
 }
