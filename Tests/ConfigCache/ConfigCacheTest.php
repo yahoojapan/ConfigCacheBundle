@@ -557,4 +557,26 @@ class ConfigCacheTest extends ConfigCacheTestCase
             ),
         );
     }
+
+    public function testSetKey()
+    {
+        // OK
+        self::$cache->setKey($expected = 'test');
+        $this->assertSame($expected, $this->getProperty(self::$cache, 'key'));
+        // exception
+        try {
+            self::$cache->setKey('zzz');
+        } catch (\RuntimeException $e) {
+            return;
+        }
+        $this->fail('Expected exception does not occurred.');
+    }
+
+    protected function getProperty($instance, $name)
+    {
+        $property = new \ReflectionProperty($instance, $name);
+        $property->setAccessible(true);
+
+        return $property->getValue($instance);
+    }
 }

@@ -112,7 +112,7 @@ class ConfigCache extends BaseConfigCache implements ConfigCacheInterface
             }
         }
 
-        return $this->key.".{$locale}";
+        return parent::getKey().".{$locale}";
     }
 
     /**

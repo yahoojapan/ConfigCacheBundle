@@ -61,6 +61,9 @@ abstract class ConfigCacheTestCase extends \PHPUnit_Framework_TestCase
         $property = new \ReflectionProperty(self::$cache, 'arrayAccess');
         $property->setAccessible(true);
         $property->setValue(self::$cache, null);
+        $property = new \ReflectionProperty(self::$cache, 'key');
+        $property->setAccessible(true);
+        $property->setValue(self::$cache, null);
 
         // initialize flag fail to remove
         $this->delete = true;

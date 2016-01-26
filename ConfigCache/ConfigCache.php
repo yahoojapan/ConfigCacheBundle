@@ -24,13 +24,15 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccessInterface;
  */
 class ConfigCache
 {
+    const DEFAULT_KEY = 'cache';
+
     protected $cache;
     protected $loader;
     protected $config = array();
     protected $arrayAccess;
     protected $configuration;
     protected $resources = array();
-    protected $key = 'cache';
+    protected $key;
 
     /**
      * Constructor.
@@ -104,6 +106,26 @@ class ConfigCache
     }
 
     /**
+     * Sets a key (only once).
+     *
+     * @param string $key
+     *
+     * @return ConfigCache
+     *
+     * @throws \RuntimeException
+     */
+    public function setKey($key)
+    {
+        if (!is_null($this->key)) {
+            throw new \RuntimeException('The key must not be set if already set.');
+        }
+
+        $this->key = $key;
+
+        return $this;
+    }
+
+    /**
      * Finds cached array.
      *
      * @param string $key
@@ -161,7 +183,7 @@ class ConfigCache
      */
     protected function getKey()
     {
-        return $this->key;
+        return $this->key ?: static::DEFAULT_KEY;
     }
 
     /**
