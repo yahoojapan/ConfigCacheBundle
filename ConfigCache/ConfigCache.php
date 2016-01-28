@@ -33,6 +33,7 @@ class ConfigCache
     protected $configuration;
     protected $resources = array();
     protected $key;
+    protected $strict = true;
 
     /**
      * Constructor.
@@ -79,12 +80,12 @@ class ConfigCache
     /**
      * Adds a resource.
      *
-     * @param string                 $resource
-     * @param ConfigurationInterface $configuration
+     * @param string                      $resource
+     * @param ConfigurationInterface|null $configuration
      *
      * @return ConfigCache
      */
-    public function addResource($resource, ConfigurationInterface $configuration)
+    public function addResource($resource, ConfigurationInterface $configuration = null)
     {
         $this->resources[] = new FileResource($resource, $configuration);
 
@@ -121,6 +122,20 @@ class ConfigCache
         }
 
         $this->key = $key;
+
+        return $this;
+    }
+
+    /**
+     * Sets a strict mode.
+     *
+     * @param bool $strict
+     *
+     * @return ConfigCache
+     */
+    public function setStrict($strict)
+    {
+        $this->strict = $strict;
 
         return $this;
     }
@@ -187,6 +202,16 @@ class ConfigCache
     }
 
     /**
+     * Whether the mode is strict or not.
+     *
+     * @return bool
+     */
+    protected function isStrict()
+    {
+        return $this->strict;
+    }
+
+    /**
      * Finds cached array internal processing.
      *
      * @param array  $data
@@ -209,7 +234,7 @@ class ConfigCache
     }
 
     /**
-     * Loads config file.
+     * Loads config files.
      *
      * @return array
      */
@@ -217,6 +242,9 @@ class ConfigCache
     {
         if ($this->resources === array()) {
             throw new \Exception('No added resources.');
+        }
+        if (!$this->isStrict() && count($this->resources) === 1) {
+            return $this->loadOne();
         }
 
         $loaded     = $this->config;
@@ -232,6 +260,16 @@ class ConfigCache
         }
 
         return $loaded;
+    }
+
+    /**
+     * Loads a config file which is not strict mode.
+     *
+     * @return array
+     */
+    protected function loadOne()
+    {
+        return $this->loader->load($this->resources[0]->getResource());
     }
 
     /**

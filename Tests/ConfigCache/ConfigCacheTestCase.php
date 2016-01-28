@@ -55,6 +55,7 @@ abstract class ConfigCacheTestCase extends \PHPUnit_Framework_TestCase
             ->setProperty(self::$cache, 'configuration', null)
             ->setProperty(self::$cache, 'arrayAccess', null)
             ->setProperty(self::$cache, 'key', null)
+            ->setProperty(self::$cache, 'strict', true)
             ;
 
         // initialize flag fail to remove
