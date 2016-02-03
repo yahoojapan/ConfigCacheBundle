@@ -144,36 +144,55 @@ class Register
             $this->registerOneInternal();
         }
 
-        // only if container has ConfigCache service Definition
         $cacheId = $this->buildId($this->bundleId);
-        if ($this->container->hasDefinition($cacheId)) {
-            $definition = $this->container->findDefinition($cacheId);
 
-            foreach ($this->dirs as $resource) {
-                $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
+        foreach ($this->dirs as $resource) {
+            $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
 
-                // private configuration definition, finally discarded because of private service
-                $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
-                $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
+            // private configuration definition, finally discarded because of private service
+            $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
+            $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
 
-                // find files under directories
-                $finder = $this->findFilesByDirectory($resource, $this->excludes);
-                foreach ($finder as $file) {
-                    $definition->addMethodCall('addResource', array((string) $file, new Reference($privateId)));
-                }
+            // find files under directories
+            $finder = $this->findFilesByDirectory($resource, $this->excludes);
+            foreach ($finder as $file) {
+                $this->container->findDefinition($cacheId)
+                    ->addMethodCall('addResource', array((string) $file, new Reference($privateId)))
+                    ;
             }
+        }
 
-            foreach ($this->files as $resource) {
+        foreach ($this->files as $resource) {
+            if ($resource->hasAlias()) {
+                $alias = $resource->getAlias();
+                $path  = $resource->getResource();
+                $standaloneCacheId = $this->buildId(array($this->bundleId, $alias));
+                if ($this->container->hasDefinition($standaloneCacheId)) {
+                    throw new \RuntimeException(
+                        "{$standaloneCacheId} is already registered. Maybe FileResource alias[{$alias}] is duplicated."
+                    );
+                }
+
+                $this->container->addResource(new BaseFileResource($path));
+                $this->setCacheDefinitionByAlias($alias);
+                $this->container->findDefinition($standaloneCacheId)
+                    ->addMethodCall('addResource', array((string) $path))
+                    ->addMethodCall('setStrict', array(false))
+                    ->addMethodCall('setKey', array($alias))
+                    ;
+            } else {
                 $this->container->addResource(new BaseFileResource($resource->getResource()));
 
                 // private configuration definition, finally discarded because of private service
                 $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
                 $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
 
-                $definition->addMethodCall(
-                    'addResource',
-                    array((string) $resource->getResource(), new Reference($privateId))
-                );
+                $this->container->findDefinition($cacheId)
+                    ->addMethodCall(
+                        'addResource',
+                        array((string) $resource->getResource(), new Reference($privateId))
+                    )
+                    ;
             }
         }
     }
@@ -192,7 +211,8 @@ class Register
                 }
             }
         }
-        $this->setCacheDefinition();
+
+        $this->postInitializeResources();
     }
 
     /**
@@ -200,25 +220,51 @@ class Register
      */
     protected function registerAllInternal($bundles)
     {
-        $register = false;
-
         foreach ($bundles as $fqcn) {
             $reflection = new \ReflectionClass($fqcn);
             foreach ($this->resources as $resource) {
+                // if the resource has alias, simply addFile()
+                if ($resource instanceof FileResource && $resource->hasAlias()) {
+                    $this->addFile($resource);
+                    continue;
+                }
+
                 $path = dirname($reflection->getFilename()).$resource->getResource();
                 if (is_dir($path)) {
-                    $register = true;
                     $this->addDirectory(new DirectoryResource($path, $this->findConfigurationByResource($resource)));
                 } elseif (file_exists($path)) {
-                    $register = true;
                     $this->addFile(new FileResource($path, $this->findConfigurationByResource($resource)));
                 }
             }
         }
 
-        if ($register) {
+        $this->postInitializeResources();
+    }
+
+    /**
+     * Initializes resources postprocessing.
+     */
+    protected function postInitializeResources()
+    {
+        if ($this->hasFileResourcesWithoutAlias() || count($this->dirs) > 0) {
             $this->setCacheDefinition();
         }
+    }
+
+    /**
+     * Whether Register has a FileResource without alias or not.
+     *
+     * @return bool
+     */
+    protected function hasFileResourcesWithoutAlias()
+    {
+        foreach ($this->files as $resource) {
+            if (!$resource->hasAlias()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -300,7 +346,19 @@ class Register
     }
 
     /**
-     * Creates a cache definition for preparing setCacheDefinition.
+     * Sets a cache definition by alias (a service name).
+     *
+     * @param string $name
+     */
+    protected function setCacheDefinitionByAlias($alias)
+    {
+        $id         = $this->buildId(array($this->bundleId, $alias));
+        $definition = $this->createCacheDefinition();
+        $this->container->setDefinition($id, $definition);
+    }
+
+    /**
+     * Creates a cache definition without Configuration Reference.
      *
      * @return Definition
      */
