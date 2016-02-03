@@ -13,6 +13,7 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * This is an abstract class for preprocessing RegisterTest, Locale\RegisterLocaleTest
@@ -149,9 +150,10 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     protected function getRegisterMockAndContainerWithParameter(array $methods = array())
     {
         list($register, $container) = $this->getRegisterMockAndContainer($methods);
-        $method = new \ReflectionMethod($register, 'setParameter');
-        $method->setAccessible(true);
-        $method->invoke($register);
+        $parameters = Yaml::parse(file_get_contents(__DIR__.'/../../Resources/config/parameters.yml'));
+        foreach ($parameters['parameters'] as $key => $value) {
+            $container->getValue($register)->setParameter($key, $value);
+        }
 
         return array($register, $container);
     }

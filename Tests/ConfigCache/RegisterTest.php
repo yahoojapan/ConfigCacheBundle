@@ -110,7 +110,6 @@ class RegisterTest extends RegisterTestCase
             'setConfigurationByExtension',
             'validateResources',
             'validateCacheId',
-            'setParameter',
             'setLoaderDefinition',
         );
         $register = $this->getRegisterMock($internalMethods);
@@ -1429,28 +1428,6 @@ class RegisterTest extends RegisterTestCase
     }
 
     /**
-     * @dataProvider buildClassIdProvider
-     */
-    public function testBuildClassId($suffix, $expected)
-    {
-        $register = $this->getRegisterMock();
-        $method = new \ReflectionMethod($register, 'buildClassId');
-        $method->setAccessible(true);
-        $this->assertSame($expected, $method->invoke($register, $suffix));
-    }
-
-    /**
-     * @return array ($suffix, $expected)
-     */
-    public function buildClassIdProvider()
-    {
-        return array(
-            array('hoge', "{$this->getCacheId()}.hoge.class"),
-            array(array('hoge', 'fuga'), "{$this->getCacheId()}.hoge.fuga.class"),
-        );
-    }
-
-    /**
      * @dataProvider buildConfigurationIdProvider
      */
     public function testBuildConfigurationId($configuration, $expected)
@@ -1515,40 +1492,5 @@ class RegisterTest extends RegisterTestCase
         $configuration = new RegisterConfiguration();
         $register->setConfiguration($configuration);
         $this->assertSame($configuration, $reflection->invoke($register));
-    }
-
-    /**
-     * test for get method
-     *
-     * @dataProvider getIdProvider
-     */
-    public function testGetId($methodName, $internalMethodName, $suffix, $expected)
-    {
-        $register = $this->getRegisterMock(array('buildId', 'buildClassId'));
-        $register
-            ->expects($this->once())
-            ->method($internalMethodName)
-            ->with($suffix)
-            ->willReturn($expected)
-            ;
-        $method   = new \ReflectionMethod($register, $methodName);
-        $method->setAccessible(true);
-        $this->assertSame($expected, $method->invoke($register));
-    }
-
-    public function getIdProvider()
-    {
-        return array(
-            array('getYamlLoaderId',          'buildId',      'yaml_file_loader',  'config.yaml_file_loader'),
-            array('getXmlLoaderId',           'buildId',      'xml_file_loader',   'config.xml_file_loader'),
-            array('getLoaderResolverId',      'buildId',      'loader_resolver',   'config.loader_resolver'),
-            array('getDelegatingLoaderId',    'buildId',      'delegating_loader', 'config.delegatingloader'),
-            array('getPhpFileCacheClass',     'buildClassId', 'php_file_cache',    'config.php_file_cache.class'),
-            array('getConfigCacheClass',      'buildClassId', 'config_cache',      'config.config_cache.class'),
-            array('getYamlFileLoaderClass',   'buildClassId', 'yaml_file_loader',  'config.yaml_file_loader.class'),
-            array('getXmlFileLoaderClass',    'buildClassId', 'xml_file_loader',   'config.xml_file_loader.class'),
-            array('getLoaderResolverClass',   'buildClassId', 'loader_resolver',   'config.loader_resolver.class'),
-            array('getDelegatingLoaderClass', 'buildClassId', 'delegating_loader', 'config.delegatingloader.class'),
-        );
     }
 }
