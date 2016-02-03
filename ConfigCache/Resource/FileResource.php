@@ -40,6 +40,20 @@ class FileResource extends BaseFileResource implements ResourceInterface
     }
 
     /**
+     * Creates a FileResource.
+     *
+     * @param string                 $resource
+     * @param ConfigurationInterface $configuration
+     * @param string                 $alias
+     *
+     * @return FileResource
+     */
+    public static function create($resource, ConfigurationInterface $configuration = null, $alias = null)
+    {
+        return new static($resource, $configuration, $alias);
+    }
+
+    /**
      * Gets configuration.
      *
      * @return ConfigurationInterface

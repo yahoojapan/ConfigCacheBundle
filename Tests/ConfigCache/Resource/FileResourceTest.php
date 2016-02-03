@@ -31,6 +31,17 @@ class FileResourceTest extends \PHPUnit_Framework_TestCase
         ));
     }
 
+    public function testCreate()
+    {
+        $path          = __DIR__.'/../../Fixtures/test_service1.yml';
+        $configuration = new FileResourceConfiguration();
+        $alias         = 'test_alias';
+        $resource      = FileResource::create($path, $configuration, $alias);
+        $this->assertSame($path, $resource->getResource());
+        $this->assertSame($configuration, $resource->getConfiguration());
+        $this->assertSame($alias, $resource->getAlias());
+    }
+
     /**
      * @dataProvider existsProvider
      */
