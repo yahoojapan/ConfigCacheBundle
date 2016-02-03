@@ -1,0 +1,12 @@
+parameters:
+    config.yaml_file_loader.id:       config.yaml_file_loader
+    config.xml_file_loader.id:        config.xml_file_loader
+    config.loader_resolver.id:        config.loader_resolver
+    config.delegating_loader.id:      config.delegating_loader
+    config.php_file_cache.class:      Doctrine\Common\Cache\PhpFileCache
+    config.config_cache.class:        YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
+    config.yaml_file_loader.class:    YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader
+    config.xml_file_loader.class:     YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader
+    config.loader_resolver.class:     Symfony\Component\Config\Loader\LoaderResolver
+    config.delegating_loader.class:   Symfony\Component\Config\Loader\DelegatingLoader
+    config.locale.config_cache.class: YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache

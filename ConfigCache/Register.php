@@ -127,7 +127,6 @@ class Register
         $this->validateCacheId();
 
         // preprocess registerInternal()
-        $this->setParameter();
         $this->setLoaderDefinition();
     }
 
@@ -325,20 +324,6 @@ class Register
     }
 
     /**
-     * Sets class name parameters to the container.
-     */
-    protected function setParameter()
-    {
-        $container = $this->container;
-        $container->setParameter($this->getPhpFileCacheClass(), 'Doctrine\Common\Cache\PhpFileCache');
-        $container->setParameter($this->getConfigCacheClass(), 'YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache');
-        $container->setParameter($this->getYamlFileLoaderClass(), 'YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader');
-        $container->setParameter($this->getXmlFileLoaderClass(), 'YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader');
-        $container->setParameter($this->getLoaderResolverClass(), 'Symfony\Component\Config\Loader\LoaderResolver');
-        $container->setParameter($this->getDelegatingLoaderClass(), 'Symfony\Component\Config\Loader\DelegatingLoader');
-    }
-
-    /**
      * Sets a cache definition.
      */
     protected function setCacheDefinition()
@@ -370,7 +355,7 @@ class Register
     {
         // doctrine/cache
         $cache = new Definition(
-            $this->container->getParameter($this->getPhpFileCacheClass()),
+            $this->container->getParameter('config.php_file_cache.class'),
             array(
                 $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}",
                 '.php',
@@ -388,10 +373,10 @@ class Register
 
         // user cache
         $definition = new Definition(
-            $this->container->getParameter($this->getConfigCacheClass()),
+            $this->container->getParameter('config.config_cache.class'),
             array(
                 new Reference($cacheId),
-                new Reference($this->getDelegatingLoaderId()),
+                new Reference($this->container->getParameter('config.delegating_loader.id')),
                 $this->config,
             )
         );
@@ -442,42 +427,46 @@ class Register
      */
     protected function setLoaderDefinition()
     {
-        $yamlLoader = new Definition($this->container->getParameter($this->getYamlFileLoaderClass()));
-        $xmlLoader  = new Definition($this->container->getParameter($this->getXmlFileLoaderClass()));
+        $yamlLoader = new Definition($this->container->getParameter('config.yaml_file_loader.class'));
+        $xmlLoader  = new Definition($this->container->getParameter('config.xml_file_loader.class'));
         $yamlLoader->setPublic(false);
         $xmlLoader->setPublic(false);
+        $yamlLoaderId = $this->container->getParameter('config.yaml_file_loader.id');
+        $xmlLoaderId  = $this->container->getParameter('config.xml_file_loader.id');
 
-        if ($this->container->hasDefinition($this->getYamlLoaderId())) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $this->getYamlLoaderId()));
+        if ($this->container->hasDefinition($yamlLoaderId)) {
+            throw new \Exception(sprintf("Service[%s] already registered.", $yamlLoaderId));
         }
-        if ($this->container->hasDefinition($this->getXmlLoaderId())) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $this->getXmlLoaderId()));
+        if ($this->container->hasDefinition($xmlLoaderId)) {
+            throw new \Exception(sprintf("Service[%s] already registered.", $xmlLoaderId));
         }
-        $this->container->setDefinition($this->getYamlLoaderId(), $yamlLoader);
-        $this->container->setDefinition($this->getXmlLoaderId(), $xmlLoader);
+        $this->container->setDefinition($yamlLoaderId, $yamlLoader);
+        $this->container->setDefinition($xmlLoaderId, $xmlLoader);
 
         $resolver = new Definition(
-            $this->container->getParameter($this->getLoaderResolverClass()),
+            $this->container->getParameter('config.loader_resolver.class'),
             array(array(
-                new Reference($this->getYamlLoaderId()),
-                new Reference($this->getXmlLoaderId()),
+                new Reference($yamlLoaderId),
+                new Reference($xmlLoaderId),
             ))
         );
         $resolver->setPublic(false);
-        if ($this->container->hasDefinition($this->getLoaderResolverId())) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $this->getLoaderResolverId()));
+        $resolverId = $this->container->getParameter('config.loader_resolver.id');
+        if ($this->container->hasDefinition($resolverId)) {
+            throw new \Exception(sprintf("Service[%s] already registered.", $resolverId));
         }
-        $this->container->setDefinition($this->getLoaderResolverId(), $resolver);
+        $this->container->setDefinition($resolverId, $resolver);
 
         $loader = new Definition(
-            $this->container->getParameter($this->getDelegatingLoaderClass()),
-            array(new Reference($this->getLoaderResolverId()))
+            $this->container->getParameter('config.delegating_loader.class'),
+            array(new Reference($resolverId))
         );
         $loader->setPublic(false);
-        if ($this->container->hasDefinition($this->getDelegatingLoaderId())) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $this->getDelegatingLoaderId()));
+        $delegatingLoaderId = $this->container->getParameter('config.delegating_loader.id');
+        if ($this->container->hasDefinition($delegatingLoaderId)) {
+            throw new \Exception(sprintf("Service[%s] already registered.", $delegatingLoaderId));
         }
-        $this->container->setDefinition($this->getDelegatingLoaderId(), $loader);
+        $this->container->setDefinition($delegatingLoaderId, $loader);
     }
 
     /**
@@ -539,18 +528,6 @@ class Register
     protected function buildId($suffix)
     {
         return implode('.', array_merge(array($this->cacheId), (array) $suffix));
-    }
-
-    /**
-     * Builds a class parameter ID.
-     *
-     * @param string $suffix ex) "php_file_cache"
-     *
-     * @return string ex) "config.php_file_cache.class"
-     */
-    protected function buildClassId($suffix)
-    {
-        return $this->buildId(array_merge((array) $suffix, array('class')));
     }
 
     /**
@@ -625,105 +602,5 @@ class Register
         $this->files[] = $file;
 
         return $this;
-    }
-
-    /**
-     * Gets a yaml loader service ID.
-     *
-     * @return string
-     */
-    protected function getYamlLoaderId()
-    {
-        return $this->buildId('yaml_file_loader');
-    }
-
-    /**
-     * Gets a xml loader service ID.
-     *
-     * @return string
-     */
-    protected function getXmlLoaderId()
-    {
-        return $this->buildId('xml_file_loader');
-    }
-
-    /**
-     * Gets a loader resolver service ID.
-     *
-     * @return string
-     */
-    protected function getLoaderResolverId()
-    {
-        return $this->buildId('loader_resolver');
-    }
-
-    /**
-     * Gets a delegating loader service ID.
-     *
-     * @return string
-     */
-    protected function getDelegatingLoaderId()
-    {
-        return $this->buildId('delegating_loader');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getPhpFileCacheClass()
-    {
-        return $this->buildClassId('php_file_cache');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getConfigCacheClass()
-    {
-        return $this->buildClassId('config_cache');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getYamlFileLoaderClass()
-    {
-        return $this->buildClassId('yaml_file_loader');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getXmlFileLoaderClass()
-    {
-        return $this->buildClassId('xml_file_loader');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getLoaderResolverClass()
-    {
-        return $this->buildClassId('loader_resolver');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getDelegatingLoaderClass()
-    {
-        return $this->buildClassId('delegating_loader');
     }
 }
