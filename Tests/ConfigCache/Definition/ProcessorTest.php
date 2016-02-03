@@ -57,18 +57,16 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
         $expectedNode,
         $expectedException
     ) {
-        try {
-            list($validated, $masterNode) = self::$processor->process(
-                $validated,
-                $validating,
-                $nodeOne,
-                $masterNode
-            );
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expectedException, $e, 'Unexpected exception occurred.');
-
-            return;
+        if (is_string($expectedException) && class_exists($expectedException)) {
+            $this->setExpectedException($expectedException);
         }
+        list($validated, $masterNode) = self::$processor->process(
+            $validated,
+            $validating,
+            $nodeOne,
+            $masterNode
+        );
+
         $this->assertSame($expectedArray, $validated);
         $this->assertEquals($expectedNode, $masterNode);
     }

@@ -74,14 +74,10 @@ class ConfigurationCommandTest extends KernelTestCase
             $fileCheckOnly = true;
         }
         $commandTester = new CommandTester($command);
-        try {
-            $commandTester->execute($options);
-        } catch (\Exception $e) {
-            if ($expectedException) {
-                return;
-            }
-            $this->fail('Unexpected exception occurred.');
+        if ($expectedException) {
+            $this->setExpectedException('\Exception');
         }
+        $commandTester->execute($options);
 
         // display and generate file
         $actual = $commandTester->getDisplay();

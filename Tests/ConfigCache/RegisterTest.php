@@ -899,12 +899,10 @@ class RegisterTest extends RegisterTestCase
         $method = new \ReflectionMethod($register, 'findFilesByDirectory');
         $method->setAccessible(true);
 
-        try {
-            $finder = $method->invoke($register, $resource, $excludes);
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        $finder = $method->invoke($register, $resource, $excludes);
 
         $results = array();
         foreach ($finder as $file) {
@@ -1259,12 +1257,10 @@ class RegisterTest extends RegisterTestCase
         $method = new \ReflectionMethod($register, 'validateResources');
         $method->setAccessible(true);
 
-        try {
-            $method->invoke($register);
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        $method->invoke($register);
         $this->assertTrue($expected);
     }
 
@@ -1319,12 +1315,10 @@ class RegisterTest extends RegisterTestCase
         $method = new \ReflectionMethod($register, 'validateCacheId');
         $method->setAccessible(true);
 
-        try {
-            $method->invoke($register);
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        $method->invoke($register);
         $this->assertTrue($expected);
     }
 
@@ -1456,12 +1450,10 @@ class RegisterTest extends RegisterTestCase
         $reflection->setAccessible(true);
 
         // configuration not set
-        try {
-            $reflection->invoke($register);
-            $this->fail('Expected exception does not occurred.');
-        } catch (\Exception $e) {
-            $this->assertInstanceOf('\Exception', $e, 'Unexpected exception occurred.');
-        }
+        $this->setExpectedException('\Exception');
+        // throw \Exception
+        $reflection->invoke($register);
+
         // configuration set
         $configuration = new RegisterConfiguration();
         $register->setConfiguration($configuration);

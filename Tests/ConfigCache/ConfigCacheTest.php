@@ -377,13 +377,10 @@ class ConfigCacheTest extends ConfigCacheTestCase
 
         $method = new \ReflectionMethod(self::$cache, 'load');
         $method->setAccessible(true);
-        try {
-            $result = $method->invoke(self::$cache);
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        $result = $method->invoke(self::$cache);
         $this->assertSame($expected, $result);
     }
 
@@ -512,19 +509,16 @@ class ConfigCacheTest extends ConfigCacheTestCase
         $configuration  = new ConfigCacheConfiguration();
         $method = new \ReflectionMethod(self::$cache, 'processConfiguration');
         $method->setAccessible(true);
-        try {
-            list($array, $node) = $method->invoke(
-                self::$cache,
-                $validated,
-                $validating,
-                $configuration,
-                $configuration->getConfigTreeBuilder()->buildTree()
-            );
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        list($array, $node) = $method->invoke(
+            self::$cache,
+            $validated,
+            $validating,
+            $configuration,
+            $configuration->getConfigTreeBuilder()->buildTree()
+        );
 
         $this->assertSame($expected, $array);
         $this->assertEquals($node, $configuration->getConfigTreeBuilder()->buildTree());
@@ -601,12 +595,8 @@ class ConfigCacheTest extends ConfigCacheTestCase
         self::$cache->setKey($expected = 'test');
         $this->assertSame($expected, $this->getProperty(self::$cache, 'key'));
         // exception
-        try {
-            self::$cache->setKey('zzz');
-        } catch (\RuntimeException $e) {
-            return;
-        }
-        $this->fail('Expected exception does not occurred.');
+        $this->setExpectedException('\RuntimeException');
+        self::$cache->setKey('zzz');
     }
 
     /**
