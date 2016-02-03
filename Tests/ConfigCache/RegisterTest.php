@@ -94,9 +94,7 @@ class RegisterTest extends RegisterTestCase
         $register = $this->getRegisterMock();
         $tag      = 'test_tag';
         $register->setTag($tag);
-        $property = new \ReflectionProperty($register, 'tag');
-        $property->setAccessible(true);
-        $this->assertSame($tag, $property->getValue($register));
+        $this->assertSame($tag, $this->getProperty($register, 'tag'));
     }
 
     /**
@@ -575,14 +573,10 @@ class RegisterTest extends RegisterTestCase
         $internalMethod = 'setCacheDefinition';
         list($register, ) = $this->getRegisterMockAndContainerWithParameter(array($internalMethod));
         $id = 'register_test';
-
-        $bundleId = new \ReflectionProperty($register, 'bundleId');
-        $bundleId->setAccessible(true);
-        $bundleId->setValue($register, $id);
-
-        $registerResources = new \ReflectionProperty($register, 'resources');
-        $registerResources->setAccessible(true);
-        $registerResources->setValue($register, $resources);
+        $this
+            ->setProperty($register, 'bundleId', $id)
+            ->setProperty($register, 'resources', $resources)
+            ;
 
         // only assert calling method
         $register
@@ -670,10 +664,7 @@ class RegisterTest extends RegisterTestCase
     {
         $internalMethod = 'setCacheDefinition';
         list($register, ) = $this->getRegisterMockAndContainerWithParameter(array($internalMethod));
-
-        $registerResources = new \ReflectionProperty($register, 'resources');
-        $registerResources->setAccessible(true);
-        $registerResources->setValue($register, $resources);
+        $this->setProperty($register, 'resources', $resources);
 
         // only assert calling method
         $register
@@ -988,20 +979,12 @@ class RegisterTest extends RegisterTestCase
             ->willReturn('register_test')
             ;
 
-        // $register->extension = $extension
-        $property = new \ReflectionProperty($register, 'extension');
-        $property->setAccessible(true);
-        $property->setValue($register, $extension);
-
-        // $register->setBundleId()
+        $this->setProperty($register, 'extension', $extension);
         $method = new \ReflectionMethod($register, 'setBundleId');
         $method->setAccessible(true);
         $method->invoke($register);
 
-        // 'register_test' === $register->bundleId ?
-        $property = new \ReflectionProperty($register, 'bundleId');
-        $property->setAccessible(true);
-        $this->assertSame('register_test', $property->getValue($register));
+        $this->assertSame('register_test', $this->getProperty($register, 'bundleId'));
     }
 
     /**
@@ -1017,18 +1000,13 @@ class RegisterTest extends RegisterTestCase
             ->method('getConfiguration')
             ->willReturn($configuration)
             ;
-
-        $property = new \ReflectionProperty($register, 'extension');
-        $property->setAccessible(true);
-        $property->setValue($register, $extension);
+        $this->setProperty($register, 'extension', $extension);
 
         $method = new \ReflectionMethod($register, 'setConfigurationByExtension');
         $method->setAccessible(true);
         $method->invoke($register);
 
-        $property = new \ReflectionProperty($register, 'configuration');
-        $property->setAccessible(true);
-        $this->assertSame($expected, $property->getValue($register));
+        $this->assertSame($expected, $this->getProperty($register, 'configuration'));
     }
 
     /**
@@ -1277,9 +1255,7 @@ class RegisterTest extends RegisterTestCase
     public function testValidateResources($resources, $expected)
     {
         $register = $this->getRegisterMock();
-        $property = new \ReflectionProperty($register, 'resources');
-        $property->setAccessible(true);
-        $property->setValue($register, $resources);
+        $this->setProperty($register, 'resources', $resources);
         $method = new \ReflectionMethod($register, 'validateResources');
         $method->setAccessible(true);
 
@@ -1339,9 +1315,7 @@ class RegisterTest extends RegisterTestCase
             ;
 
         $register = $this->getRegisterMock();
-        $property = new \ReflectionProperty($register, 'container');
-        $property->setAccessible(true);
-        $property->setValue($register, $container);
+        $this->setProperty($register, 'container', $container);
         $method = new \ReflectionMethod($register, 'validateCacheId');
         $method->setAccessible(true);
 

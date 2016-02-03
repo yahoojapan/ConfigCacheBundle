@@ -110,10 +110,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     protected function getCacheId()
     {
         if (is_null($this->cacheId)) {
-            $register = $this->getRegisterMock();
-            $reflection = new \ReflectionProperty($register, 'cacheId');
-            $reflection->setAccessible(true);
-            $this->cacheId = $reflection->getValue($register);
+            $this->cacheId = $this->getProperty($this->getRegisterMock(), 'cacheId');
         }
 
         return $this->cacheId;
