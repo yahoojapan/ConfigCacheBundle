@@ -20,7 +20,91 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
 {
     protected $cacheId;
-    protected $registerClass = 'YahooJapan\ConfigCacheBundle\ConfigCache\Register';
+    protected $registerClass    = 'YahooJapan\ConfigCacheBundle\ConfigCache\Register';
+    protected $configCacheClass = 'YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache';
+
+    /**
+     * for testSetCacheDefinition, testSetCacheDefinitionByAlias
+     */
+    protected function preSetCacheDefinition($register, $tag, $id)
+    {
+        $this
+            ->setProperty($register, 'bundleId', $id)
+            ->setProperty($register, 'config', array('aaa' => 'bbb'))
+            ;
+        if (!is_null($tag)) {
+            $register->setTag($tag);
+        }
+    }
+
+    /**
+     * for testSetCacheDefinition, testSetCacheDefinitionByAlias
+     */
+    protected function postSetCacheDefinition($container, $register, $tag, $id, $alias = '')
+    {
+        // assert(doctrine/cache)
+        $doctrineCacheId = "{$this->getCacheId()}.doctrine.cache.{$id}";
+        $this->assertTrue($container->getValue($register)->hasDefinition($doctrineCacheId));
+        $definition = $container->getValue($register)->getDefinition($doctrineCacheId);
+        $this->assertFalse($definition->isPublic());
+        $this->assertSame('Doctrine\Common\Cache\PhpFileCache', $definition->getClass());
+        $this->assertSame(
+            array(
+                $container->getValue($register)->getParameter('kernel.cache_dir')."/{$id}",
+                '.php',
+            ),
+            $definition->getArguments()
+        );
+
+        // assert(ConfigCache)
+        $aliases = $alias !== '' ? array($alias) : array();
+        $userCacheId = implode('.', array_merge(array($this->getCacheId(), $id), $aliases));
+        $this->assertTrue($container->getValue($register)->hasDefinition($userCacheId));
+        $definition = $container->getValue($register)->getDefinition($userCacheId);
+        $this->assertTrue($definition->isPublic());
+        $this->assertTrue($definition->isLazy());
+        $this->assertSame($this->configCacheClass, $definition->getClass());
+        $arguments = $definition->getArguments();
+        $this->assertSame(3, count($arguments));
+        foreach ($arguments as $i => $argument) {
+            if ($i === 0) {
+                $this->assertInstanceOf(
+                    'Symfony\Component\DependencyInjection\Reference',
+                    $argument,
+                    'Unexpected argument "0" instance.'
+                );
+                $this->assertSame($doctrineCacheId, (string) $argument);
+            } elseif ($i === 1) {
+                $this->assertInstanceOf(
+                    'Symfony\Component\DependencyInjection\Reference',
+                    $argument,
+                    'Unexpected argument "1" instance.'
+                );
+                $this->assertSame("{$this->getCacheId()}.delegating_loader", (string) $argument);
+            } elseif ($i === 2) {
+                $this->assertSame(array('aaa' => 'bbb'), $argument);
+            } else {
+                $this->fail(sprintf('The ConfigCache argument "%s" is not set.', $i));
+            }
+        }
+        if (!is_null($tag)) {
+            $this->assertTrue($definition->hasTag($tag));
+        } else {
+            $this->assertSame(array(), $definition->getTags());
+        }
+
+        // addMethodCalls is asserted on test method
+
+        // assert(ArrayAccess)
+        $arrayAccessId = "{$this->getCacheId()}.array_access.{$id}";
+        $this->assertTrue($container->getValue($register)->hasDefinition($arrayAccessId));
+        $arrayDefinition = $container->getValue($register)->getDefinition($arrayAccessId);
+        $this->assertFalse($arrayDefinition->isPublic());
+        $this->assertSame('YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess', $arrayDefinition->getClass());
+        $this->assertSame(0, count($arrayDefinition->getArguments()));
+
+        return $definition;
+    }
 
     protected function getCacheId()
     {
@@ -86,5 +170,22 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
             'kernel.root_dir'       => __DIR__,
             'kernel.default_locale' => 'ja',
         ), $data)));
+    }
+
+    protected function getProperty($instance, $name)
+    {
+        $property = new \ReflectionProperty($instance, $name);
+        $property->setAccessible(true);
+
+        return $property->getValue($instance);
+    }
+
+    protected function setProperty($instance, $name, $value)
+    {
+        $property = new \ReflectionProperty($instance, $name);
+        $property->setAccessible(true);
+        $property->setValue($instance, $value);
+
+        return $this;
     }
 }
