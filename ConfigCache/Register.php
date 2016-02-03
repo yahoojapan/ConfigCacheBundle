@@ -220,15 +220,19 @@ class Register
      */
     protected function registerAllInternal($bundles)
     {
+        // extract resources without FileResource with alias
+        $resources = array();
+        foreach ($this->resources as $resource) {
+            if ($resource instanceof FileResource && $resource->hasAlias()) {
+                $this->addFile($resource);
+            } else {
+                $resources[] = $resource;
+            }
+        }
+
         foreach ($bundles as $fqcn) {
             $reflection = new \ReflectionClass($fqcn);
-            foreach ($this->resources as $resource) {
-                // if the resource has alias, simply addFile()
-                if ($resource instanceof FileResource && $resource->hasAlias()) {
-                    $this->addFile($resource);
-                    continue;
-                }
-
+            foreach ($resources as $resource) {
                 $path = dirname($reflection->getFilename()).$resource->getResource();
                 if (is_dir($path)) {
                     $this->addDirectory(new DirectoryResource($path, $this->findConfigurationByResource($resource)));
