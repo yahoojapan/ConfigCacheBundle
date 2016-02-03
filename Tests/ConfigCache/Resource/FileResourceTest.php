@@ -19,10 +19,7 @@ class FileResourceTest extends \PHPUnit_Framework_TestCase
     public function testConstruct()
     {
         $className = 'YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource';
-        $resource  = $this->getMockBuilder($className)
-            ->disableOriginalConstructor()
-            ->getMock()
-            ;
+        $resource  = $this->createFileResourceMock();
         $class = new \ReflectionClass($className);
         $constructor = $class->getConstructor();
         // assert OK with no Configuration
@@ -58,23 +55,77 @@ class FileResourceTest extends \PHPUnit_Framework_TestCase
 
     public function testSetConfiguration()
     {
-        $resource = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource')
-            ->disableOriginalConstructor()
-            ->setMethods(null)
-            ->getMock()
-            ;
+        $resource = $this->createFileResourceMock();
         $configuration = $this->getMock('Symfony\Component\Config\Definition\ConfigurationInterface');
         $this->assertSame($configuration, $resource->setConfiguration($configuration)->getConfiguration());
     }
 
     public function testSetResource()
     {
-        $resource = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource')
-            ->disableOriginalConstructor()
-            ->setMethods(null)
-            ->getMock()
-            ;
+        $resource = $this->createFileResourceMock();
         $dir = __DIR__.'/../../Fixtures';
         $this->assertSame($dir, $resource->setResource($dir)->getResource());
+    }
+
+    public function testGetAlias()
+    {
+        $resource = $this->createFileResourceMock();
+        $this->assertSame(null, $resource->getAlias());
+        $resource->setAlias($expected = 'test');
+        $this->assertSame($expected, $resource->getAlias());
+    }
+
+    /**
+     * @dataProvider setAliasProvider
+     */
+    public function testSetAlias($alias, $expectedException)
+    {
+        $resource = $this->createFileResourceMock();
+        if (!is_null($expectedException)) {
+            $this->setExpectedException($expectedException);
+        }
+        $this->assertSame($resource, $resource->setAlias($alias));
+        $this->assertSame($alias, $resource->getAlias());
+    }
+
+    public function testHasAlias()
+    {
+        $resource = $this->createFileResourceMock();
+        $this->assertFalse($resource->hasAlias());
+        $resource->setAlias('');
+        $this->assertFalse($resource->hasAlias());
+        $resource->setAlias('test');
+        $this->assertTrue($resource->hasAlias());
+    }
+
+    /**
+     * @return array($alias, $expectedException)
+     */
+    public function setAliasProvider()
+    {
+        return array(
+            // normal
+            array('test_name', null),
+            array('', null),
+            // exception
+            array(false, '\InvalidArgumentException'),
+            array(null, '\InvalidArgumentException'),
+        );
+    }
+
+    protected function createFileResourceMock(array $methods = null)
+    {
+        return $this->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource', $methods);
+    }
+
+    protected function createMock($name, array $methods = null)
+    {
+        $mock = $this->getMockBuilder($name)
+            ->disableOriginalConstructor()
+            ->setMethods($methods)
+            ->getMock()
+            ;
+
+        return $mock;
     }
 }

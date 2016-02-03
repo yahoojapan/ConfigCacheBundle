@@ -23,17 +23,20 @@ class FileResource extends BaseFileResource implements ResourceInterface
 {
     protected $resource;
     protected $configuration;
+    protected $alias;
 
     /**
      * Constructor.
      *
      * @param string                 $resource
      * @param ConfigurationInterface $configuration
+     * @param string                 $alias
      */
-    public function __construct($resource, ConfigurationInterface $configuration = null)
+    public function __construct($resource, ConfigurationInterface $configuration = null, $alias = null)
     {
         $this->resource      = $resource;
         $this->configuration = $configuration;
+        $this->alias         = $alias;
     }
 
     /**
@@ -82,6 +85,45 @@ class FileResource extends BaseFileResource implements ResourceInterface
         $this->resource = $resource;
 
         return $this;
+    }
+
+    /**
+     * Gets an alias (as ConfigCache service name suffix).
+     *
+     * @return string
+     */
+    public function getAlias()
+    {
+        return $this->alias;
+    }
+
+    /**
+     * Sets an alias (as ConfigCache service name suffix).
+     *
+     * @param string $alias
+     *
+     * @return FileResource
+     *
+     * @throws \InvalidArgumentException
+     */
+    public function setAlias($alias)
+    {
+        if (!is_string($alias)) {
+            throw new \InvalidArgumentException("Alias[{$alias}] must be string.");
+        }
+        $this->alias = $alias;
+
+        return $this;
+    }
+
+    /**
+     * Whether FileResource has an alias or not.
+     *
+     * @return bool
+     */
+    public function hasAlias()
+    {
+        return !is_null($this->alias) && $this->alias !== '';
     }
 
     /**
