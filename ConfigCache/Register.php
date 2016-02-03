@@ -293,7 +293,10 @@ class Register
      */
     protected function setCacheDefinition()
     {
-        $this->container->setDefinition($this->buildId($this->bundleId), $this->createCacheDefinition());
+        $id         = $this->buildId($this->bundleId);
+        $definition = $this->createCacheDefinition();
+        $this->addConfigurationMethod($definition);
+        $this->container->setDefinition($id, $definition);
     }
 
     /**
@@ -315,10 +318,6 @@ class Register
         $cacheId = $this->buildId(array('doctrine', 'cache', $this->bundleId));
         $this->container->setDefinition($cacheId, $cache);
 
-        // master configuration
-        $configId = $this->buildConfigurationId($this->getInitializedConfiguration());
-        $this->setConfigurationDefinition($configId, $this->getInitializedConfiguration());
-
         // ArrayAccess
         $arrayAccess = new Definition('YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess');
         $arrayAccess->setPublic(false);
@@ -334,13 +333,28 @@ class Register
                 $this->config,
             )
         );
-        $definition->setLazy(true)
-            ->addMethodCall('setConfiguration', array(new Reference($configId)))
+        $definition
+            ->setLazy(true)
             ->addMethodCall('setArrayAccess', array(new Reference($arrayAccessId)))
-        ;
+            ;
         if (!is_null($this->tag)) {
             $definition->addTag($this->tag);
         }
+
+        return $definition;
+    }
+
+    /**
+     * Adds a Configuration set method to Definition.
+     *
+     * @return Definition
+     */
+    protected function addConfigurationMethod(Definition $definition)
+    {
+        // master configuration
+        $configId = $this->buildConfigurationId($this->getInitializedConfiguration());
+        $this->setConfigurationDefinition($configId, $this->getInitializedConfiguration());
+        $definition->addMethodCall('setConfiguration', array(new Reference($configId)));
 
         return $definition;
     }
