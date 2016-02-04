@@ -1,6 +1,3 @@
-imports:
-    - { resource: parameters.yml }
-
 services:
     yahoo_japan_config_cache.array_loader:
         class: YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader
