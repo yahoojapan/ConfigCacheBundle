@@ -34,13 +34,13 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface;
 class Register
 {
     protected $extension;
-    protected $config;
     protected $configuration;
     protected $container;
     protected $resources;
     protected $excludes;
-    protected $dirs  = array();
-    protected $files = array();
+    protected $dirs      = array();
+    protected $files     = array();
+    protected $appConfig = array();
     // bundle ID
     protected $bundleId;
     // ConfigCache service ID
@@ -52,20 +52,17 @@ class Register
      * Constructor.
      *
      * @param ExtensionInterface $extension An Extension
-     * @param array              $config    An array of configuration values
      * @param ContainerBuilder   $container A ContainerBuilder instance
      * @param array              $resources Array of Resource key and Configuration instance value
      * @param array              $excludes  Exclude file names
      */
     public function __construct(
         ExtensionInterface $extension,
-        array $config,
         ContainerBuilder $container,
         array $resources,
         array $excludes = array()
     ) {
         $this->extension = $extension;
-        $this->config    = $config;
         $this->container = $container;
         $this->resources = $resources;
         $this->excludes  = $excludes;
@@ -101,6 +98,20 @@ class Register
     public function setConfiguration(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
+
+        return $this;
+    }
+
+    /**
+     * Sets an application config.
+     *
+     * @param array $appConfig
+     *
+     * @return Register
+     */
+    public function setAppConfig(array $appConfig)
+    {
+        $this->appConfig = $appConfig;
 
         return $this;
     }
@@ -385,7 +396,7 @@ class Register
             array(
                 new Reference($cacheId),
                 new Reference($this->container->getParameter('config.delegating_loader.id')),
-                $this->config,
+                $this->appConfig,
             )
         );
         $definition
