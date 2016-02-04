@@ -23,11 +23,16 @@ class RegisterLocaleTest extends RegisterTestCase
 
     public function testRegister()
     {
-        $register = $this->getRegisterMock(array('setTag', 'registerInternal'));
+        $register = $this->getRegisterMock(array('setTag', 'initializeResources', 'registerInternal'));
         $register
             ->expects($this->once())
             ->method('setTag')
             ->with(ConfigCache::TAG_LOCALE)
+            ->willReturnSelf()
+            ;
+        $register
+            ->expects($this->once())
+            ->method('initializeResources')
             ->willReturnSelf()
             ;
         $register
@@ -40,7 +45,9 @@ class RegisterLocaleTest extends RegisterTestCase
 
     public function testRegisterAll()
     {
-        $register = $this->getRegisterMock(array('setTag', 'registerInternal'));
+        $methods = array('setTag', 'initializeAllResources', 'registerInternal');
+        $register = $this->getRegisterMock($methods);
+        $this->setProperty($register, 'container', $this->getContainerBuilder());
         $register
             ->expects($this->once())
             ->method('setTag')
@@ -49,8 +56,12 @@ class RegisterLocaleTest extends RegisterTestCase
             ;
         $register
             ->expects($this->once())
+            ->method('initializeAllResources')
+            ->willReturnSelf()
+            ;
+        $register
+            ->expects($this->once())
             ->method('registerInternal')
-            ->with('all')
             ->willReturn(null)
             ;
         $register->registerAll();

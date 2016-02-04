@@ -61,12 +61,15 @@ class RegisterTest extends RegisterTestCase
      */
     public function testRegister()
     {
-        $internalMethod = 'registerInternal';
-        $register = $this->getRegisterMock(array($internalMethod));
+        $register = $this->getRegisterMock(array('initializeResources', 'registerInternal'));
         $register
             ->expects($this->once())
-            ->method($internalMethod)
-            ->with(false)
+            ->method('initializeResources')
+            ->willReturnSelf()
+            ;
+        $register
+            ->expects($this->once())
+            ->method('registerInternal')
             ->willReturn(null)
             ;
         $register->register();
@@ -78,12 +81,16 @@ class RegisterTest extends RegisterTestCase
      */
     public function testRegisterAll()
     {
-        $internalMethod = 'registerInternal';
-        $register = $this->getRegisterMock(array($internalMethod));
+        $register = $this->getRegisterMock(array('initializeAllResources', 'registerInternal'));
+        $this->setProperty($register, 'container', $this->getContainerBuilder());
         $register
             ->expects($this->once())
-            ->method($internalMethod)
-            ->with(true)
+            ->method('initializeAllResources')
+            ->willReturnSelf()
+            ;
+        $register
+            ->expects($this->once())
+            ->method('registerInternal')
             ->willReturn(null)
             ;
         $register->registerAll();
@@ -124,9 +131,11 @@ class RegisterTest extends RegisterTestCase
     }
 
     /**
+     * register, registerAll, registerInternal test cases.
+     *
      * @dataProvider registerInternalProvider
      */
-    public function testRegisterInternal(
+    public function testRegisterAndRegisterAll(
         $all,
         $resources,
         $createFiles,
@@ -166,9 +175,9 @@ class RegisterTest extends RegisterTestCase
         $definitions = count($container->getValue($register)->getDefinitions());
 
         // registerInternal
-        $method = new \ReflectionMethod($register, 'registerInternal');
+        $method = new \ReflectionMethod($register, $all ? 'registerAll' : 'register');
         $method->setAccessible(true);
-        is_null($all) ? $method->invoke($register) : $method->invoke($register, $all);
+        $method->invoke($register);
 
         // whether user cache service defined
         $this->assertSame(
@@ -467,11 +476,11 @@ class RegisterTest extends RegisterTestCase
         $method->setAccessible(true);
         $method->invoke($register);
 
-        // store Definition count before registerInternal
+        // store Definition count before register
         $definitions = count($container->getValue($register)->getDefinitions());
 
-        // registerInternal
-        $method = new \ReflectionMethod($register, 'registerInternal');
+        // register
+        $method = new \ReflectionMethod($register, 'register');
         $method->setAccessible(true);
         $method->invoke($register);
 
@@ -566,9 +575,9 @@ class RegisterTest extends RegisterTestCase
     }
 
     /**
-     * @dataProvider registerOneInternalProvider
+     * @dataProvider initializeResourcesProvider
      */
-    public function testRegisterOneInternal($resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
+    public function testInitializeResources($resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
     {
         $internalMethod = 'setCacheDefinition';
         list($register, ) = $this->getRegisterMockAndContainerWithParameter(array($internalMethod));
@@ -585,7 +594,7 @@ class RegisterTest extends RegisterTestCase
             ->willReturn(null)
             ;
 
-        $method = new \ReflectionMethod($register, 'registerOneInternal');
+        $method = new \ReflectionMethod($register, 'initializeResources');
         $method->setAccessible(true);
         $method->invoke($register);
         $this->assertSame($expectedDirs, $this->getProperty($register, 'dirs'));
@@ -595,7 +604,7 @@ class RegisterTest extends RegisterTestCase
     /**
      * @return array ($resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
      */
-    public function registerOneInternalProvider()
+    public function initializeResourcesProvider()
     {
         $configuration        = new RegisterConfiguration();
         $fileResource         = new FileResource(__DIR__.'/../Fixtures/test_service1.yml', $configuration);
@@ -658,9 +667,9 @@ class RegisterTest extends RegisterTestCase
     }
 
     /**
-     * @dataProvider registerAllInternalProvider
+     * @dataProvider initializeAllResourcesProvider
      */
-    public function testRegisterAllInternal($bundles, $resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
+    public function testInitializeAllResources($bundles, $resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
     {
         $internalMethod = 'setCacheDefinition';
         list($register, ) = $this->getRegisterMockAndContainerWithParameter(array($internalMethod));
@@ -673,8 +682,8 @@ class RegisterTest extends RegisterTestCase
             ->willReturn(null)
             ;
 
-        // $register->registerAllInternal()
-        $method = new \ReflectionMethod($register, 'registerAllInternal');
+        // $register->initializeAllResources()
+        $method = new \ReflectionMethod($register, 'initializeAllResources');
         $method->setAccessible(true);
         $method->invoke($register, $bundles);
         $dirs  = $this->getProperty($register, 'dirs');
@@ -700,7 +709,7 @@ class RegisterTest extends RegisterTestCase
     /**
      * @return array ($bundles, $resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
      */
-    public function registerAllInternalProvider()
+    public function initializeAllResourcesProvider()
     {
         $bundles = array(
             'FrameworkBundle'             => 'Symfony\\Bundle\\FrameworkBundle\\FrameworkBundle',
