@@ -28,7 +28,11 @@ class RegisterLocale extends Register
      */
     public function register()
     {
-        $this->setTag(ConfigCache::TAG_LOCALE)->registerInternal();
+        $this
+            ->setTag(ConfigCache::TAG_LOCALE)
+            ->initializeResources()
+            ->registerInternal()
+            ;
     }
 
     /**
@@ -36,7 +40,11 @@ class RegisterLocale extends Register
      */
     public function registerAll()
     {
-        $this->setTag(ConfigCache::TAG_LOCALE)->registerInternal('all');
+        $this
+            ->setTag(ConfigCache::TAG_LOCALE)
+            ->initializeAllResources($this->container->getParameter('kernel.bundles'))
+            ->registerInternal()
+            ;
     }
 
     /**

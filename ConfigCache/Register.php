@@ -78,7 +78,10 @@ class Register
      */
     public function register()
     {
-        $this->registerInternal();
+        $this
+            ->initializeResources()
+            ->registerInternal()
+            ;
     }
 
     /**
@@ -86,7 +89,10 @@ class Register
      */
     public function registerAll()
     {
-        $this->registerInternal(true);
+        $this
+            ->initializeAllResources($this->container->getParameter('kernel.bundles'))
+            ->registerInternal()
+            ;
     }
 
     /**
@@ -131,18 +137,10 @@ class Register
     }
 
     /**
-     * Register a service internal processing.
-     *
-     * @param bool $all all or one bundle(s)
+     * Register services internal processing.
      */
-    protected function registerInternal($all = false)
+    protected function registerInternal()
     {
-        if ($all) {
-            $this->registerAllInternal($this->container->getParameter('kernel.bundles'));
-        } else {
-            $this->registerOneInternal();
-        }
-
         $cacheId = $this->buildId($this->bundleId);
 
         foreach ($this->dirs as $resource) {
@@ -197,9 +195,11 @@ class Register
     }
 
     /**
-     * Registers by a bundle internal processing.
+     * Initializes resources by a bundle.
+     *
+     * @return Register
      */
-    protected function registerOneInternal()
+    protected function initializeResources()
     {
         foreach ($this->resources as $resource) {
             if ($resource->exists()) {
@@ -212,12 +212,18 @@ class Register
         }
 
         $this->postInitializeResources();
+
+        return $this;
     }
 
     /**
-     * Registers by all bundles internal processing.
+     * Initializes resources by all bundles.
+     *
+     * @param array $bundles
+     *
+     * @return Register
      */
-    protected function registerAllInternal($bundles)
+    protected function initializeAllResources(array $bundles)
     {
         // extract resources without FileResource with alias
         $resources = array();
@@ -242,6 +248,8 @@ class Register
         }
 
         $this->postInitializeResources();
+
+        return $this;
     }
 
     /**
