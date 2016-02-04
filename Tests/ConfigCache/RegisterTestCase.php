@@ -31,7 +31,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     {
         $this
             ->setProperty($register, 'bundleId', $id)
-            ->setProperty($register, 'config', array('aaa' => 'bbb'))
+            ->setProperty($register, 'appConfig', array('aaa' => 'bbb'))
             ;
         if (!is_null($tag)) {
             $register->setTag($tag);

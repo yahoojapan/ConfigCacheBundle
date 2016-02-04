@@ -166,7 +166,7 @@ class RegisterLocaleTest extends RegisterTestCase
         $id = 'register_test';
         $this
             ->setProperty($register, 'bundleId', $id)
-            ->setProperty($register, 'config', array('aaa' => 'bbb'))
+            ->setProperty($register, 'appConfig', array('aaa' => 'bbb'))
             ->setProperty($register, 'configuration', new RegisterConfiguration())
             ;
 

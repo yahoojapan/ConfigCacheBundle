@@ -51,8 +51,8 @@ class RegisterTest extends RegisterTestCase
             ;
         $class = new \ReflectionClass($className);
         $constructor = $class->getConstructor();
-        $this->assertNull($constructor->invoke($register, $extension, array(), $container, array()));
-        $this->assertNull($constructor->invoke($register, $extension, array(), $container, array(), array()));
+        $this->assertNull($constructor->invoke($register, $extension, $container, array()));
+        $this->assertNull($constructor->invoke($register, $extension, $container, array(), array()));
     }
 
     /**
