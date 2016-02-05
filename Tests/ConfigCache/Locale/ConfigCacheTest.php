@@ -67,13 +67,10 @@ class ConfigCacheTest extends ConfigCacheTestCase
             ;
 
         // create()
-        try {
-            self::$cache->create();
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        self::$cache->create();
 
         // has no referableLocales
         // no created directory for do-nothing
@@ -187,17 +184,13 @@ class ConfigCacheTest extends ConfigCacheTestCase
         self::$cache->setDefaultLocale($defaultLocale);
         $method = new \ReflectionMethod(self::$cache, 'createInternal');
         $method->setAccessible(true);
-        try {
-            if (is_null($locale)) {
-                $result = $method->invoke(self::$cache);
-            } else {
-                $result = $method->invoke(self::$cache, $locale);
-            }
-        } catch (\Exception $e) {
-            if ($expectedException) {
-                return;
-            }
-            $this->fail('Unexpected exception occurred.');
+        if ($expectedException) {
+            $this->setExpectedException('\Exception');
+        }
+        if (is_null($locale)) {
+            $result = $method->invoke(self::$cache);
+        } else {
+            $result = $method->invoke(self::$cache, $locale);
         }
 
         // assert return
@@ -285,14 +278,10 @@ class ConfigCacheTest extends ConfigCacheTestCase
         $method->setAccessible(true);
         self::$cache->setCurrentLocale($currentLocale);
 
-        try {
-            $key = $method->invoke(self::$cache, $locale);
-        } catch (\Exception $e) {
-            if ($expectedException) {
-                return;
-            }
-            $this->fail('Unexpected exception occurred.');
+        if ($expectedException) {
+            $this->setExpectedException('\Exception');
         }
+        $key = $method->invoke(self::$cache, $locale);
 
         $this->assertSame($expected, $key);
     }
@@ -306,7 +295,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
             // locale = null, currentLocale = null
             array(null, null, true, 'cache'),
             // locale = null, currentLocale != null
-            array(null, 'ja', true, 'cache.ja'),
+            array(null, 'ja', false, 'cache.ja'),
             // locale != null
             array('en', 'uk', false, 'cache.en'),
         );

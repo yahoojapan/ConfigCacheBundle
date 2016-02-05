@@ -33,14 +33,10 @@ class YahooJapanConfigCacheExtensionTest extends \PHPUnit_Framework_TestCase
         $extension     = new YahooJapanConfigCacheExtension();
         $configuration = new Configuration();
 
-        try {
-            $extension->load($configs, $container);
-        } catch (\Exception $e) {
-            if ($expectedException) {
-                return;
-            }
-            $this->fail('Unexpected exception occurred.');
+        if ($expectedException) {
+            $this->setExpectedException('\Exception');
         }
+        $extension->load($configs, $container);
 
         $arrayLoaderId     = 'yahoo_japan_config_cache.array_loader';
         $yamlLoaderId      = 'yahoo_japan_config_cache.yaml_file_loader';

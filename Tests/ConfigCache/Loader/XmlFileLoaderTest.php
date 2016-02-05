@@ -52,13 +52,10 @@ class XmlFileLoaderTest extends \PHPUnit_Framework_TestCase
     {
         $method = new \ReflectionMethod(self::$loader, 'loadFile');
         $method->setAccessible(true);
-        try {
-            $loaded = $method->invoke(self::$loader, $file);
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-
-            return;
+        if ($expected === '\Exception') {
+            $this->setExpectedException($expected);
         }
+        $loaded = $method->invoke(self::$loader, $file);
         $this->assertInstanceOf($expected, $loaded, 'Unexpected instance.');
     }
 

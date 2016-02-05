@@ -28,7 +28,11 @@ class RegisterLocale extends Register
      */
     public function register()
     {
-        $this->setTag(ConfigCache::TAG_LOCALE)->registerInternal();
+        $this
+            ->setTag(ConfigCache::TAG_LOCALE)
+            ->initializeResources()
+            ->registerInternal()
+            ;
     }
 
     /**
@@ -36,20 +40,11 @@ class RegisterLocale extends Register
      */
     public function registerAll()
     {
-        $this->setTag(ConfigCache::TAG_LOCALE)->registerInternal('all');
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function setParameter()
-    {
-        parent::setParameter();
-
-        // config.config_cache.class
-        $this->container->setParameter(parent::getConfigCacheClass(), 'YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache');
-        // config.locale.config_cache.class
-        $this->container->setParameter($this->getConfigCacheClass(), 'YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache');
+        $this
+            ->setTag(ConfigCache::TAG_LOCALE)
+            ->initializeAllResources($this->container->getParameter('kernel.bundles'))
+            ->registerInternal()
+            ;
     }
 
     /**
@@ -57,18 +52,42 @@ class RegisterLocale extends Register
      */
     protected function setCacheDefinition()
     {
-        $definition = $this->createCacheDefinition()
-            ->addMethodCall('setDefaultLocale', array($this->container->getParameter('kernel.default_locale')))
-            ->addMethodCall('setLoader', array(new Reference($this->loaderId)))
-        ;
-        $this->container->setDefinition($this->buildId($this->bundleId), $definition);
+        parent::setCacheDefinition();
+
+        $this->addLocaleMethods($this->buildId($this->bundleId));
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function getConfigCacheClass()
+    protected function setCacheDefinitionByAlias($alias)
     {
-        return $this->buildClassId('locale.config_cache');
+        parent::setCacheDefinitionByAlias($alias);
+
+        $this->addLocaleMethods($this->buildId(array($this->bundleId, $alias)));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function createCacheDefinition()
+    {
+        $definition = parent::createCacheDefinition();
+        $definition->setClass($this->container->getParameter('config.locale.config_cache.class'));
+
+        return $definition;
+    }
+
+    /**
+     * Adds a locale addMethodCall to a definition.
+     *
+     * @param string $id
+     */
+    protected function addLocaleMethods($id)
+    {
+        $this->container->getDefinition($id)
+            ->addMethodCall('setDefaultLocale', array($this->container->getParameter('kernel.default_locale')))
+            ->addMethodCall('setLoader', array(new Reference($this->loaderId)))
+            ;
     }
 }

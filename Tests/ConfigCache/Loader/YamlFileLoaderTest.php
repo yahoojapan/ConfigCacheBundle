@@ -53,12 +53,10 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
     {
         $method = new \ReflectionMethod(self::$loader, 'loadFile');
         $method->setAccessible(true);
-        try {
-            $loaded = $method->invoke(self::$loader, $file);
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        $loaded = $method->invoke(self::$loader, $file);
         $this->assertSame($expected, $loaded);
     }
 
@@ -95,13 +93,10 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
         self::$loader->addLoader(new ArrayLoader());
         $method = new \ReflectionMethod(self::$loader, 'loadFile');
         $method->setAccessible(true);
-        try {
-            $loaded = $method->invoke(self::$loader, $file);
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        $loaded = $method->invoke(self::$loader, $file);
         $this->assertSame($expected, $loaded);
     }
 
@@ -121,6 +116,10 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
                         'xxx' => 'yyy',
                     ),
                 ),
+            ),
+            array(
+                __DIR__.'/../../Fixtures/no_exists.yml',
+                '\InvalidArgumentException',
             ),
         );
     }

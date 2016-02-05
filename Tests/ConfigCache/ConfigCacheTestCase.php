@@ -49,18 +49,14 @@ abstract class ConfigCacheTestCase extends \PHPUnit_Framework_TestCase
 
     protected function reload()
     {
-        $property = new \ReflectionProperty(self::$cache, 'resources');
-        $property->setAccessible(true);
-        $property->setValue(self::$cache, array());
-        $property = new \ReflectionProperty(self::$cache, 'config');
-        $property->setAccessible(true);
-        $property->setValue(self::$cache, array());
-        $property = new \ReflectionProperty(self::$cache, 'configuration');
-        $property->setAccessible(true);
-        $property->setValue(self::$cache, null);
-        $property = new \ReflectionProperty(self::$cache, 'arrayAccess');
-        $property->setAccessible(true);
-        $property->setValue(self::$cache, null);
+        $this
+            ->setProperty(self::$cache, 'resources', array())
+            ->setProperty(self::$cache, 'config', array())
+            ->setProperty(self::$cache, 'configuration', null)
+            ->setProperty(self::$cache, 'arrayAccess', null)
+            ->setProperty(self::$cache, 'key', null)
+            ->setProperty(self::$cache, 'strict', true)
+            ;
 
         // initialize flag fail to remove
         $this->delete = true;
@@ -82,13 +78,28 @@ abstract class ConfigCacheTestCase extends \PHPUnit_Framework_TestCase
      */
     public function getHashFileName($fileName)
     {
-        $property = new \ReflectionProperty(self::$cache, 'cache');
-        $property->setAccessible(true);
-        $cache  = $property->getValue(self::$cache);
+        $cache  = $this->getProperty(self::$cache, 'cache');
         $method = new \ReflectionMethod($cache, 'getFilename');
         $method->setAccessible(true);
         $hashedFileName = $method->invoke($cache, basename($fileName, static::$extension));
 
         return basename($hashedFileName);
+    }
+
+    protected function getProperty($instance, $name)
+    {
+        $property = new \ReflectionProperty($instance, $name);
+        $property->setAccessible(true);
+
+        return $property->getValue($instance);
+    }
+
+    protected function setProperty($instance, $name, $value)
+    {
+        $property = new \ReflectionProperty($instance, $name);
+        $property->setAccessible(true);
+        $property->setValue($instance, $value);
+
+        return $this;
     }
 }

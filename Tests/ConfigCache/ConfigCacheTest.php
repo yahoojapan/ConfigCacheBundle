@@ -361,33 +361,31 @@ class ConfigCacheTest extends ConfigCacheTestCase
     /**
      * @dataProvider loadProvider
      */
-    public function testLoad($resources, $config, $masterConfiguration, $expected)
+    public function testLoad($resources, $config, $masterConfiguration, $strict, $expected)
     {
         $configuration = new ConfigCacheConfiguration();
         foreach ($resources as $resource) {
             self::$cache->addResource($resource, $configuration);
         }
-        $property = new \ReflectionProperty(self::$cache, 'config');
-        $property->setAccessible(true);
-        $property->setValue(self::$cache, $config);
+        $this->setProperty(self::$cache, 'config', $config);
         if (!is_null($masterConfiguration)) {
             self::$cache->setConfiguration($masterConfiguration);
+        }
+        if (!$strict) {
+            self::$cache->setStrict($strict);
         }
 
         $method = new \ReflectionMethod(self::$cache, 'load');
         $method->setAccessible(true);
-        try {
-            $result = $method->invoke(self::$cache);
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        $result = $method->invoke(self::$cache);
         $this->assertSame($expected, $result);
     }
 
     /**
-     * @return array ($resources, $expected)
+     * @return array ($resources, $config, $masterConfiguration, $strict, $expected)
      */
     public function loadProvider()
     {
@@ -397,6 +395,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
                 array(),
                 array(),
                 null,
+                true,
                 'Exception',
             ),
             // resources one
@@ -406,9 +405,26 @@ class ConfigCacheTest extends ConfigCacheTestCase
                 ),
                 array(),
                 null,
+                true,
                 array(
                     'aaa' => 'bbb',
                     'ccc' => 'ddd',
+                ),
+            ),
+            // resources one and strict = true
+            array(
+                array(
+                    __DIR__.'/../Fixtures/test_service1.yml',
+                ),
+                array(),
+                null,
+                false,
+                array(
+                    // original config with root key
+                    'test_service' => array(
+                        'aaa' => 'bbb',
+                        'ccc' => 'ddd',
+                    ),
                 ),
             ),
             // resources greater than two
@@ -419,6 +435,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
                 ),
                 array(),
                 null,
+                true,
                 array(
                     'aaa' => 'bbb',
                     'ccc' => 'ddd',
@@ -436,6 +453,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
                     'xxx' => 'yyy',
                 ),
                 null,
+                true,
                 array(
                     'zzz' => 'www',
                     'xxx' => 'yyy',
@@ -453,6 +471,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
                     'ggg' => true,
                 ),
                 new ConfigCacheMasterConfiguration(),
+                true,
                 array(
                     'eee' => 12345,
                     'ggg' => true,
@@ -461,6 +480,23 @@ class ConfigCacheTest extends ConfigCacheTestCase
                 ),
             ),
         );
+    }
+
+    public function testLoadOne()
+    {
+        self::$cache->addResource($resource = __DIR__.'/../Fixtures/test_service1.yml');
+        $loader = $this->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
+        $loader
+            ->expects($this->once())
+            ->method('load')
+            ->with($resource)
+            ->willReturn($expected = array('aaa' => 'bbb'))
+            ;
+        self::$cache->setLoader($loader);
+
+        $method = new \ReflectionMethod(self::$cache, 'loadOne');
+        $method->setAccessible(true);
+        $this->assertSame($expected, $method->invoke(self::$cache));
     }
 
     /**
@@ -473,19 +509,16 @@ class ConfigCacheTest extends ConfigCacheTestCase
         $configuration  = new ConfigCacheConfiguration();
         $method = new \ReflectionMethod(self::$cache, 'processConfiguration');
         $method->setAccessible(true);
-        try {
-            list($array, $node) = $method->invoke(
-                self::$cache,
-                $validated,
-                $validating,
-                $configuration,
-                $configuration->getConfigTreeBuilder()->buildTree()
-            );
-        } catch (\Exception $e) {
-            $this->assertInstanceOf($expected, $e, 'Unexpected exception occurred.');
-
-            return;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
         }
+        list($array, $node) = $method->invoke(
+            self::$cache,
+            $validated,
+            $validating,
+            $configuration,
+            $configuration->getConfigTreeBuilder()->buildTree()
+        );
 
         $this->assertSame($expected, $array);
         $this->assertEquals($node, $configuration->getConfigTreeBuilder()->buildTree());
@@ -524,9 +557,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testCreateMasterNode($configuration, $expected)
     {
         // use reflection to set null
-        $property = new \ReflectionProperty(self::$cache, 'configuration');
-        $property->setAccessible(true);
-        $property->setValue(self::$cache, $configuration);
+        $this->setProperty(self::$cache, 'configuration', $configuration);
 
         $method = new \ReflectionMethod(self::$cache, 'createMasterNode');
         $method->setAccessible(true);
@@ -556,5 +587,46 @@ class ConfigCacheTest extends ConfigCacheTestCase
                 $configuration->getConfigTreeBuilder()->buildTree(),
             ),
         );
+    }
+
+    public function testSetKey()
+    {
+        // OK
+        self::$cache->setKey($expected = 'test');
+        $this->assertSame($expected, $this->getProperty(self::$cache, 'key'));
+        // exception
+        $this->setExpectedException('\RuntimeException');
+        self::$cache->setKey('zzz');
+    }
+
+    /**
+     * test setStrict(), isStrict()
+     */
+    public function testStrict()
+    {
+        $method = new \ReflectionMethod(self::$cache, 'isStrict');
+        $method->setAccessible(true);
+        $this->assertTrue($method->invoke(self::$cache));
+        self::$cache->setStrict(false);
+        $this->assertFalse($method->invoke(self::$cache));
+    }
+
+    protected function createInterfaceMock($interfaceName)
+    {
+        return $this->getMockBuilder($interfaceName)
+            ->setMethods($this->getMethods($interfaceName))
+            ->getMock()
+            ;
+    }
+
+    protected function getMethods($name)
+    {
+        $methods = array();
+        $class   = new \ReflectionClass($name);
+        foreach ($class->getMethods() as $method) {
+            $methods[] = $method->getName();
+        }
+
+        return $methods;
     }
 }

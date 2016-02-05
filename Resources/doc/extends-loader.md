@@ -22,7 +22,7 @@ class ArrayLoader implements ArrayLoaderInterface
      */
     public function load(array $resource)
     {
-        foreach ($resource as $key => &$value) {
+        foreach ($resource['acme_demo'] as $key => &$value) {
             if ($key === 'function1') {
                 $value['key1'] = 'replaced';
             }
@@ -63,7 +63,7 @@ class AcmeDemoBundle extends Bundle
     public function boot()
     {
         $loader = $this->container->get('acme_demo.yaml_file_loader');
-        $this->container->get('config.acme_demo')
+        $this->container->get('config.acme_demo.sample')
             ->setLoader($loader)
             ->create()
             ;
@@ -71,7 +71,7 @@ class AcmeDemoBundle extends Bundle
 }
 ```
 
-これで`config.acme_demo`は`ArrayLoader`による置き換え後の配列データを持った状態になります。
+これで`config.acme_demo.sample`は`ArrayLoader`による置き換え後の配列データを持った状態になります。
 
 ```php
 <?php
@@ -85,12 +85,14 @@ class WelcomeController extends Controller
 {
     public function indexAction()
     {
-        $cache = $this->get('config.acme_demo');
+        $cache = $this->get('config.acme_demo.sample');
 
         /**
          * array(
-         *     'function1' => array('key1' => 'replaced'),
-         *     'function2' => 'value2',
+         *     'acme_demo' => array(
+         *         'function1' => array('key1' => 'replaced'),
+         *         'function2' => 'value2',
+         *     ),
          * )
          */
         $cache->findAll();

@@ -5,9 +5,7 @@ ConfigCacheBundle
 [![Code Coverage](https://scrutinizer-ci.com/g/yahoojapan/ConfigCacheBundle/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/yahoojapan/ConfigCacheBundle/?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/yahoojapan/ConfigCacheBundle/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/yahoojapan/ConfigCacheBundle/?branch=master)
 
-ConfigCacheBundleは設定ファイルキャッシュを扱うバンドルです。  
-バンドルごとに定義された設定ファイルをキャッシュします。  
-また設定ファイルキャッシュをオブジェクトとして持ちSymfony上でサービス化することで扱いやすい形にします。
+ConfigCacheBundleは設定ファイルキャッシュを扱うバンドルです。
 
 ドキュメント
 ------------

@@ -1,7 +1,7 @@
 基本的な使い方
 --------------
 
-AcmeDemoBundleに設定ファイルsample.ymlを配置するケースを例にして，キャッシュ生成までの手順を示します。
+AcmeDemoBundleに設定ファイルsample.ymlを配置するケースを例にして、キャッシュ生成までの手順を示します。
 
 ##### 設定ファイル
 
@@ -9,60 +9,11 @@ Resources/config配下に定義したい設定ファイルを配置します。
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample.yml
-acme_demo:
+all:
    function1:
        key1: value1
    function2: value2
 ```
-
-設定ファイルのルートキーはバンドル名に一致させる必要があります。  
-例えばAcmeDemoBundleならルートキーは`acme_demo`になります。
-
-##### Configurationクラス
-
-DependencyInjection/Configuration.phpを以下のように記述します。
-
-```php
-<?php
-
-// src/Acme/DemoBundle/DependencyInjection/Configuration.php
-namespace Acme\DemoBundle\DependencyInjection;
-
-use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
-
-/**
- * This is the class that validates and merges configuration from your app/config files
- *
- * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html#cookbook-bundles-extension-config-class}
- */
-class Configuration implements ConfigurationInterface
-{
-    /**
-     * {@inheritdoc}
-     */
-    public function getConfigTreeBuilder()
-    {
-        $treeBuilder = new TreeBuilder();
-        $rootNode    = $treeBuilder->root('acme_demo');
-        $rootNode
-            ->children()
-                ->arrayNode('function1')
-                    ->children()
-                        ->scalarNode('key1')->end()
-                    ->end()
-                ->end()
-                ->scalarNode('function2')->end()
-            ->end()
-            ;
-
-        return $treeBuilder;
-    }
-}
-```
-
-`Configuration`クラスの作成は必須です。  
-`Configuration`クラスの作成を省略したい場合は[自動生成ツール](generate-configuration.md)を用意していますのでそちらをお試しください。
 
 ##### Extensionクラス
 
@@ -75,48 +26,6 @@ DependencyInjection/AcmeDemoExtension.phpにサービス登録の記述を追加
 namespace Acme\DemoBundle\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\Config\FileLocator;
-use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Loader;
-use YahooJapan\ConfigCacheBundle\ConfigCache\Register;
-use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
-
-/**
- * This is the class that loads and manages your bundle configuration
- *
- * To learn more see {@link http://symfony.com/doc/current/cookbook/bundles/extension.html}
- */
-class AcmeDemoExtension extends Extension
-{
-    /**
-     * {@inheritdoc}
-     */
-    public function load(array $configs, ContainerBuilder $container)
-    {
-        $configuration = new Configuration();
-        $config = $this->processConfiguration($configuration, $configs);
-
-        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.yml');
-
-        // add
-        $cache = new Register($this, $config, $container, array(
-            new FileResource(__DIR__.'/../Resources/config/sample.yml'),
-        ));
-        $cache->register();
-    }
-}
-```
-
-AcmeDemoBundleがapp/config/config.ymlやservices.ymlを使わないのであれば以下のように記述することもできます。
-
-```php
-<?php
-
-// src/Acme/DemoBundle/DependencyInjection/AcmeDemoExtension.php
-namespace Acme\DemoBundle\DependencyInjection;
-
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
@@ -133,8 +42,10 @@ class AcmeDemoExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        $cache = new Register($this, array(), $container, array(
-            new FileResource(__DIR__.'/../Resources/config/sample.yml'),
+        $cache = new Register($this, $container, array(
+            new FileResource(__DIR__.'/../Resources/config/sample.yml', null, 'sample'),
+            // 以下でも同じ
+            //FileResource::create(__DIR__.'/../Resources/config/sample.yml')->setAlias('sample'),
         ));
         $cache->register();
     }
@@ -158,13 +69,13 @@ class AcmeDemoBundle extends Bundle
 {
     public function boot()
     {
-        $this->container->get('config.acme_demo')->create();
+        $this->container->get('config.acme_demo.sample')->create();
     }
 }
 ```
 
-ここで登場するサービスID`config.acme_demo`はバンドル名をもとに自動的に割り振られます。  
-`AcmeDemoBundle`なら`config.acme_demo`となります。
+ここで登場するサービスID`config.acme_demo.sample`はバンドル名と`FileResource`で指定したエイリアスをもとに自動的に割り振られます。  
+バンドル名が`AcmeDemoBundle`でエイリアスがsampleなら`config.acme_demo.sample`となります。
 
 ##### キャッシュ生成
 
@@ -174,12 +85,12 @@ Symfonyのconsoleを使ってキャッシュ生成します。
 $ app/console cache:warmup
 ```
 
-ここまで完了すると設定ファイルキャッシュのオブジェクト`ConfigCache`がサービス化された状態になります。
+ここまで完了するとキャッシュオブジェクト`ConfigCache`がサービス化された状態になります。
 
 ```sh
-$ app/console debug:container config.acme_demo
-[container] Information for service config.acme_demo
-Service Id       config.acme_demo
+$ app/console debug:container config.acme_demo.sample
+[container] Information for service config.acme_demo.sample
+Service Id       config.acme_demo.sample
 Class            YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
 Tags             -
 Scope            container
@@ -190,7 +101,7 @@ Synchronized     no
 Abstract         no
 ```
 
-生成された設定ファイルキャッシュはSymfonyのキャッシュディレクトリ配下に配置されます。
+生成されたキャッシュはSymfonyのキャッシュディレクトリ配下に配置されます。
 
 ```sh
 $ cat app/cache/dev/acme_demo/ec/5b63616368655d5b315d.php
@@ -198,18 +109,21 @@ $ cat app/cache/dev/acme_demo/ec/5b63616368655d5b315d.php
   'lifetime' => 0,
   'data' =>
   array (
-    'function1' =>
+    'all' =>
     array (
-      'key1' => 'value1',
+      'function1' =>
+      array (
+        'key1' => 'value1',
+      ),
+      'function2' => 'value2',
     ),
-    'function2' => 'value2',
   ),
 );
 ```
 
 ##### サービスを使う
 
-コンテナから直接サービスを取り出すか，またはservices.ymlに記述することで`ConfigCache`サービスのインジェクトができるようになります。
+コンテナから直接サービスを取り出すか、またはservices.ymlに記述することで`ConfigCache`サービスを使えるようになります。
 
 ```php
 <?php
@@ -224,15 +138,15 @@ class WelcomeController extends Controller
     public function indexAction()
     {
         // ConfigCache
-        $cache = $this->get('config.acme_demo');
-
-        // = array('key1' => 'value1')
-        $cache->find('function1');
-
-        // = 'value1'
-        $cache->find('function1.key1');
+        $cache = $this->get('config.acme_demo.sample');
 
         // = array('function1' => array('key1' => 'value1'), 'function2' => 'value2')
+        $cache->find('all');
+
+        // = 'value1'
+        $cache->find('all.function1.key1');
+
+        // = array('all' => array('function1' => array('key1' => 'value1'), 'function2' => 'value2'))
         $cache->findAll();
 
         // ...
@@ -246,7 +160,7 @@ services:
     acme_demo.sample_model:
         class: Acme\DemoBundle\SampleModel
         arguments:
-            - @config.acme_demo
+            - @config.acme_demo.sample
 ```
 
 ```php
@@ -269,10 +183,10 @@ class SampleModel
     public function sampleMethod()
     {
         // = array('key1' => 'value1')
-        $this->config->find('function1');
+        $this->config->find('all.function1');
 
         // = 'value1'
-        $this->config->find('function1.key1');
+        $this->config->find('all.function1.key1');
 
         // ...
     }

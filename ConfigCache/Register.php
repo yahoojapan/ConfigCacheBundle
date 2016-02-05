@@ -34,11 +34,13 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface;
 class Register
 {
     protected $extension;
-    protected $config;
     protected $configuration;
     protected $container;
     protected $resources;
     protected $excludes;
+    protected $dirs      = array();
+    protected $files     = array();
+    protected $appConfig = array();
     // bundle ID
     protected $bundleId;
     // ConfigCache service ID
@@ -50,20 +52,17 @@ class Register
      * Constructor.
      *
      * @param ExtensionInterface $extension An Extension
-     * @param array              $config    An array of configuration values
      * @param ContainerBuilder   $container A ContainerBuilder instance
      * @param array              $resources Array of Resource key and Configuration instance value
      * @param array              $excludes  Exclude file names
      */
     public function __construct(
         ExtensionInterface $extension,
-        array $config,
         ContainerBuilder $container,
         array $resources,
         array $excludes = array()
     ) {
         $this->extension = $extension;
-        $this->config    = $config;
         $this->container = $container;
         $this->resources = $resources;
         $this->excludes  = $excludes;
@@ -76,7 +75,10 @@ class Register
      */
     public function register()
     {
-        $this->registerInternal();
+        $this
+            ->initializeResources()
+            ->registerInternal()
+            ;
     }
 
     /**
@@ -84,7 +86,10 @@ class Register
      */
     public function registerAll()
     {
-        $this->registerInternal(true);
+        $this
+            ->initializeAllResources($this->container->getParameter('kernel.bundles'))
+            ->registerInternal()
+            ;
     }
 
     /**
@@ -93,6 +98,20 @@ class Register
     public function setConfiguration(ConfigurationInterface $configuration)
     {
         $this->configuration = $configuration;
+
+        return $this;
+    }
+
+    /**
+     * Sets an application config.
+     *
+     * @param array $appConfig
+     *
+     * @return Register
+     */
+    public function setAppConfig(array $appConfig)
+    {
+        $this->appConfig = $appConfig;
 
         return $this;
     }
@@ -125,118 +144,149 @@ class Register
         $this->validateCacheId();
 
         // preprocess registerInternal()
-        $this->setParameter();
         $this->setLoaderDefinition();
     }
 
     /**
-     * Register a service internal processing.
-     *
-     * @param bool $all all or one bundle(s)
+     * Register services internal processing.
      */
-    protected function registerInternal($all = false)
+    protected function registerInternal()
     {
-        $dirs    = array();
-        $files   = array();
+        $cacheId = $this->buildId($this->bundleId);
 
-        if ($all) {
-            list($dirs, $files) = $this->registerAllInternal($this->container->getParameter('kernel.bundles'));
-        } else {
-            list($dirs, $files) = $this->registerOneInternal();
+        foreach ($this->dirs as $resource) {
+            $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
+
+            // private configuration definition, finally discarded because of private service
+            $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
+            $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
+
+            // find files under directories
+            $finder = $this->findFilesByDirectory($resource, $this->excludes);
+            foreach ($finder as $file) {
+                $this->container->findDefinition($cacheId)
+                    ->addMethodCall('addResource', array((string) $file, new Reference($privateId)))
+                    ;
+            }
         }
 
-        // only if container has ConfigCache service Definition
-        $cacheId = $this->buildId($this->bundleId);
-        if ($this->container->hasDefinition($cacheId)) {
-            $definition = $this->container->findDefinition($cacheId);
-
-            if ($dirs) {
-                foreach ($dirs as $resource) {
-                    $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
-
-                    // private configuration definition, finally discarded because of private service
-                    $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
-                    $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
-
-                    // find files under directories
-                    $finder = $this->findFilesByDirectory($resource, $this->excludes);
-                    foreach ($finder as $file) {
-                        $definition->addMethodCall('addResource', array((string) $file, new Reference($privateId)));
-                    }
-                }
-            }
-
-            if ($files) {
-                foreach ($files as $resource) {
-                    $this->container->addResource(new BaseFileResource($resource->getResource()));
-
-                    // private configuration definition, finally discarded because of private service
-                    $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
-                    $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
-
-                    $definition->addMethodCall(
-                        'addResource',
-                        array((string) $resource->getResource(), new Reference($privateId))
+        foreach ($this->files as $resource) {
+            if ($resource->hasAlias()) {
+                $alias = $resource->getAlias();
+                $path  = $resource->getResource();
+                $standaloneCacheId = $this->buildId(array($this->bundleId, $alias));
+                if ($this->container->hasDefinition($standaloneCacheId)) {
+                    throw new \RuntimeException(
+                        "{$standaloneCacheId} is already registered. Maybe FileResource alias[{$alias}] is duplicated."
                     );
                 }
+
+                $this->container->addResource(new BaseFileResource($path));
+                $this->setCacheDefinitionByAlias($alias);
+                $this->container->findDefinition($standaloneCacheId)
+                    ->addMethodCall('addResource', array((string) $path))
+                    ->addMethodCall('setStrict', array(false))
+                    ->addMethodCall('setKey', array($alias))
+                    ;
+            } else {
+                $this->container->addResource(new BaseFileResource($resource->getResource()));
+
+                // private configuration definition, finally discarded because of private service
+                $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
+                $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
+
+                $this->container->findDefinition($cacheId)
+                    ->addMethodCall(
+                        'addResource',
+                        array((string) $resource->getResource(), new Reference($privateId))
+                    )
+                    ;
             }
         }
     }
 
     /**
-     * Registers by a bundle internal processing.
+     * Initializes resources by a bundle.
      *
-     * @return array list of $dirs, $files
+     * @return Register
      */
-    protected function registerOneInternal()
+    protected function initializeResources()
     {
-        $dirs  = array();
-        $files = array();
-
         foreach ($this->resources as $resource) {
             if ($resource->exists()) {
                 if ($resource instanceof DirectoryResource) {
-                    $dirs[]  = $resource;
+                    $this->addDirectory($resource);
                 } elseif ($resource instanceof FileResource) {
-                    $files[] = $resource;
+                    $this->addFile($resource);
                 }
             }
         }
-        $this->setCacheDefinition();
 
-        return array($dirs, $files);
+        $this->postInitializeResources();
+
+        return $this;
     }
 
     /**
-     * Registers by all bundles internal processing.
+     * Initializes resources by all bundles.
      *
-     * @return array list of $dirs, $files
+     * @param array $bundles
+     *
+     * @return Register
      */
-    protected function registerAllInternal($bundles)
+    protected function initializeAllResources(array $bundles)
     {
-        $dirs     = array();
-        $files    = array();
-        $register = false;
+        // extract resources without FileResource with alias
+        $resources = array();
+        foreach ($this->resources as $resource) {
+            if ($resource instanceof FileResource && $resource->hasAlias()) {
+                $this->addFile($resource);
+            } else {
+                $resources[] = $resource;
+            }
+        }
 
         foreach ($bundles as $fqcn) {
             $reflection = new \ReflectionClass($fqcn);
-            foreach ($this->resources as $resource) {
+            foreach ($resources as $resource) {
                 $path = dirname($reflection->getFilename()).$resource->getResource();
                 if (is_dir($path)) {
-                    $register = true;
-                    $dirs[]   = new DirectoryResource($path, $this->findConfigurationByResource($resource));
+                    $this->addDirectory(new DirectoryResource($path, $this->findConfigurationByResource($resource)));
                 } elseif (file_exists($path)) {
-                    $register = true;
-                    $files[]  = new FileResource($path, $this->findConfigurationByResource($resource));
+                    $this->addFile(new FileResource($path, $this->findConfigurationByResource($resource)));
                 }
             }
         }
 
-        if ($register) {
+        $this->postInitializeResources();
+
+        return $this;
+    }
+
+    /**
+     * Initializes resources postprocessing.
+     */
+    protected function postInitializeResources()
+    {
+        if ($this->hasFileResourcesWithoutAlias() || count($this->dirs) > 0) {
             $this->setCacheDefinition();
         }
+    }
 
-        return array($dirs, $files);
+    /**
+     * Whether Register has a FileResource without alias or not.
+     *
+     * @return bool
+     */
+    protected function hasFileResourcesWithoutAlias()
+    {
+        foreach ($this->files as $resource) {
+            if (!$resource->hasAlias()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -293,29 +343,30 @@ class Register
     }
 
     /**
-     * Sets class name parameters to the container.
-     */
-    protected function setParameter()
-    {
-        $container = $this->container;
-        $container->setParameter($this->getPhpFileCacheClass(), 'Doctrine\Common\Cache\PhpFileCache');
-        $container->setParameter($this->getConfigCacheClass(), 'YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache');
-        $container->setParameter($this->getYamlFileLoaderClass(), 'YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader');
-        $container->setParameter($this->getXmlFileLoaderClass(), 'YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader');
-        $container->setParameter($this->getLoaderResolverClass(), 'Symfony\Component\Config\Loader\LoaderResolver');
-        $container->setParameter($this->getDelegatingLoaderClass(), 'Symfony\Component\Config\Loader\DelegatingLoader');
-    }
-
-    /**
      * Sets a cache definition.
      */
     protected function setCacheDefinition()
     {
-        $this->container->setDefinition($this->buildId($this->bundleId), $this->createCacheDefinition());
+        $id         = $this->buildId($this->bundleId);
+        $definition = $this->createCacheDefinition();
+        $this->addConfigurationMethod($definition);
+        $this->container->setDefinition($id, $definition);
     }
 
     /**
-     * Creates a cache definition for preparing setCacheDefinition.
+     * Sets a cache definition by alias (a service name).
+     *
+     * @param string $alias
+     */
+    protected function setCacheDefinitionByAlias($alias)
+    {
+        $id         = $this->buildId(array($this->bundleId, $alias));
+        $definition = $this->createCacheDefinition();
+        $this->container->setDefinition($id, $definition);
+    }
+
+    /**
+     * Creates a cache definition without Configuration Reference.
      *
      * @return Definition
      */
@@ -323,7 +374,7 @@ class Register
     {
         // doctrine/cache
         $cache = new Definition(
-            $this->container->getParameter($this->getPhpFileCacheClass()),
+            $this->container->getParameter('config.php_file_cache.class'),
             array(
                 $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}",
                 '.php',
@@ -333,10 +384,6 @@ class Register
         $cacheId = $this->buildId(array('doctrine', 'cache', $this->bundleId));
         $this->container->setDefinition($cacheId, $cache);
 
-        // master configuration
-        $configId = $this->buildConfigurationId($this->getInitializedConfiguration());
-        $this->setConfigurationDefinition($configId, $this->getInitializedConfiguration());
-
         // ArrayAccess
         $arrayAccess = new Definition('YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess');
         $arrayAccess->setPublic(false);
@@ -345,20 +392,35 @@ class Register
 
         // user cache
         $definition = new Definition(
-            $this->container->getParameter($this->getConfigCacheClass()),
+            $this->container->getParameter('config.config_cache.class'),
             array(
                 new Reference($cacheId),
-                new Reference($this->getDelegatingLoaderId()),
-                $this->config,
+                new Reference($this->container->getParameter('config.delegating_loader.id')),
+                $this->appConfig,
             )
         );
-        $definition->setLazy(true)
-            ->addMethodCall('setConfiguration', array(new Reference($configId)))
+        $definition
+            ->setLazy(true)
             ->addMethodCall('setArrayAccess', array(new Reference($arrayAccessId)))
-        ;
+            ;
         if (!is_null($this->tag)) {
             $definition->addTag($this->tag);
         }
+
+        return $definition;
+    }
+
+    /**
+     * Adds a Configuration set method to Definition.
+     *
+     * @return Definition
+     */
+    protected function addConfigurationMethod(Definition $definition)
+    {
+        // master configuration
+        $configId = $this->buildConfigurationId($this->getInitializedConfiguration());
+        $this->setConfigurationDefinition($configId, $this->getInitializedConfiguration());
+        $definition->addMethodCall('setConfiguration', array(new Reference($configId)));
 
         return $definition;
     }
@@ -384,42 +446,46 @@ class Register
      */
     protected function setLoaderDefinition()
     {
-        $yamlLoader = new Definition($this->container->getParameter($this->getYamlFileLoaderClass()));
-        $xmlLoader  = new Definition($this->container->getParameter($this->getXmlFileLoaderClass()));
+        $yamlLoader = new Definition($this->container->getParameter('config.yaml_file_loader.class'));
+        $xmlLoader  = new Definition($this->container->getParameter('config.xml_file_loader.class'));
         $yamlLoader->setPublic(false);
         $xmlLoader->setPublic(false);
+        $yamlLoaderId = $this->container->getParameter('config.yaml_file_loader.id');
+        $xmlLoaderId  = $this->container->getParameter('config.xml_file_loader.id');
 
-        if ($this->container->hasDefinition($this->getYamlLoaderId())) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $this->getYamlLoaderId()));
+        if ($this->container->hasDefinition($yamlLoaderId)) {
+            throw new \Exception(sprintf("Service[%s] already registered.", $yamlLoaderId));
         }
-        if ($this->container->hasDefinition($this->getXmlLoaderId())) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $this->getXmlLoaderId()));
+        if ($this->container->hasDefinition($xmlLoaderId)) {
+            throw new \Exception(sprintf("Service[%s] already registered.", $xmlLoaderId));
         }
-        $this->container->setDefinition($this->getYamlLoaderId(), $yamlLoader);
-        $this->container->setDefinition($this->getXmlLoaderId(), $xmlLoader);
+        $this->container->setDefinition($yamlLoaderId, $yamlLoader);
+        $this->container->setDefinition($xmlLoaderId, $xmlLoader);
 
         $resolver = new Definition(
-            $this->container->getParameter($this->getLoaderResolverClass()),
+            $this->container->getParameter('config.loader_resolver.class'),
             array(array(
-                new Reference($this->getYamlLoaderId()),
-                new Reference($this->getXmlLoaderId()),
+                new Reference($yamlLoaderId),
+                new Reference($xmlLoaderId),
             ))
         );
         $resolver->setPublic(false);
-        if ($this->container->hasDefinition($this->getLoaderResolverId())) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $this->getLoaderResolverId()));
+        $resolverId = $this->container->getParameter('config.loader_resolver.id');
+        if ($this->container->hasDefinition($resolverId)) {
+            throw new \Exception(sprintf("Service[%s] already registered.", $resolverId));
         }
-        $this->container->setDefinition($this->getLoaderResolverId(), $resolver);
+        $this->container->setDefinition($resolverId, $resolver);
 
         $loader = new Definition(
-            $this->container->getParameter($this->getDelegatingLoaderClass()),
-            array(new Reference($this->getLoaderResolverId()))
+            $this->container->getParameter('config.delegating_loader.class'),
+            array(new Reference($resolverId))
         );
         $loader->setPublic(false);
-        if ($this->container->hasDefinition($this->getDelegatingLoaderId())) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $this->getDelegatingLoaderId()));
+        $delegatingLoaderId = $this->container->getParameter('config.delegating_loader.id');
+        if ($this->container->hasDefinition($delegatingLoaderId)) {
+            throw new \Exception(sprintf("Service[%s] already registered.", $delegatingLoaderId));
         }
-        $this->container->setDefinition($this->getDelegatingLoaderId(), $loader);
+        $this->container->setDefinition($delegatingLoaderId, $loader);
     }
 
     /**
@@ -484,18 +550,6 @@ class Register
     }
 
     /**
-     * Builds a class parameter ID.
-     *
-     * @param string $suffix ex) "php_file_cache"
-     *
-     * @return string ex) "config.php_file_cache.class"
-     */
-    protected function buildClassId($suffix)
-    {
-        return $this->buildId(array_merge((array) $suffix, array('class')));
-    }
-
-    /**
      * Builds a configuration private service ID.
      *
      * @param ConfigurationInterface $configuration
@@ -542,102 +596,30 @@ class Register
     }
 
     /**
-     * Gets a yaml loader service ID.
+     * Adds a directory resource.
      *
-     * @return string
+     * @param DirectoryResource $dir
+     *
+     * @return Register
      */
-    protected function getYamlLoaderId()
+    protected function addDirectory(DirectoryResource $dir)
     {
-        return $this->buildId('yaml_file_loader');
+        $this->dirs[] = $dir;
+
+        return $this;
     }
 
     /**
-     * Gets a xml loader service ID.
+     * Adds a file resource.
      *
-     * @return string
+     * @param FileResource $file
+     *
+     * @return Register
      */
-    protected function getXmlLoaderId()
+    protected function addFile(FileResource $file)
     {
-        return $this->buildId('xml_file_loader');
-    }
+        $this->files[] = $file;
 
-    /**
-     * Gets a loader resolver service ID.
-     *
-     * @return string
-     */
-    protected function getLoaderResolverId()
-    {
-        return $this->buildId('loader_resolver');
-    }
-
-    /**
-     * Gets a delegating loader service ID.
-     *
-     * @return string
-     */
-    protected function getDelegatingLoaderId()
-    {
-        return $this->buildId('delegating_loader');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getPhpFileCacheClass()
-    {
-        return $this->buildClassId('php_file_cache');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getConfigCacheClass()
-    {
-        return $this->buildClassId('config_cache');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getYamlFileLoaderClass()
-    {
-        return $this->buildClassId('yaml_file_loader');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getXmlFileLoaderClass()
-    {
-        return $this->buildClassId('xml_file_loader');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getLoaderResolverClass()
-    {
-        return $this->buildClassId('loader_resolver');
-    }
-
-    /**
-     * Gets a class parameter ID.
-     *
-     * @return string
-     */
-    protected function getDelegatingLoaderClass()
-    {
-        return $this->buildClassId('delegating_loader');
+        return $this;
     }
 }
