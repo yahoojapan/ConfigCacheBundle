@@ -11,9 +11,7 @@ AppKernel.phpに登録されているすべてのバンドルを対象として�
 namespace Acme\DemoBundle\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\Config\FileLocator;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Loader;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
 
@@ -29,14 +27,7 @@ class AcmeDemoExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        $configuration = new Configuration();
-        $config = $this->processConfiguration($configuration, $configs);
-
-        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.yml');
-
-        // add
-        $cache = new Register($this, $config, $container, array(
+        $cache = new Register($this, $container, array(
             new FileResource('/Resources/config/sample.yml'),
         ));
         $cache->registerAll();
@@ -44,4 +35,7 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-AcmeDemoBundleに限らずすべてのバンドルの/Resources/config/sample.ymlをマージして1個のキャッシュを生成します。
+`FileResource`のエイリアス(第3引数)指定はしないようにします。
+エイリアス指定をしたときは`register()`と同様の効果になります。
+
+このサンプルではすべてのバンドルの/Resources/config/sample.ymlをマージして1個のキャッシュを生成します。

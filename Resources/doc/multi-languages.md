@@ -20,8 +20,8 @@ class WelcomeController extends Controller
     public function indexAction()
     {
         $translator = $this->get('translator.default');
-        $cache      = $this->get('config.acme_demo');
-        $config     = $cache->find('function1');
+        $cache      = $this->get('config.acme_demo.sample');
+        $config     = $cache->find('acme_demo.function1');
 
         foreach ($config as $key => &$value) {
             if ($translator->getCatalogue()->has($value)) {
@@ -34,13 +34,13 @@ class WelcomeController extends Controller
 }
 ```
 
-ここで都度翻訳するのではなく事前に翻訳済みのキャッシュを用意しておけば，使うときはそれを取り出すだけなので翻訳の余計な処理を省くことができます。
+ここで都度翻訳するのではなく事前に翻訳済みのキャッシュを用意しておけば、使うときはそれを取り出すだけなので翻訳の余計な処理を省くことができます。
 
 ConfigCacheBundleでは設定ファイルに記述した文言を事前に翻訳した状態でキャッシュさせることができます。  
 そのためには多言語対応のサービス登録クラス`RegisterLocale`を使います。  
 `RegisterLocale`を使うと翻訳用のローダをサービス化します。  
-キャッシュ生成前に翻訳用のローダとSymfonyのtranslatorを使って翻訳し，翻訳された状態の配列データをキャッシュします。  
-キャッシュは言語の数だけ生成され，キャッシュ取得時は現在の言語設定に応じたキャッシュを自動的に選択して設定値を取得します。
+キャッシュ生成前に翻訳用のローダとSymfonyのtranslatorを使って翻訳し、翻訳された状態の配列データをキャッシュします。  
+キャッシュは言語の数だけ生成され、キャッシュ取得時は現在の言語設定に応じたキャッシュを自動的に選択して設定値を取得します。
 
 以下多言語対応のための実装例を示します。
 
@@ -98,9 +98,7 @@ yahoo_japan_config_cache:
 namespace Acme\DemoBundle\DependencyInjection;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\Config\FileLocator;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Loader;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\RegisterLocale;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
 
@@ -116,15 +114,8 @@ class AcmeDemoExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        $configuration = new Configuration();
-        $config = $this->processConfiguration($configuration, $configs);
-
-        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('services.yml');
-
-        // add
-        $cache = new RegisterLocale($this, $config, $container, array(
-            new FileResource(__DIR__.'/../Resources/config/sample.yml'),
+        $cache = new RegisterLocale($this, $container, array(
+            new FileResource(__DIR__.'/../Resources/config/sample.yml', null, 'sample'),
         ));
         $cache->register();
     }
@@ -133,7 +124,7 @@ class AcmeDemoExtension extends Extension
 
 ##### サービスを使う
 
-後述の[現在の言語設定](#現在の言語設定)がされていれば，以下のように翻訳済みの設定値を取得できます。
+後述の[現在の言語設定](#現在の言語設定)がされていれば、以下のように翻訳済みの設定値を取得できます。
 
 ```php
 <?php
@@ -148,11 +139,11 @@ class WelcomeController extends Controller
     public function indexAction()
     {
         // ConfigCache
-        $cache = $this->get('config.acme_demo');
+        $cache = $this->get('config.acme_demo.sample');
 
         // = 'Japan' if _locale is en
         // = '日本'  if _locale is ja
-        $cache->find('function1.key1');
+        $cache->find('acme_demo.function1.key1');
 
         // ...
     }
@@ -166,8 +157,8 @@ class WelcomeController extends Controller
 
 現在の言語設定をするためには以下が必要になります。
 
-* [`ConfigCache`サービスに現在の言語設定を反映する](#configcache%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9%E3%81%AB%E7%8F%BE%E5%9C%A8%E3%81%AE%E8%A8%80%E8%AA%9E%E8%A8%AD%E5%AE%9A%E3%82%92%E5%8F%8D%E6%98%A0%E3%81%99%E3%82%8B)
-* [`ConfigCacheListener`が参照するSymfonyの`Request::locale`の設定をする](#configcachelistener%E3%81%8C%E5%8F%82%E7%85%A7%E3%81%99%E3%82%8Bsymfony%E3%81%AErequestlocale%E3%81%AE%E8%A8%AD%E5%AE%9A%E3%82%92%E3%81%99%E3%82%8B)
+* `ConfigCache`サービスに現在の言語設定を反映する
+* `ConfigCacheListener`が参照するSymfonyのRequest::localeの設定をする
 
 ##### ConfigCacheサービスに現在の言語設定を反映する
 
