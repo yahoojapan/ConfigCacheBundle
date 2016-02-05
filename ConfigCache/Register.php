@@ -356,7 +356,7 @@ class Register
     /**
      * Sets a cache definition by alias (a service name).
      *
-     * @param string $name
+     * @param string $alias
      */
     protected function setCacheDefinitionByAlias($alias)
     {
