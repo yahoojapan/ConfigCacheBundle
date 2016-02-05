@@ -96,6 +96,14 @@ class RegisterTest extends RegisterTestCase
         $register->registerAll();
     }
 
+    public function testSetAppConfig()
+    {
+        $register = $this->getRegisterMock();
+        $config   = array('aaa' => 'bbb');
+        $register->setAppConfig($config);
+        $this->assertSame($config, $this->getProperty($register, 'appConfig'));
+    }
+
     public function testSetTag()
     {
         $register = $this->getRegisterMock();
@@ -447,7 +455,8 @@ class RegisterTest extends RegisterTestCase
     public function testRegisterInternalWithAlias(
         $resources,
         $createFiles,
-        array $expected
+        array $expected,
+        $expectedException
     ) {
         list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
         $id = 'register_test';
@@ -479,6 +488,10 @@ class RegisterTest extends RegisterTestCase
         // store Definition count before register
         $definitions = count($container->getValue($register)->getDefinitions());
 
+        if (!is_null($expectedException)) {
+            $this->setExpectedException($expectedException);
+        }
+
         // register
         $method = new \ReflectionMethod($register, 'register');
         $method->setAccessible(true);
@@ -503,7 +516,7 @@ class RegisterTest extends RegisterTestCase
     }
 
     /**
-     * @return array($resources, $createFiles, $expected)
+     * @return array($resources, $createFiles, $expected, $expectedException)
      */
     public function registerInternalWithAliasProvider()
     {
@@ -537,6 +550,7 @@ class RegisterTest extends RegisterTestCase
                         array('setKey'         => array($alias2)),
                     ),
                 ),
+                null,
             ),
             // mixed FilesResource, FileResource with alias
             array(
@@ -570,6 +584,17 @@ class RegisterTest extends RegisterTestCase
                         )),
                     ),
                 ),
+                null,
+            ),
+            // duplicated aliases
+            array(
+                array(
+                    new FileResource(__DIR__.'/../Fixtures/test_service1.yml', null, $alias = 'duplicated_alias'),
+                    new FileResource(__DIR__.'/../Fixtures/test_service2.yml', null, $alias),
+                ),
+                0,
+                array(),
+                '\RuntimeException',
             ),
         );
     }
