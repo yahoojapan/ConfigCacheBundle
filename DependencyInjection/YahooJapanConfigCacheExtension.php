@@ -30,7 +30,7 @@ class YahooJapanConfigCacheExtension extends Extension implements PrependExtensi
     public function prepend(ContainerBuilder $container)
     {
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
-        $loader->load('parameters.yml');
+        $loader->load('pre_services.yml');
     }
 
     /**
