@@ -1,0 +1,4 @@
+register_all:
+    ship_to:
+        given  : Taro
+        family : Yahoo

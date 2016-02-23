@@ -22,6 +22,8 @@ class AppKernel extends Kernel
     {
         $bundles = array(
             new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
+            new \YahooJapan\ConfigCacheBundle\Tests\Functional\Bundle\RegisterBundle\RegisterBundle(),
+            new \YahooJapan\ConfigCacheBundle\Tests\Functional\Bundle\RegisterAllBundle\RegisterAllBundle(),
             new \YahooJapan\ConfigCacheBundle\YahooJapanConfigCacheBundle(),
         );
 
