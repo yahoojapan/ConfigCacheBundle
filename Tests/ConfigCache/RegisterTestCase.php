@@ -42,19 +42,19 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     /**
      * for testSetCacheDefinition, testSetCacheDefinitionByAlias
      */
-    protected function postSetCacheDefinition($container, $register, $tag, $id, $alias = '')
+    protected function postSetCacheDefinition($container, $tag, $id, $alias = '')
     {
         // assert(doctrine/cache)
         $doctrineCacheId = "{$this->getCacheId()}.doctrine.cache.{$id}";
-        $this->assertTrue($container->getValue($register)->hasDefinition($doctrineCacheId));
+        $this->assertTrue($container->hasDefinition($doctrineCacheId));
         // Definition
-        $definition = $container->getValue($register)->getDefinition($doctrineCacheId);
+        $definition = $container->getDefinition($doctrineCacheId);
         // DefinitionDecorator
-        $parent = $container->getValue($register)->getDefinition($definition->getParent());
+        $parent = $container->getDefinition($definition->getParent());
         $this->assertFalse($parent->isPublic());
         $this->assertSame('Doctrine\Common\Cache\PhpFileCache', $parent->getClass());
         $this->assertSame(
-            $container->getValue($register)->getParameter('kernel.cache_dir')."/{$id}",
+            $container->getParameter('kernel.cache_dir')."/{$id}",
             $definition->getArgument(0)
         );
         $this->assertSame('.php', $parent->getArgument(1));
@@ -62,8 +62,8 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         // assert(ConfigCache)
         $aliases = $alias !== '' ? array($alias) : array();
         $userCacheId = implode('.', array_merge(array($this->getCacheId(), $id), $aliases));
-        $this->assertTrue($container->getValue($register)->hasDefinition($userCacheId));
-        $definition = $container->getValue($register)->getDefinition($userCacheId);
+        $this->assertTrue($container->hasDefinition($userCacheId));
+        $definition = $container->getDefinition($userCacheId);
         $this->assertTrue($definition->isPublic());
         $this->assertTrue($definition->isLazy());
         $this->assertSame($this->configCacheClass, $definition->getClass());
@@ -122,7 +122,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * return Register mock and container property
+     * @return array list of Register mock, ContainerBuilder
      */
     protected function getRegisterMockAndContainer(array $methods = array())
     {
@@ -132,11 +132,11 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         $property->setAccessible(true);
         $property->setValue($register, $container);
 
-        return array($register, $property);
+        return array($register, $container);
     }
 
     /**
-     * return Register mock and container with parameters
+     * @return array list of Register mock, ContainerBuilder
      */
     protected function getRegisterMockAndContainerWithParameter(array $methods = array())
     {

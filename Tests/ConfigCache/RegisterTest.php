@@ -175,7 +175,7 @@ class RegisterTest extends RegisterTestCase
             ;
 
         // store Definition count before registerInternal
-        $definitions = count($container->getValue($register)->getDefinitions());
+        $definitions = count($container->getDefinitions());
 
         // registerInternal
         $method = new \ReflectionMethod($register, $all ? 'registerAll' : 'register');
@@ -185,7 +185,7 @@ class RegisterTest extends RegisterTestCase
         // whether user cache service defined
         $this->assertSame(
             $expCacheDefinition,
-            $container->getValue($register)->hasDefinition("{$this->getCacheId()}.{$id}")
+            $container->hasDefinition("{$this->getCacheId()}.{$id}")
         );
 
         // whether configuration cache service defined
@@ -194,15 +194,15 @@ class RegisterTest extends RegisterTestCase
         $adjustment = $expCacheDefinition ? 2 : 0;
         $this->assertSame(
             $expConfigDefinition,
-            count($container->getValue($register)->getDefinitions()) > $definitions + $adjustment
+            count($container->getDefinitions()) > $definitions + $adjustment
         );
         foreach ($expConfigIds as $configId) {
-            $this->assertTrue($container->getValue($register)->hasDefinition($configId));
+            $this->assertTrue($container->hasDefinition($configId));
         }
 
         // whether addMethodCall defined
-        if ($container->getValue($register)->hasDefinition("{$this->getCacheId()}.{$id}")) {
-            $calls = $container->getValue($register)->getDefinition("{$this->getCacheId()}.{$id}")->getMethodCalls();
+        if ($container->hasDefinition("{$this->getCacheId()}.{$id}")) {
+            $calls = $container->getDefinition("{$this->getCacheId()}.{$id}")->getMethodCalls();
             foreach ($calls as $index => $call) {
                 if (isset($expAddMethodCalls[$index]) && is_array($expAddMethodCalls[$index])) {
                     foreach ($expAddMethodCalls[$index] as $method => $arguments) {
@@ -477,7 +477,7 @@ class RegisterTest extends RegisterTestCase
             ;
 
         // store Definition count before register
-        $definitions = count($container->getValue($register)->getDefinitions());
+        $definitions = count($container->getDefinitions());
 
         if (!is_null($expectedException)) {
             $this->setExpectedException($expectedException);
@@ -490,8 +490,8 @@ class RegisterTest extends RegisterTestCase
 
         // whether user cache service defined
         foreach ($expected as $serviceId => $expectedCalls) {
-            $this->assertTrue($container->getValue($register)->hasDefinition($serviceId));
-            $actualCalls = $container->getValue($register)->getDefinition($serviceId)->getMethodCalls();
+            $this->assertTrue($container->hasDefinition($serviceId));
+            $actualCalls = $container->getDefinition($serviceId)->getMethodCalls();
             foreach ($actualCalls as $i => $call) {
                 // method name
                 $this->assertSame(key($expectedCalls[$i]), $call[0]);
@@ -1067,7 +1067,7 @@ class RegisterTest extends RegisterTestCase
         $method->setAccessible(true);
         $method->invoke($register);
 
-        $definition = $this->postSetCacheDefinition($container, $register, $tag, $id);
+        $definition = $this->postSetCacheDefinition($container, $tag, $id);
 
         // assert addMethodCalls simplified
         $calls = $definition->getMethodCalls();
@@ -1081,8 +1081,8 @@ class RegisterTest extends RegisterTestCase
         $method = new \ReflectionMethod($register, 'buildConfigurationId');
         $method->setAccessible(true);
         $configId = $method->invoke($register, $configuration);
-        $this->assertTrue($container->getValue($register)->hasDefinition($configId));
-        $definition = $container->getValue($register)->getDefinition($configId);
+        $this->assertTrue($container->hasDefinition($configId));
+        $definition = $container->getDefinition($configId);
         $this->assertFalse($definition->isPublic());
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
         $this->assertSame(0, count($definition->getArguments()));
@@ -1116,7 +1116,7 @@ class RegisterTest extends RegisterTestCase
         $method->setAccessible(true);
         $method->invoke($register, $alias);
 
-        $definition = $this->postSetCacheDefinition($container, $register, $tag, $id, $alias);
+        $definition = $this->postSetCacheDefinition($container, $tag, $id, $alias);
 
         // assert addMethodCalls simplified
         $calls = $definition->getMethodCalls();
@@ -1137,15 +1137,15 @@ class RegisterTest extends RegisterTestCase
 
         // state not registered ID
         $method->invoke($register, $id, $configuration);
-        $this->assertTrue($container->getValue($register)->hasDefinition($id));
-        $definition = $container->getValue($register)->getDefinition($id);
+        $this->assertTrue($container->hasDefinition($id));
+        $definition = $container->getDefinition($id);
         $this->assertFalse($definition->isPublic());
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
 
         // state already registered ID
         $mock = $this->getMock('Symfony\Component\Config\Definition\ConfigurationInterface');
         $method->invoke($register, $id, $mock);
-        $definition = $container->getValue($register)->getDefinition($id);
+        $definition = $container->getDefinition($id);
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
         $this->assertFalse(strpos('Mock_ConfigurationInterface', $definition->getClass()) === 0);
     }
