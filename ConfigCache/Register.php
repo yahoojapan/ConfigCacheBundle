@@ -17,6 +17,7 @@ use Symfony\Component\Config\Resource\FileResource as BaseFileResource;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
@@ -370,14 +371,9 @@ class Register
     protected function createCacheDefinition()
     {
         // doctrine/cache
-        $cache = new Definition(
-            $this->container->getParameter('config.php_file_cache.class'),
-            array(
-                $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}",
-                '.php',
-            )
-        );
-        $cache->setPublic(false);
+        $cache = new DefinitionDecorator('yahoo_japan_config_cache.component.php_file_cache');
+        // only replace cache directory
+        $cache->replaceArgument(0, $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}");
         $cacheId = $this->buildId(array('doctrine', 'cache', $this->bundleId));
         $this->container->setDefinition($cacheId, $cache);
 

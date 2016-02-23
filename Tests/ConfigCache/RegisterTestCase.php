@@ -11,9 +11,10 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
+use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * This is an abstract class for preprocessing RegisterTest, Locale\RegisterLocaleTest
@@ -46,16 +47,17 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         // assert(doctrine/cache)
         $doctrineCacheId = "{$this->getCacheId()}.doctrine.cache.{$id}";
         $this->assertTrue($container->getValue($register)->hasDefinition($doctrineCacheId));
+        // Definition
         $definition = $container->getValue($register)->getDefinition($doctrineCacheId);
-        $this->assertFalse($definition->isPublic());
-        $this->assertSame('Doctrine\Common\Cache\PhpFileCache', $definition->getClass());
+        // DefinitionDecorator
+        $parent = $container->getValue($register)->getDefinition($definition->getParent());
+        $this->assertFalse($parent->isPublic());
+        $this->assertSame('Doctrine\Common\Cache\PhpFileCache', $parent->getClass());
         $this->assertSame(
-            array(
-                $container->getValue($register)->getParameter('kernel.cache_dir')."/{$id}",
-                '.php',
-            ),
-            $definition->getArguments()
+            $container->getValue($register)->getParameter('kernel.cache_dir')."/{$id}",
+            $definition->getArgument(0)
         );
+        $this->assertSame('.php', $parent->getArgument(1));
 
         // assert(ConfigCache)
         $aliases = $alias !== '' ? array($alias) : array();
@@ -139,17 +141,13 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     protected function getRegisterMockAndContainerWithParameter(array $methods = array())
     {
         list($register, $container) = $this->getRegisterMockAndContainer($methods);
-        $parameters = Yaml::parse(file_get_contents(__DIR__.'/../../Resources/config/parameters.yml'));
-        foreach ($parameters['parameters'] as $key => $value) {
-            $container->getValue($register)->setParameter($key, $value);
-        }
 
         return array($register, $container);
     }
 
     protected function getContainerBuilder(array $data = array())
     {
-        return new ContainerBuilder(new ParameterBag(array_merge(array(
+        $container = new ContainerBuilder(new ParameterBag(array_merge(array(
             'kernel.bundles'        => array(
                 'FrameworkBundle'             => 'Symfony\\Bundle\\FrameworkBundle\\FrameworkBundle',
                 'YahooJapanConfigCacheBundle' => 'YahooJapan\\ConfigCacheBundle\\YahooJapanConfigCacheBundle',
@@ -161,6 +159,11 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
             'kernel.root_dir'       => __DIR__,
             'kernel.default_locale' => 'ja',
         ), $data)));
+
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../../Resources/config'));
+        $loader->load('pre_services.yml');
+
+        return $container;
     }
 
     protected function getProperty($instance, $name)

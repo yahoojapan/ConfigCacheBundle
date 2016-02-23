@@ -2,6 +2,14 @@ imports:
     - { resource: parameters.yml }
 
 services:
+    yahoo_japan_config_cache.component.php_file_cache:
+        class: Doctrine\Common\Cache\PhpFileCache
+        arguments:
+            # The first argument will be replaced by DefinitionDecorator
+            - ''
+            - '.php'
+        public: false
+
     yahoo_japan_config_cache.component.array_access:
         class: YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess
 
