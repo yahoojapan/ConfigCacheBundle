@@ -5,7 +5,7 @@
 * Symfonyの[translator](http://symfony.com/doc/current/book/translation.html)を使って多言語対応をする
 * 設定ファイルに多言語の文言を定義してmodelなどで使う
 
-通常は設定ファイルのデータを取り出した後にtranslatorを使って都度翻訳する必要があります。
+通常は[設定ファイル](#sample_config)のデータを取り出した後にtranslatorを使って都度翻訳する必要があります。
 
 ```php
 <?php
@@ -21,7 +21,7 @@ class WelcomeController extends Controller
     {
         $translator = $this->get('translator.default');
         $cache      = $this->get('config.acme_demo.sample');
-        $config     = $cache->find('acme_demo.function1');
+        $config     = $cache->find('bill-to.given');
 
         foreach ($config as $key => &$value) {
             if ($translator->getCatalogue()->has($value)) {
@@ -44,6 +44,7 @@ ConfigCacheBundleでは設定ファイルに記述した文言を事前に翻訳
 
 以下多言語対応のための実装例を示します。
 
+<a id="sample_config">
 ##### 設定ファイル
 
 AcmeDemoBundleに配置する設定ファイルを以下のように定義します。  
@@ -51,23 +52,26 @@ AcmeDemoBundleに配置する設定ファイルを以下のように定義しま
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample.yml
-acme_demo:
-    function1:
-        # will be translated
-        key1: sample_label_japan
-    function2: value2
+invoice: 34843
+date   : '2001-01-23'
+bill-to:
+    # values will be translated
+    given  : id.001
+    family : id.002
 ```
 
 翻訳のためのcatalogueを用意します。
 
 ```yml
 # app/Resources/translations/messages.en.yml
-sample_label_japan: Japan
+id.001: Chris
+id.002: Dumars
 ```
 
 ```yml
 # app/Resources/translations/messages.ja.yml
-sample_label_japan: 日本
+id.001: クリス
+id.002: デュマース
 ```
 
 ##### app/config/config.yml
@@ -141,9 +145,9 @@ class WelcomeController extends Controller
         // ConfigCache
         $cache = $this->get('config.acme_demo.sample');
 
-        // = 'Japan' if _locale is en
-        // = '日本'  if _locale is ja
-        $cache->find('acme_demo.function1.key1');
+        // 'Chris' if _locale is en
+        // 'クリス' if _locale is ja
+        $cache->find('bill-to.given');
 
         // ...
     }

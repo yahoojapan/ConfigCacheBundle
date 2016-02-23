@@ -6,17 +6,18 @@
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample1.yml
-all:
-   function1:
-       key1: value1
-   function2: value2
+invoice: 34843
+date   : '2001-01-23'
+bill-to:
+    given  : Chris
+    family : Dumars
 ```
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample2.yml
-all:
-   function3: value3
-   function4: value4
+ship-to:
+    given  : Taro
+    family : Yahoo
 ```
 
 ```php
@@ -59,7 +60,6 @@ class AcmeDemoExtension extends Extension
 // src/Acme/DemoBundle/AcmeDemoBundle.php
 namespace Acme\DemoBundle;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class AcmeDemoBundle extends Bundle
@@ -89,9 +89,11 @@ class WelcomeController extends Controller
 
         /**
          * array(
-         *     'all' => array(
-         *         'function1' => array('key1' => 'value1'),
-         *         'function2' => 'value2',
+         *     'invoice' => 34843,
+         *     'date' => '2001-01-23',
+         *     'bill-to' => array(
+         *         'given' => 'Chris',
+         *         'family' => 'Dumars',
          *     ),
          * )
          */
@@ -99,9 +101,9 @@ class WelcomeController extends Controller
 
         /**
          * array(
-         *     'all' => array(
-         *         'function3' => 'value3',
-         *         'function4' => 'value4',
+         *     'ship-to' => array(
+         *         'given' => 'Taro',
+         *         'family' => 'Yahoo',
          *     ),
          * )
          */

@@ -16,16 +16,19 @@
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample1.yml
 acme_demo:
-   function1:
-       key1: value1
-   function2: value2
+    invoice: 34843
+    date   : '2001-01-23'
+    bill_to:
+        given  : Chris
+        family : Dumars
 ```
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample2.yml
 acme_demo:
-   function3: value3
-   function4: value4
+    ship_to:
+        given  : Taro
+        family : Yahoo
 ```
 
 ##### Configurationクラスの実装
@@ -57,14 +60,20 @@ class Configuration implements ConfigurationInterface
         $rootNode    = $treeBuilder->root('acme_demo');
         $rootNode
             ->children()
-                ->arrayNode('function1')
+                ->integerNode('invoice')->end()
+                ->scalarNode('date')->end()
+                ->arrayNode('bill_to')
                     ->children()
-                        ->scalarNode('key1')->end()
+                        ->scalarNode('given')->end()
+                        ->scalarNode('family')->end()
                     ->end()
                 ->end()
-                ->scalarNode('function2')->end()
-                ->scalarNode('function3')->end()
-                ->scalarNode('function4')->end()
+                ->arrayNode('ship_to')
+                    ->children()
+                        ->scalarNode('given')->end()
+                        ->scalarNode('family')->end()
+                    ->end()
+                ->end()
             ->end()
             ;
 
@@ -120,7 +129,6 @@ class AcmeDemoExtension extends Extension
 // src/Acme/DemoBundle/AcmeDemoBundle.php
 namespace Acme\DemoBundle;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class AcmeDemoBundle extends Bundle
@@ -151,10 +159,16 @@ class WelcomeController extends Controller
 
         /**
          * array(
-         *     'function1' => array('key1' => 'value1'),
-         *     'function2' => 'value2',
-         *     'function3' => 'value3',
-         *     'function4' => 'value4',
+         *     'invoice' => 34843,
+         *     'date' => '2001-01-23',
+         *     'bill_to' => array(
+         *         'given' => 'Chris',
+         *         'family' => 'Dumars',
+         *     ),
+         *     'ship_to' => array(
+         *         'given' => 'Taro',
+         *         'family' => 'Yahoo',
+         *     ),
          * )
          */
         $cache->findAll();
