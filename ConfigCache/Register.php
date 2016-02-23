@@ -142,9 +142,6 @@ class Register
         // validate set data on constructor
         $this->validateResources();
         $this->validateCacheId();
-
-        // preprocess registerInternal()
-        $this->setLoaderDefinition();
     }
 
     /**
@@ -436,53 +433,6 @@ class Register
             $configDefinition->setPublic(false);
             $this->container->setDefinition($configId, $configDefinition);
         }
-    }
-
-    /**
-     * Sets a loader definition.
-     */
-    protected function setLoaderDefinition()
-    {
-        $yamlLoader = new Definition($this->container->getParameter('config.yaml_file_loader.class'));
-        $xmlLoader  = new Definition($this->container->getParameter('config.xml_file_loader.class'));
-        $yamlLoader->setPublic(false);
-        $xmlLoader->setPublic(false);
-        $yamlLoaderId = $this->container->getParameter('config.yaml_file_loader.id');
-        $xmlLoaderId  = $this->container->getParameter('config.xml_file_loader.id');
-
-        if ($this->container->hasDefinition($yamlLoaderId)) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $yamlLoaderId));
-        }
-        if ($this->container->hasDefinition($xmlLoaderId)) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $xmlLoaderId));
-        }
-        $this->container->setDefinition($yamlLoaderId, $yamlLoader);
-        $this->container->setDefinition($xmlLoaderId, $xmlLoader);
-
-        $resolver = new Definition(
-            $this->container->getParameter('config.loader_resolver.class'),
-            array(array(
-                new Reference($yamlLoaderId),
-                new Reference($xmlLoaderId),
-            ))
-        );
-        $resolver->setPublic(false);
-        $resolverId = $this->container->getParameter('config.loader_resolver.id');
-        if ($this->container->hasDefinition($resolverId)) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $resolverId));
-        }
-        $this->container->setDefinition($resolverId, $resolver);
-
-        $loader = new Definition(
-            $this->container->getParameter('config.delegating_loader.class'),
-            array(new Reference($resolverId))
-        );
-        $loader->setPublic(false);
-        $delegatingLoaderId = $this->container->getParameter('config.delegating_loader.id');
-        if ($this->container->hasDefinition($delegatingLoaderId)) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $delegatingLoaderId));
-        }
-        $this->container->setDefinition($delegatingLoaderId, $loader);
     }
 
     /**

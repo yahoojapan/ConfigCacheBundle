@@ -123,7 +123,6 @@ class RegisterTest extends RegisterTestCase
             'setConfigurationByExtension',
             'validateResources',
             'validateCacheId',
-            'setLoaderDefinition',
         );
         $register = $this->getRegisterMock($internalMethods);
         foreach ($internalMethods as $method) {
@@ -174,10 +173,6 @@ class RegisterTest extends RegisterTestCase
             // not assert excluding setting test here for asserting on testFindFilesByDirectory
             ->setProperty($register, 'excludes', array())
             ;
-        // only setLoaderDefinition, setParameter() is excuted on getRegisterMockAndContainerWithParameter()
-        $method = new \ReflectionMethod($register, 'setLoaderDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
 
         // store Definition count before registerInternal
         $definitions = count($container->getValue($register)->getDefinitions());
@@ -480,10 +475,6 @@ class RegisterTest extends RegisterTestCase
             // not assert excluding setting test here for asserting on testFindFilesByDirectory
             ->setProperty($register, 'excludes', array())
             ;
-        // only setLoaderDefinition, setParameter() is excuted on getRegisterMockAndContainerWithParameter()
-        $method = new \ReflectionMethod($register, 'setLoaderDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
 
         // store Definition count before register
         $definitions = count($container->getValue($register)->getDefinitions());
@@ -1157,108 +1148,6 @@ class RegisterTest extends RegisterTestCase
         $definition = $container->getValue($register)->getDefinition($id);
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
         $this->assertFalse(strpos('Mock_ConfigurationInterface', $definition->getClass()) === 0);
-    }
-
-    public function testSetLoaderDefinition()
-    {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
-        $method = new \ReflectionMethod($register, 'setLoaderDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
-
-        // assert
-        $yamlLoaderId       = "{$this->getCacheId()}.yaml_file_loader";
-        $xmlLoaderId        = "{$this->getCacheId()}.xml_file_loader";
-        $resolverId         = "{$this->getCacheId()}.loader_resolver";
-        $delegatingLoaderId = "{$this->getCacheId()}.delegating_loader";
-
-        $this->assertTrue($container->getValue($register)->hasDefinition($yamlLoaderId));
-        $this->assertTrue($container->getValue($register)->hasDefinition($xmlLoaderId));
-        $this->assertTrue($container->getValue($register)->hasDefinition($resolverId));
-        $this->assertTrue($container->getValue($register)->hasDefinition($delegatingLoaderId));
-
-        $yamlLoaderDefinition = $container->getValue($register)->getDefinition($yamlLoaderId);
-        $xmlLoaderDefinition  = $container->getValue($register)->getDefinition($xmlLoaderId);
-        $resolverDefinition   = $container->getValue($register)->getDefinition($resolverId);
-        $delLoaderDefinition  = $container->getValue($register)->getDefinition($delegatingLoaderId);
-
-        $this->assertFalse($yamlLoaderDefinition->isPublic());
-        $this->assertFalse($xmlLoaderDefinition->isPublic());
-        $this->assertFalse($resolverDefinition->isPublic());
-        $this->assertFalse($delLoaderDefinition->isPublic());
-
-        $this->assertSame('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader', $yamlLoaderDefinition->getClass());
-        $this->assertSame('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader', $xmlLoaderDefinition->getClass());
-        $this->assertSame('Symfony\Component\Config\Loader\LoaderResolver', $resolverDefinition->getClass());
-        $this->assertSame('Symfony\Component\Config\Loader\DelegatingLoader', $delLoaderDefinition->getClass());
-
-        $arguments = $resolverDefinition->getArguments();
-        if (isset($arguments[0][0])) {
-            $this->assertInstanceOf(
-                'Symfony\Component\DependencyInjection\Reference',
-                $arguments[0][0],
-                'Unexpected argument "0-0" instance.'
-            );
-            $this->assertSame($yamlLoaderId, (string) $arguments[0][0]);
-        } else {
-            $this->fail('The LoaderResolver argument "0-0" is not set.');
-        }
-        if (isset($arguments[0][1])) {
-            $this->assertInstanceOf(
-                'Symfony\Component\DependencyInjection\Reference',
-                $arguments[0][1],
-                'Unexpected argument "0-1" instance.'
-            );
-            $this->assertSame($xmlLoaderId, (string) $arguments[0][1]);
-        } else {
-            $this->fail('The LoaderResolver argument "0-1" is not set.');
-        }
-
-        $arguments = $delLoaderDefinition->getArguments();
-        if (isset($arguments[0])) {
-            $this->assertInstanceOf(
-                'Symfony\Component\DependencyInjection\Reference',
-                $arguments[0],
-                'Unexpected argument "0" instance.'
-            );
-            $this->assertSame($resolverId, (string) $arguments[0]);
-        } else {
-            $this->fail('The DelegatingLoader argument "0" is not set.');
-        }
-    }
-
-    /**
-     * @dataProvider      setLoaderDefinitionExceptionProvider
-     * @expectedException \Exception
-     */
-    public function testSetLoaderDefinitionException($preDefinedId)
-    {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
-        $noUsedId = 'register_test';
-
-        // set to be duplicated Definition
-        $container->getValue($register)->setDefinition($preDefinedId, new Definition($noUsedId));
-
-        // exception thrown
-        $method = new \ReflectionMethod($register, 'setLoaderDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
-
-        // not pass here
-        $this->fail('Expected exception does not occurred.');
-    }
-
-    /**
-     * @return array ($preDefinedId)
-     */
-    public function setLoaderDefinitionExceptionProvider()
-    {
-        return array(
-            array("{$this->getCacheId()}.yaml_file_loader"),
-            array("{$this->getCacheId()}.xml_file_loader"),
-            array("{$this->getCacheId()}.loader_resolver"),
-            array("{$this->getCacheId()}.delegating_loader"),
-        );
     }
 
     /**

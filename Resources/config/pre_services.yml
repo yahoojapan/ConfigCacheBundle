@@ -4,3 +4,24 @@ imports:
 services:
     yahoo_japan_config_cache.component.array_access:
         class: YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess
+
+    yahoo_japan_config_cache.component.delegating_loader:
+        class: Symfony\Component\Config\Loader\DelegatingLoader
+        arguments:
+            - '@yahoo_japan_config_cache.component.resolver'
+
+    yahoo_japan_config_cache.component.resolver:
+        class: Symfony\Component\Config\Loader\LoaderResolver
+        arguments:
+            -
+                - '@yahoo_japan_config_cache.component.yaml_file_loader'
+                - '@yahoo_japan_config_cache.component.xml_file_loader'
+        public: false
+
+    yahoo_japan_config_cache.component.yaml_file_loader:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader
+        public: false
+
+    yahoo_japan_config_cache.component.xml_file_loader:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader
+        public: false

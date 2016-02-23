@@ -81,7 +81,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
                     $argument,
                     'Unexpected argument "1" instance.'
                 );
-                $this->assertSame("{$this->getCacheId()}.delegating_loader", (string) $argument);
+                $this->assertSame('yahoo_japan_config_cache.component.delegating_loader', (string) $argument);
             } elseif ($i === 2) {
                 $this->assertSame(array('aaa' => 'bbb'), $argument);
             } else {
