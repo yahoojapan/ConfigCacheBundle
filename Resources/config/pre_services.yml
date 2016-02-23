@@ -1,2 +1,6 @@
 imports:
     - { resource: parameters.yml }
+
+services:
+    yahoo_japan_config_cache.component.array_access:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess

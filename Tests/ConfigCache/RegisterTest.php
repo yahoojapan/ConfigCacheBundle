@@ -281,7 +281,7 @@ class RegisterTest extends RegisterTestCase
                     array(
                         'setArrayAccess' => array(
                             'Symfony\Component\DependencyInjection\Reference',
-                            "{$this->getCacheId()}.array_access.{$id}",
+                            'yahoo_japan_config_cache.component.array_access',
                         ),
                     ),
                     array(
@@ -318,7 +318,7 @@ class RegisterTest extends RegisterTestCase
                     array(
                         'setArrayAccess' => array(
                             'Symfony\Component\DependencyInjection\Reference',
-                            "{$this->getCacheId()}.array_access.{$id}",
+                            'yahoo_japan_config_cache.component.array_access',
                         ),
                     ),
                     array(
@@ -365,7 +365,7 @@ class RegisterTest extends RegisterTestCase
                     array(
                         'setArrayAccess' => array(
                             'Symfony\Component\DependencyInjection\Reference',
-                            "{$this->getCacheId()}.array_access.{$id}",
+                            'yahoo_japan_config_cache.component.array_access',
                         ),
                     ),
                     array(
@@ -405,7 +405,7 @@ class RegisterTest extends RegisterTestCase
                     array(
                         'setArrayAccess' => array(
                             'Symfony\Component\DependencyInjection\Reference',
-                            "{$this->getCacheId()}.array_access.{$id}",
+                            'yahoo_japan_config_cache.component.array_access',
                         ),
                     ),
                     array(
@@ -523,7 +523,7 @@ class RegisterTest extends RegisterTestCase
         $bundleId        = 'register_test';
         $cacheId         = $this->getCacheId();
         $baseId          = "{$cacheId}.{$bundleId}";
-        $arrayAccessId   = "{$cacheId}.array_access.{$bundleId}";
+        $arrayAccessId   = 'yahoo_japan_config_cache.component.array_access';
         $configurationId = "{$cacheId}.configuration.yahoo_japan.config_cache_bundle.tests.fixtures.register_configuration";
 
         return array(

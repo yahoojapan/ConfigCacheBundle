@@ -96,14 +96,6 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
 
         // addMethodCalls is asserted on test method
 
-        // assert(ArrayAccess)
-        $arrayAccessId = "{$this->getCacheId()}.array_access.{$id}";
-        $this->assertTrue($container->getValue($register)->hasDefinition($arrayAccessId));
-        $arrayDefinition = $container->getValue($register)->getDefinition($arrayAccessId);
-        $this->assertFalse($arrayDefinition->isPublic());
-        $this->assertSame('YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess', $arrayDefinition->getClass());
-        $this->assertSame(0, count($arrayDefinition->getArguments()));
-
         return $definition;
     }
 

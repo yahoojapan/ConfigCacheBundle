@@ -385,10 +385,7 @@ class Register
         $this->container->setDefinition($cacheId, $cache);
 
         // ArrayAccess
-        $arrayAccess = new Definition('YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess');
-        $arrayAccess->setPublic(false);
-        $arrayAccessId = $this->buildId(array('array_access', $this->bundleId));
-        $this->container->setDefinition($arrayAccessId, $arrayAccess);
+        $arrayAccessId = $this->container->getParameter('config.array_access.id');
 
         // user cache
         $definition = new Definition(
