@@ -135,16 +135,6 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         return array($register, $container);
     }
 
-    /**
-     * @return array list of Register mock, ContainerBuilder
-     */
-    protected function getRegisterMockAndContainerWithParameter(array $methods = array())
-    {
-        list($register, $container) = $this->getRegisterMockAndContainer($methods);
-
-        return array($register, $container);
-    }
-
     protected function getContainerBuilder(array $data = array())
     {
         $container = new ContainerBuilder(new ParameterBag(array_merge(array(

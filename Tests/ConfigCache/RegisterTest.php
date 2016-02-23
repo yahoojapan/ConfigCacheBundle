@@ -151,7 +151,7 @@ class RegisterTest extends RegisterTestCase
         $expConfigIds,
         $expAddMethodCalls
     ) {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
 
         // create directory/file
@@ -453,7 +453,7 @@ class RegisterTest extends RegisterTestCase
         array $expected,
         $expectedException
     ) {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
 
         // create directory/file
@@ -596,7 +596,7 @@ class RegisterTest extends RegisterTestCase
     public function testInitializeResources($resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
     {
         $internalMethod = 'setCacheDefinition';
-        list($register, ) = $this->getRegisterMockAndContainerWithParameter(array($internalMethod));
+        list($register, ) = $this->getRegisterMockAndContainer(array($internalMethod));
         $id = 'register_test';
         $this
             ->setProperty($register, 'bundleId', $id)
@@ -688,7 +688,7 @@ class RegisterTest extends RegisterTestCase
     public function testInitializeAllResources($bundles, $resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
     {
         $internalMethod = 'setCacheDefinition';
-        list($register, ) = $this->getRegisterMockAndContainerWithParameter(array($internalMethod));
+        list($register, ) = $this->getRegisterMockAndContainer(array($internalMethod));
         $this->setProperty($register, 'resources', $resources);
 
         // only assert calling method
@@ -1054,7 +1054,7 @@ class RegisterTest extends RegisterTestCase
      */
     public function testSetCacheDefinition($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
@@ -1106,7 +1106,7 @@ class RegisterTest extends RegisterTestCase
      */
     public function testSetCacheDefinitionByAlias($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 

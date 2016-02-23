@@ -72,7 +72,7 @@ class RegisterLocaleTest extends RegisterTestCase
      */
     public function testSetCacheDefinition($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
@@ -117,7 +117,7 @@ class RegisterLocaleTest extends RegisterTestCase
      */
     public function testSetCacheDefinitionByAlias($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
@@ -162,7 +162,7 @@ class RegisterLocaleTest extends RegisterTestCase
      */
     public function testCreateCacheDefinition()
     {
-        list($register, ) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, ) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
         $this
             ->setProperty($register, 'bundleId', $id)
