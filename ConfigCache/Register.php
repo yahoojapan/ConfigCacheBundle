@@ -377,21 +377,15 @@ class Register
         $cacheId = $this->buildId(array('doctrine', 'cache', $this->bundleId));
         $this->container->setDefinition($cacheId, $cache);
 
-        // ArrayAccess
-        $arrayAccessId = $this->container->getParameter('config.array_access.id');
-
         // user cache
-        $definition = new Definition(
-            $this->container->getParameter('config.config_cache.class'),
-            array(
+        $definition = new DefinitionDecorator('yahoo_japan_config_cache.component.config_cache');
+        $definition
+            ->setPublic(true)
+            ->setArguments(array(
                 new Reference($cacheId),
                 new Reference($this->container->getParameter('config.delegating_loader.id')),
                 $this->appConfig,
-            )
-        );
-        $definition
-            ->setLazy(true)
-            ->addMethodCall('setArrayAccess', array(new Reference($arrayAccessId)))
+            ))
             ;
         if (!is_null($this->tag)) {
             $definition->addTag($this->tag);

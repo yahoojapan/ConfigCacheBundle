@@ -1,6 +1,3 @@
 parameters:
     config.delegating_loader.id:      yahoo_japan_config_cache.component.delegating_loader
-    config.array_access.id:           yahoo_japan_config_cache.component.array_access
-
-    config.config_cache.class:        YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
     config.locale.config_cache.class: YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache

@@ -85,18 +85,21 @@ class RegisterLocaleTest extends RegisterTestCase
         $method->setAccessible(true);
         $method->invoke($register);
 
+        // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id);
+        // DefinitionDecorator
+        $parent     = $container->getDefinition($definition->getParent());
 
         // assert addMethodCalls simplified
-        $calls = $definition->getMethodCalls();
-        $this->assertSame('setArrayAccess', $calls[0][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[0][1][0]);
-        $this->assertSame('setConfiguration', $calls[1][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[1][1][0]);
-        $this->assertSame('setDefaultLocale', $calls[2][0]);
-        $this->assertSame($container->getParameter('kernel.default_locale'), $calls[2][1][0]);
-        $this->assertSame('setLoader', $calls[3][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[3][1][0]);
+        $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
+        $this->assertSame('setArrayAccess', $actualCalls[0][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[0][1][0]);
+        $this->assertSame('setConfiguration', $actualCalls[1][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[1][1][0]);
+        $this->assertSame('setDefaultLocale', $actualCalls[2][0]);
+        $this->assertSame($container->getParameter('kernel.default_locale'), $actualCalls[2][1][0]);
+        $this->assertSame('setLoader', $actualCalls[3][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[3][1][0]);
     }
 
     /**
@@ -127,16 +130,19 @@ class RegisterLocaleTest extends RegisterTestCase
         $method->setAccessible(true);
         $method->invoke($register, $alias);
 
+        // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id, $alias);
+        // DefinitionDecorator
+        $parent     = $container->getDefinition($definition->getParent());
 
         // assert addMethodCalls simplified
-        $calls = $definition->getMethodCalls();
-        $this->assertSame('setArrayAccess', $calls[0][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[0][1][0]);
-        $this->assertSame('setDefaultLocale', $calls[1][0]);
-        $this->assertSame($container->getParameter('kernel.default_locale'), $calls[1][1][0]);
-        $this->assertSame('setLoader', $calls[2][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[2][1][0]);
+        $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
+        $this->assertSame('setArrayAccess', $actualCalls[0][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[0][1][0]);
+        $this->assertSame('setDefaultLocale', $actualCalls[1][0]);
+        $this->assertSame($container->getParameter('kernel.default_locale'), $actualCalls[1][1][0]);
+        $this->assertSame('setLoader', $actualCalls[2][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[2][1][0]);
     }
 
     public function testAddLocaleMethods()

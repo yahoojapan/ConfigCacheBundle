@@ -202,8 +202,12 @@ class RegisterTest extends RegisterTestCase
 
         // whether addMethodCall defined
         if ($container->hasDefinition("{$this->getCacheId()}.{$id}")) {
-            $calls = $container->getDefinition("{$this->getCacheId()}.{$id}")->getMethodCalls();
-            foreach ($calls as $index => $call) {
+            // Definition
+            $definition  = $container->getDefinition("{$this->getCacheId()}.{$id}");
+            // DefinitionDecorator
+            $parent      = $container->getDefinition($definition->getParent());
+            $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
+            foreach ($actualCalls as $index => $call) {
                 if (isset($expAddMethodCalls[$index]) && is_array($expAddMethodCalls[$index])) {
                     foreach ($expAddMethodCalls[$index] as $method => $arguments) {
                         // method name
@@ -491,7 +495,11 @@ class RegisterTest extends RegisterTestCase
         // whether user cache service defined
         foreach ($expected as $serviceId => $expectedCalls) {
             $this->assertTrue($container->hasDefinition($serviceId));
-            $actualCalls = $container->getDefinition($serviceId)->getMethodCalls();
+            // Definition
+            $definition  = $container->getDefinition($serviceId);
+            // DefinitionDecorator
+            $parent      = $container->getDefinition($definition->getParent());
+            $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
             foreach ($actualCalls as $i => $call) {
                 // method name
                 $this->assertSame(key($expectedCalls[$i]), $call[0]);
@@ -1067,15 +1075,18 @@ class RegisterTest extends RegisterTestCase
         $method->setAccessible(true);
         $method->invoke($register);
 
+        // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id);
+        // DefinitionDecorator
+        $parent     = $container->getDefinition($definition->getParent());
 
         // assert addMethodCalls simplified
-        $calls = $definition->getMethodCalls();
-        $this->assertSame('setArrayAccess', $calls[0][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[0][1][0]);
+        $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
+        $this->assertSame('setArrayAccess', $actualCalls[0][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[0][1][0]);
         // differ by setCacheDefinitionByAlias
-        $this->assertSame('setConfiguration', $calls[1][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[1][1][0]);
+        $this->assertSame('setConfiguration', $actualCalls[1][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[1][1][0]);
 
         // assert(Configuration)
         $method = new \ReflectionMethod($register, 'buildConfigurationId');
@@ -1116,14 +1127,17 @@ class RegisterTest extends RegisterTestCase
         $method->setAccessible(true);
         $method->invoke($register, $alias);
 
+        // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id, $alias);
+        // DefinitionDecorator
+        $parent     = $container->getDefinition($definition->getParent());
 
         // assert addMethodCalls simplified
-        $calls = $definition->getMethodCalls();
-        $this->assertSame('setArrayAccess', $calls[0][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[0][1][0]);
-        $this->assertFalse(isset($calls[1][0]));
-        $this->assertFalse(isset($calls[1][1][0]));
+        $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
+        $this->assertSame('setArrayAccess', $actualCalls[0][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[0][1][0]);
+        $this->assertFalse(isset($actualCalls[1][0]));
+        $this->assertFalse(isset($actualCalls[1][1][0]));
     }
 
     public function testSetConfigurationDefinition()

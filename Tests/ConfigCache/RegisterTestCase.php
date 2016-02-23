@@ -63,10 +63,16 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         $aliases = $alias !== '' ? array($alias) : array();
         $userCacheId = implode('.', array_merge(array($this->getCacheId(), $id), $aliases));
         $this->assertTrue($container->hasDefinition($userCacheId));
+        // Definition
         $definition = $container->getDefinition($userCacheId);
+        // DefinitionDecorator
+        $parent = $container->getDefinition($definition->getParent());
         $this->assertTrue($definition->isPublic());
-        $this->assertTrue($definition->isLazy());
-        $this->assertSame($this->configCacheClass, $definition->getClass());
+        $this->assertTrue($parent->isLazy());
+        // The class name is defined as parent Definition on Register. (current Definition is null)
+        // On the other hand, the class name is defined as current Definition on RegisterLocale.
+        // An actual class name is changed by these cases.
+        $this->assertSame($this->configCacheClass, $definition->getClass() ?: $parent->getClass());
         $arguments = $definition->getArguments();
         $this->assertSame(3, count($arguments));
         foreach ($arguments as $i => $argument) {
