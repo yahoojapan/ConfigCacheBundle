@@ -11,9 +11,10 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
+use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * This is an abstract class for preprocessing RegisterTest, Locale\RegisterLocaleTest
@@ -41,30 +42,37 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     /**
      * for testSetCacheDefinition, testSetCacheDefinitionByAlias
      */
-    protected function postSetCacheDefinition($container, $register, $tag, $id, $alias = '')
+    protected function postSetCacheDefinition($container, $tag, $id, $alias = '')
     {
         // assert(doctrine/cache)
         $doctrineCacheId = "{$this->getCacheId()}.doctrine.cache.{$id}";
-        $this->assertTrue($container->getValue($register)->hasDefinition($doctrineCacheId));
-        $definition = $container->getValue($register)->getDefinition($doctrineCacheId);
-        $this->assertFalse($definition->isPublic());
-        $this->assertSame('Doctrine\Common\Cache\PhpFileCache', $definition->getClass());
+        $this->assertTrue($container->hasDefinition($doctrineCacheId));
+        // Definition
+        $definition = $container->getDefinition($doctrineCacheId);
+        // DefinitionDecorator
+        $parent = $container->getDefinition($definition->getParent());
+        $this->assertFalse($parent->isPublic());
+        $this->assertSame('Doctrine\Common\Cache\PhpFileCache', $parent->getClass());
         $this->assertSame(
-            array(
-                $container->getValue($register)->getParameter('kernel.cache_dir')."/{$id}",
-                '.php',
-            ),
-            $definition->getArguments()
+            $container->getParameter('kernel.cache_dir')."/{$id}",
+            $definition->getArgument(0)
         );
+        $this->assertSame('.php', $parent->getArgument(1));
 
         // assert(ConfigCache)
         $aliases = $alias !== '' ? array($alias) : array();
         $userCacheId = implode('.', array_merge(array($this->getCacheId(), $id), $aliases));
-        $this->assertTrue($container->getValue($register)->hasDefinition($userCacheId));
-        $definition = $container->getValue($register)->getDefinition($userCacheId);
+        $this->assertTrue($container->hasDefinition($userCacheId));
+        // Definition
+        $definition = $container->getDefinition($userCacheId);
+        // DefinitionDecorator
+        $parent = $container->getDefinition($definition->getParent());
         $this->assertTrue($definition->isPublic());
-        $this->assertTrue($definition->isLazy());
-        $this->assertSame($this->configCacheClass, $definition->getClass());
+        $this->assertTrue($parent->isLazy());
+        // The class name is defined as parent Definition on Register. (current Definition is null)
+        // On the other hand, the class name is defined as current Definition on RegisterLocale.
+        // An actual class name is changed by these cases.
+        $this->assertSame($this->configCacheClass, $definition->getClass() ?: $parent->getClass());
         $arguments = $definition->getArguments();
         $this->assertSame(3, count($arguments));
         foreach ($arguments as $i => $argument) {
@@ -81,7 +89,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
                     $argument,
                     'Unexpected argument "1" instance.'
                 );
-                $this->assertSame("{$this->getCacheId()}.delegating_loader", (string) $argument);
+                $this->assertSame('yahoo_japan_config_cache.component.delegating_loader', (string) $argument);
             } elseif ($i === 2) {
                 $this->assertSame(array('aaa' => 'bbb'), $argument);
             } else {
@@ -95,14 +103,6 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         }
 
         // addMethodCalls is asserted on test method
-
-        // assert(ArrayAccess)
-        $arrayAccessId = "{$this->getCacheId()}.array_access.{$id}";
-        $this->assertTrue($container->getValue($register)->hasDefinition($arrayAccessId));
-        $arrayDefinition = $container->getValue($register)->getDefinition($arrayAccessId);
-        $this->assertFalse($arrayDefinition->isPublic());
-        $this->assertSame('YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess', $arrayDefinition->getClass());
-        $this->assertSame(0, count($arrayDefinition->getArguments()));
 
         return $definition;
     }
@@ -128,7 +128,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * return Register mock and container property
+     * @return array list of Register mock, ContainerBuilder
      */
     protected function getRegisterMockAndContainer(array $methods = array())
     {
@@ -138,26 +138,12 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         $property->setAccessible(true);
         $property->setValue($register, $container);
 
-        return array($register, $property);
-    }
-
-    /**
-     * return Register mock and container with parameters
-     */
-    protected function getRegisterMockAndContainerWithParameter(array $methods = array())
-    {
-        list($register, $container) = $this->getRegisterMockAndContainer($methods);
-        $parameters = Yaml::parse(file_get_contents(__DIR__.'/../../Resources/config/parameters.yml'));
-        foreach ($parameters['parameters'] as $key => $value) {
-            $container->getValue($register)->setParameter($key, $value);
-        }
-
         return array($register, $container);
     }
 
     protected function getContainerBuilder(array $data = array())
     {
-        return new ContainerBuilder(new ParameterBag(array_merge(array(
+        $container = new ContainerBuilder(new ParameterBag(array_merge(array(
             'kernel.bundles'        => array(
                 'FrameworkBundle'             => 'Symfony\\Bundle\\FrameworkBundle\\FrameworkBundle',
                 'YahooJapanConfigCacheBundle' => 'YahooJapan\\ConfigCacheBundle\\YahooJapanConfigCacheBundle',
@@ -169,6 +155,11 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
             'kernel.root_dir'       => __DIR__,
             'kernel.default_locale' => 'ja',
         ), $data)));
+
+        $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../../Resources/config'));
+        $loader->load('pre_services.yml');
+
+        return $container;
     }
 
     protected function getProperty($instance, $name)

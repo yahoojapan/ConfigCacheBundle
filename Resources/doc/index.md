@@ -17,8 +17,9 @@ Symfonyが生成するサービスコンテナなどのキャッシュではな�
 --------
 
 PHP 5.3.9以上  
-またSymfonyコンポーネントおよびdoctrine/cacheが必要です。  
-詳細は[composer.json](../../composer.json)を参照ください。
+またSymfony 2.7以上のコンポーネントおよびdoctrine/cacheが必要です。  
+Symfonyのセットアップには[Symfonyのドキュメント](http://symfony.com/doc/current/book/installation.html)を参照ください。  
+パッケージの依存関係は[composer.json](../../composer.json)を参照ください。
 
 インストール
 ------------

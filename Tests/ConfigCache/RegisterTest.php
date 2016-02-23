@@ -123,7 +123,6 @@ class RegisterTest extends RegisterTestCase
             'setConfigurationByExtension',
             'validateResources',
             'validateCacheId',
-            'setLoaderDefinition',
         );
         $register = $this->getRegisterMock($internalMethods);
         foreach ($internalMethods as $method) {
@@ -152,7 +151,7 @@ class RegisterTest extends RegisterTestCase
         $expConfigIds,
         $expAddMethodCalls
     ) {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
 
         // create directory/file
@@ -174,13 +173,9 @@ class RegisterTest extends RegisterTestCase
             // not assert excluding setting test here for asserting on testFindFilesByDirectory
             ->setProperty($register, 'excludes', array())
             ;
-        // only setLoaderDefinition, setParameter() is excuted on getRegisterMockAndContainerWithParameter()
-        $method = new \ReflectionMethod($register, 'setLoaderDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
 
         // store Definition count before registerInternal
-        $definitions = count($container->getValue($register)->getDefinitions());
+        $definitions = count($container->getDefinitions());
 
         // registerInternal
         $method = new \ReflectionMethod($register, $all ? 'registerAll' : 'register');
@@ -190,7 +185,7 @@ class RegisterTest extends RegisterTestCase
         // whether user cache service defined
         $this->assertSame(
             $expCacheDefinition,
-            $container->getValue($register)->hasDefinition("{$this->getCacheId()}.{$id}")
+            $container->hasDefinition("{$this->getCacheId()}.{$id}")
         );
 
         // whether configuration cache service defined
@@ -199,16 +194,20 @@ class RegisterTest extends RegisterTestCase
         $adjustment = $expCacheDefinition ? 2 : 0;
         $this->assertSame(
             $expConfigDefinition,
-            count($container->getValue($register)->getDefinitions()) > $definitions + $adjustment
+            count($container->getDefinitions()) > $definitions + $adjustment
         );
         foreach ($expConfigIds as $configId) {
-            $this->assertTrue($container->getValue($register)->hasDefinition($configId));
+            $this->assertTrue($container->hasDefinition($configId));
         }
 
         // whether addMethodCall defined
-        if ($container->getValue($register)->hasDefinition("{$this->getCacheId()}.{$id}")) {
-            $calls = $container->getValue($register)->getDefinition("{$this->getCacheId()}.{$id}")->getMethodCalls();
-            foreach ($calls as $index => $call) {
+        if ($container->hasDefinition("{$this->getCacheId()}.{$id}")) {
+            // Definition
+            $definition  = $container->getDefinition("{$this->getCacheId()}.{$id}");
+            // DefinitionDecorator
+            $parent      = $container->getDefinition($definition->getParent());
+            $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
+            foreach ($actualCalls as $index => $call) {
                 if (isset($expAddMethodCalls[$index]) && is_array($expAddMethodCalls[$index])) {
                     foreach ($expAddMethodCalls[$index] as $method => $arguments) {
                         // method name
@@ -281,7 +280,7 @@ class RegisterTest extends RegisterTestCase
                     array(
                         'setArrayAccess' => array(
                             'Symfony\Component\DependencyInjection\Reference',
-                            "{$this->getCacheId()}.array_access.{$id}",
+                            'yahoo_japan_config_cache.component.array_access',
                         ),
                     ),
                     array(
@@ -318,7 +317,7 @@ class RegisterTest extends RegisterTestCase
                     array(
                         'setArrayAccess' => array(
                             'Symfony\Component\DependencyInjection\Reference',
-                            "{$this->getCacheId()}.array_access.{$id}",
+                            'yahoo_japan_config_cache.component.array_access',
                         ),
                     ),
                     array(
@@ -365,7 +364,7 @@ class RegisterTest extends RegisterTestCase
                     array(
                         'setArrayAccess' => array(
                             'Symfony\Component\DependencyInjection\Reference',
-                            "{$this->getCacheId()}.array_access.{$id}",
+                            'yahoo_japan_config_cache.component.array_access',
                         ),
                     ),
                     array(
@@ -405,7 +404,7 @@ class RegisterTest extends RegisterTestCase
                     array(
                         'setArrayAccess' => array(
                             'Symfony\Component\DependencyInjection\Reference',
-                            "{$this->getCacheId()}.array_access.{$id}",
+                            'yahoo_japan_config_cache.component.array_access',
                         ),
                     ),
                     array(
@@ -458,7 +457,7 @@ class RegisterTest extends RegisterTestCase
         array $expected,
         $expectedException
     ) {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
 
         // create directory/file
@@ -480,13 +479,9 @@ class RegisterTest extends RegisterTestCase
             // not assert excluding setting test here for asserting on testFindFilesByDirectory
             ->setProperty($register, 'excludes', array())
             ;
-        // only setLoaderDefinition, setParameter() is excuted on getRegisterMockAndContainerWithParameter()
-        $method = new \ReflectionMethod($register, 'setLoaderDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
 
         // store Definition count before register
-        $definitions = count($container->getValue($register)->getDefinitions());
+        $definitions = count($container->getDefinitions());
 
         if (!is_null($expectedException)) {
             $this->setExpectedException($expectedException);
@@ -499,8 +494,12 @@ class RegisterTest extends RegisterTestCase
 
         // whether user cache service defined
         foreach ($expected as $serviceId => $expectedCalls) {
-            $this->assertTrue($container->getValue($register)->hasDefinition($serviceId));
-            $actualCalls = $container->getValue($register)->getDefinition($serviceId)->getMethodCalls();
+            $this->assertTrue($container->hasDefinition($serviceId));
+            // Definition
+            $definition  = $container->getDefinition($serviceId);
+            // DefinitionDecorator
+            $parent      = $container->getDefinition($definition->getParent());
+            $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
             foreach ($actualCalls as $i => $call) {
                 // method name
                 $this->assertSame(key($expectedCalls[$i]), $call[0]);
@@ -523,7 +522,7 @@ class RegisterTest extends RegisterTestCase
         $bundleId        = 'register_test';
         $cacheId         = $this->getCacheId();
         $baseId          = "{$cacheId}.{$bundleId}";
-        $arrayAccessId   = "{$cacheId}.array_access.{$bundleId}";
+        $arrayAccessId   = 'yahoo_japan_config_cache.component.array_access';
         $configurationId = "{$cacheId}.configuration.yahoo_japan.config_cache_bundle.tests.fixtures.register_configuration";
 
         return array(
@@ -605,7 +604,7 @@ class RegisterTest extends RegisterTestCase
     public function testInitializeResources($resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
     {
         $internalMethod = 'setCacheDefinition';
-        list($register, ) = $this->getRegisterMockAndContainerWithParameter(array($internalMethod));
+        list($register, ) = $this->getRegisterMockAndContainer(array($internalMethod));
         $id = 'register_test';
         $this
             ->setProperty($register, 'bundleId', $id)
@@ -697,7 +696,7 @@ class RegisterTest extends RegisterTestCase
     public function testInitializeAllResources($bundles, $resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
     {
         $internalMethod = 'setCacheDefinition';
-        list($register, ) = $this->getRegisterMockAndContainerWithParameter(array($internalMethod));
+        list($register, ) = $this->getRegisterMockAndContainer(array($internalMethod));
         $this->setProperty($register, 'resources', $resources);
 
         // only assert calling method
@@ -1056,26 +1055,6 @@ class RegisterTest extends RegisterTestCase
         );
     }
 
-    public function testSetParameter()
-    {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
-        $expected = array(
-            'Doctrine\Common\Cache\PhpFileCache'                             => 'php_file_cache.class',
-            'YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache'           => 'config_cache.class',
-            'YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader' => 'yaml_file_loader.class',
-            'YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader'  => 'xml_file_loader.class',
-            'Symfony\Component\Config\Loader\LoaderResolver'                 => 'loader_resolver.class',
-            'Symfony\Component\Config\Loader\DelegatingLoader'               => 'delegating_loader.class',
-        );
-        foreach ($expected as $className => $serviceId) {
-            $this->assertTrue($container->getValue($register)->hasParameter("{$this->getCacheId()}.{$serviceId}"));
-            $this->assertSame(
-                $className,
-                $container->getValue($register)->getParameter("{$this->getCacheId()}.{$serviceId}")
-            );
-        }
-    }
-
     /**
      * test setCacheDefinition and createCacheDefinition in this method
      *
@@ -1083,7 +1062,7 @@ class RegisterTest extends RegisterTestCase
      */
     public function testSetCacheDefinition($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
@@ -1096,22 +1075,25 @@ class RegisterTest extends RegisterTestCase
         $method->setAccessible(true);
         $method->invoke($register);
 
-        $definition = $this->postSetCacheDefinition($container, $register, $tag, $id);
+        // Definition
+        $definition = $this->postSetCacheDefinition($container, $tag, $id);
+        // DefinitionDecorator
+        $parent     = $container->getDefinition($definition->getParent());
 
         // assert addMethodCalls simplified
-        $calls = $definition->getMethodCalls();
-        $this->assertSame('setArrayAccess', $calls[0][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[0][1][0]);
+        $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
+        $this->assertSame('setArrayAccess', $actualCalls[0][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[0][1][0]);
         // differ by setCacheDefinitionByAlias
-        $this->assertSame('setConfiguration', $calls[1][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[1][1][0]);
+        $this->assertSame('setConfiguration', $actualCalls[1][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[1][1][0]);
 
         // assert(Configuration)
         $method = new \ReflectionMethod($register, 'buildConfigurationId');
         $method->setAccessible(true);
         $configId = $method->invoke($register, $configuration);
-        $this->assertTrue($container->getValue($register)->hasDefinition($configId));
-        $definition = $container->getValue($register)->getDefinition($configId);
+        $this->assertTrue($container->hasDefinition($configId));
+        $definition = $container->getDefinition($configId);
         $this->assertFalse($definition->isPublic());
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
         $this->assertSame(0, count($definition->getArguments()));
@@ -1135,7 +1117,7 @@ class RegisterTest extends RegisterTestCase
      */
     public function testSetCacheDefinitionByAlias($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
+        list($register, $container) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
@@ -1145,14 +1127,17 @@ class RegisterTest extends RegisterTestCase
         $method->setAccessible(true);
         $method->invoke($register, $alias);
 
-        $definition = $this->postSetCacheDefinition($container, $register, $tag, $id, $alias);
+        // Definition
+        $definition = $this->postSetCacheDefinition($container, $tag, $id, $alias);
+        // DefinitionDecorator
+        $parent     = $container->getDefinition($definition->getParent());
 
         // assert addMethodCalls simplified
-        $calls = $definition->getMethodCalls();
-        $this->assertSame('setArrayAccess', $calls[0][0]);
-        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $calls[0][1][0]);
-        $this->assertFalse(isset($calls[1][0]));
-        $this->assertFalse(isset($calls[1][1][0]));
+        $actualCalls = array_merge($parent->getMethodCalls(), $definition->getMethodCalls());
+        $this->assertSame('setArrayAccess', $actualCalls[0][0]);
+        $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[0][1][0]);
+        $this->assertFalse(isset($actualCalls[1][0]));
+        $this->assertFalse(isset($actualCalls[1][1][0]));
     }
 
     public function testSetConfigurationDefinition()
@@ -1166,119 +1151,17 @@ class RegisterTest extends RegisterTestCase
 
         // state not registered ID
         $method->invoke($register, $id, $configuration);
-        $this->assertTrue($container->getValue($register)->hasDefinition($id));
-        $definition = $container->getValue($register)->getDefinition($id);
+        $this->assertTrue($container->hasDefinition($id));
+        $definition = $container->getDefinition($id);
         $this->assertFalse($definition->isPublic());
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
 
         // state already registered ID
         $mock = $this->getMock('Symfony\Component\Config\Definition\ConfigurationInterface');
         $method->invoke($register, $id, $mock);
-        $definition = $container->getValue($register)->getDefinition($id);
+        $definition = $container->getDefinition($id);
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
         $this->assertFalse(strpos('Mock_ConfigurationInterface', $definition->getClass()) === 0);
-    }
-
-    public function testSetLoaderDefinition()
-    {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
-        $method = new \ReflectionMethod($register, 'setLoaderDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
-
-        // assert
-        $yamlLoaderId       = "{$this->getCacheId()}.yaml_file_loader";
-        $xmlLoaderId        = "{$this->getCacheId()}.xml_file_loader";
-        $resolverId         = "{$this->getCacheId()}.loader_resolver";
-        $delegatingLoaderId = "{$this->getCacheId()}.delegating_loader";
-
-        $this->assertTrue($container->getValue($register)->hasDefinition($yamlLoaderId));
-        $this->assertTrue($container->getValue($register)->hasDefinition($xmlLoaderId));
-        $this->assertTrue($container->getValue($register)->hasDefinition($resolverId));
-        $this->assertTrue($container->getValue($register)->hasDefinition($delegatingLoaderId));
-
-        $yamlLoaderDefinition = $container->getValue($register)->getDefinition($yamlLoaderId);
-        $xmlLoaderDefinition  = $container->getValue($register)->getDefinition($xmlLoaderId);
-        $resolverDefinition   = $container->getValue($register)->getDefinition($resolverId);
-        $delLoaderDefinition  = $container->getValue($register)->getDefinition($delegatingLoaderId);
-
-        $this->assertFalse($yamlLoaderDefinition->isPublic());
-        $this->assertFalse($xmlLoaderDefinition->isPublic());
-        $this->assertFalse($resolverDefinition->isPublic());
-        $this->assertFalse($delLoaderDefinition->isPublic());
-
-        $this->assertSame('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader', $yamlLoaderDefinition->getClass());
-        $this->assertSame('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader', $xmlLoaderDefinition->getClass());
-        $this->assertSame('Symfony\Component\Config\Loader\LoaderResolver', $resolverDefinition->getClass());
-        $this->assertSame('Symfony\Component\Config\Loader\DelegatingLoader', $delLoaderDefinition->getClass());
-
-        $arguments = $resolverDefinition->getArguments();
-        if (isset($arguments[0][0])) {
-            $this->assertInstanceOf(
-                'Symfony\Component\DependencyInjection\Reference',
-                $arguments[0][0],
-                'Unexpected argument "0-0" instance.'
-            );
-            $this->assertSame($yamlLoaderId, (string) $arguments[0][0]);
-        } else {
-            $this->fail('The LoaderResolver argument "0-0" is not set.');
-        }
-        if (isset($arguments[0][1])) {
-            $this->assertInstanceOf(
-                'Symfony\Component\DependencyInjection\Reference',
-                $arguments[0][1],
-                'Unexpected argument "0-1" instance.'
-            );
-            $this->assertSame($xmlLoaderId, (string) $arguments[0][1]);
-        } else {
-            $this->fail('The LoaderResolver argument "0-1" is not set.');
-        }
-
-        $arguments = $delLoaderDefinition->getArguments();
-        if (isset($arguments[0])) {
-            $this->assertInstanceOf(
-                'Symfony\Component\DependencyInjection\Reference',
-                $arguments[0],
-                'Unexpected argument "0" instance.'
-            );
-            $this->assertSame($resolverId, (string) $arguments[0]);
-        } else {
-            $this->fail('The DelegatingLoader argument "0" is not set.');
-        }
-    }
-
-    /**
-     * @dataProvider      setLoaderDefinitionExceptionProvider
-     * @expectedException \Exception
-     */
-    public function testSetLoaderDefinitionException($preDefinedId)
-    {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
-        $noUsedId = 'register_test';
-
-        // set to be duplicated Definition
-        $container->getValue($register)->setDefinition($preDefinedId, new Definition($noUsedId));
-
-        // exception thrown
-        $method = new \ReflectionMethod($register, 'setLoaderDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
-
-        // not pass here
-        $this->fail('Expected exception does not occurred.');
-    }
-
-    /**
-     * @return array ($preDefinedId)
-     */
-    public function setLoaderDefinitionExceptionProvider()
-    {
-        return array(
-            array("{$this->getCacheId()}.yaml_file_loader"),
-            array("{$this->getCacheId()}.xml_file_loader"),
-            array("{$this->getCacheId()}.loader_resolver"),
-            array("{$this->getCacheId()}.delegating_loader"),
-        );
     }
 
     /**

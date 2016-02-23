@@ -22,11 +22,8 @@ class ArrayLoader implements ArrayLoaderInterface
      */
     public function load(array $resource)
     {
-        foreach ($resource['acme_demo'] as $key => &$value) {
-            if ($key === 'function1') {
-                $value['key1'] = 'replaced';
-            }
-        }
+        $resource['bill-to']['given']  = 'Taro';
+        $resource['bill-to']['family'] = 'Yahoo';
 
         return $resource;
     }
@@ -44,7 +41,7 @@ services:
     acme_demo.yaml_file_loader:
         class: YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader
         calls:
-            - [addLoader, [@acme_demo.array_loader]]
+            - [addLoader, ['@acme_demo.array_loader']]
 ```
 
 `Bundle`クラスでキャッシュ生成前に`YamlFileLoader`を差し替えます。
@@ -55,7 +52,6 @@ services:
 // src/Acme/DemoBundle/AcmeDemoBundle.php
 namespace Acme\DemoBundle;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class AcmeDemoBundle extends Bundle
@@ -89,9 +85,11 @@ class WelcomeController extends Controller
 
         /**
          * array(
-         *     'acme_demo' => array(
-         *         'function1' => array('key1' => 'replaced'),
-         *         'function2' => 'value2',
+         *     'invoice' => 34843,
+         *     'date' => '2001-01-23',
+         *     'bill-to' => array(
+         *         'given' => 'Taro',
+         *         'family' => 'Yahoo',
          *     ),
          * )
          */

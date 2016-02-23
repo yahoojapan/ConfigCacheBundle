@@ -3,16 +3,28 @@
 
 AcmeDemoBundleに設定ファイルsample.ymlを配置するケースを例にして、キャッシュ生成までの手順を示します。
 
+##### AcmeDemoBundle生成
+
+Symfonyのバンドルを1つ作成しておきます。
+
+```sh
+# Symfony 2.x
+$ app/console generate:bundle --namespace=Acme/DemoBundle --format=yml
+# Symfony 3.x
+$ bin/console generate:bundle --namespace=Acme/DemoBundle --format=yml
+```
+
 ##### 設定ファイル
 
 Resources/config配下に定義したい設定ファイルを配置します。
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample.yml
-all:
-   function1:
-       key1: value1
-   function2: value2
+invoice: 34843
+date   : '2001-01-23'
+bill-to:
+    given  : Chris
+    family : Dumars
 ```
 
 ##### Extensionクラス
@@ -62,7 +74,6 @@ AcmeDemoBundle.phpにキャッシュ生成の記述を追加します。
 // src/Acme/DemoBundle/AcmeDemoBundle.php
 namespace Acme\DemoBundle;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class AcmeDemoBundle extends Bundle
@@ -82,13 +93,19 @@ class AcmeDemoBundle extends Bundle
 Symfonyのconsoleを使ってキャッシュ生成します。
 
 ```sh
+# Symfony 2.x
 $ app/console cache:warmup
+# Symfony 3.x
+$ bin/console cache:warmup
 ```
 
 ここまで完了するとキャッシュオブジェクト`ConfigCache`がサービス化された状態になります。
 
 ```sh
+# Symfony 2.x
 $ app/console debug:container config.acme_demo.sample
+# Symfony 3.x
+$ bin/console debug:container config.acme_demo.sample
 [container] Information for service config.acme_demo.sample
 Service Id       config.acme_demo.sample
 Class            YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
@@ -104,20 +121,20 @@ Abstract         no
 生成されたキャッシュはSymfonyのキャッシュディレクトリ配下に配置されます。
 
 ```sh
-$ cat app/cache/dev/acme_demo/ec/5b63616368655d5b315d.php
+// Symfony 2.x : app/cache/dev/acme_demo/75/5b73616d706c655d5b315d.php
+// Symfony 3.x : var/cache/dev/acme_demo/75/5b73616d706c655d5b315d.php
 <?php return array (
   'lifetime' => 0,
   'data' =>
   array (
-    'all' =>
+    'invoice' => 34843,
+    'date' => '2001-01-23',
+    'bill-to' =>
     array (
-      'function1' =>
-      array (
-        'key1' => 'value1',
-      ),
-      'function2' => 'value2',
-    ),
-  ),
+      'given' => 'Chris',
+      'family' => 'Dumars',
+    )
+  )
 );
 ```
 
@@ -140,13 +157,13 @@ class WelcomeController extends Controller
         // ConfigCache
         $cache = $this->get('config.acme_demo.sample');
 
-        // = array('function1' => array('key1' => 'value1'), 'function2' => 'value2')
-        $cache->find('all');
+        // 34843
+        $cache->find('invoice');
 
-        // = 'value1'
-        $cache->find('all.function1.key1');
+        // 'Chris'
+        $cache->find('bill-to.given');
 
-        // = array('all' => array('function1' => array('key1' => 'value1'), 'function2' => 'value2'))
+        // array('invoice' => 34843, 'date' => '2001-01-23', 'bill-to' => array('given' => 'Chris', 'family' => 'Dumars'))
         $cache->findAll();
 
         // ...
@@ -160,7 +177,7 @@ services:
     acme_demo.sample_model:
         class: Acme\DemoBundle\SampleModel
         arguments:
-            - @config.acme_demo.sample
+            - '@config.acme_demo.sample'
 ```
 
 ```php
@@ -182,11 +199,11 @@ class SampleModel
 
     public function sampleMethod()
     {
-        // = array('key1' => 'value1')
-        $this->config->find('all.function1');
+        // 34843
+        $this->config->find('invoice');
 
-        // = 'value1'
-        $this->config->find('all.function1.key1');
+        // 'Chris'
+        $this->config->find('bill-to.given');
 
         // ...
     }

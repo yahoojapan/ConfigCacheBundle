@@ -17,6 +17,7 @@ use Symfony\Component\Config\Resource\FileResource as BaseFileResource;
 use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
@@ -142,9 +143,6 @@ class Register
         // validate set data on constructor
         $this->validateResources();
         $this->validateCacheId();
-
-        // preprocess registerInternal()
-        $this->setLoaderDefinition();
     }
 
     /**
@@ -373,35 +371,21 @@ class Register
     protected function createCacheDefinition()
     {
         // doctrine/cache
-        $cache = new Definition(
-            $this->container->getParameter('config.php_file_cache.class'),
-            array(
-                $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}",
-                '.php',
-            )
-        );
-        $cache->setPublic(false);
+        $cache = new DefinitionDecorator('yahoo_japan_config_cache.component.php_file_cache');
+        // only replace cache directory
+        $cache->replaceArgument(0, $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}");
         $cacheId = $this->buildId(array('doctrine', 'cache', $this->bundleId));
         $this->container->setDefinition($cacheId, $cache);
 
-        // ArrayAccess
-        $arrayAccess = new Definition('YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess');
-        $arrayAccess->setPublic(false);
-        $arrayAccessId = $this->buildId(array('array_access', $this->bundleId));
-        $this->container->setDefinition($arrayAccessId, $arrayAccess);
-
         // user cache
-        $definition = new Definition(
-            $this->container->getParameter('config.config_cache.class'),
-            array(
+        $definition = new DefinitionDecorator('yahoo_japan_config_cache.component.config_cache');
+        $definition
+            ->setPublic(true)
+            ->setArguments(array(
                 new Reference($cacheId),
                 new Reference($this->container->getParameter('config.delegating_loader.id')),
                 $this->appConfig,
-            )
-        );
-        $definition
-            ->setLazy(true)
-            ->addMethodCall('setArrayAccess', array(new Reference($arrayAccessId)))
+            ))
             ;
         if (!is_null($this->tag)) {
             $definition->addTag($this->tag);
@@ -439,53 +423,6 @@ class Register
             $configDefinition->setPublic(false);
             $this->container->setDefinition($configId, $configDefinition);
         }
-    }
-
-    /**
-     * Sets a loader definition.
-     */
-    protected function setLoaderDefinition()
-    {
-        $yamlLoader = new Definition($this->container->getParameter('config.yaml_file_loader.class'));
-        $xmlLoader  = new Definition($this->container->getParameter('config.xml_file_loader.class'));
-        $yamlLoader->setPublic(false);
-        $xmlLoader->setPublic(false);
-        $yamlLoaderId = $this->container->getParameter('config.yaml_file_loader.id');
-        $xmlLoaderId  = $this->container->getParameter('config.xml_file_loader.id');
-
-        if ($this->container->hasDefinition($yamlLoaderId)) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $yamlLoaderId));
-        }
-        if ($this->container->hasDefinition($xmlLoaderId)) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $xmlLoaderId));
-        }
-        $this->container->setDefinition($yamlLoaderId, $yamlLoader);
-        $this->container->setDefinition($xmlLoaderId, $xmlLoader);
-
-        $resolver = new Definition(
-            $this->container->getParameter('config.loader_resolver.class'),
-            array(array(
-                new Reference($yamlLoaderId),
-                new Reference($xmlLoaderId),
-            ))
-        );
-        $resolver->setPublic(false);
-        $resolverId = $this->container->getParameter('config.loader_resolver.id');
-        if ($this->container->hasDefinition($resolverId)) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $resolverId));
-        }
-        $this->container->setDefinition($resolverId, $resolver);
-
-        $loader = new Definition(
-            $this->container->getParameter('config.delegating_loader.class'),
-            array(new Reference($resolverId))
-        );
-        $loader->setPublic(false);
-        $delegatingLoaderId = $this->container->getParameter('config.delegating_loader.id');
-        if ($this->container->hasDefinition($delegatingLoaderId)) {
-            throw new \Exception(sprintf("Service[%s] already registered.", $delegatingLoaderId));
-        }
-        $this->container->setDefinition($delegatingLoaderId, $loader);
     }
 
     /**
