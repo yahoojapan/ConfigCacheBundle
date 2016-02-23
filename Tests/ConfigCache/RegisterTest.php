@@ -1056,26 +1056,6 @@ class RegisterTest extends RegisterTestCase
         );
     }
 
-    public function testSetParameter()
-    {
-        list($register, $container) = $this->getRegisterMockAndContainerWithParameter();
-        $expected = array(
-            'Doctrine\Common\Cache\PhpFileCache'                             => 'php_file_cache.class',
-            'YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache'           => 'config_cache.class',
-            'YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader' => 'yaml_file_loader.class',
-            'YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader'  => 'xml_file_loader.class',
-            'Symfony\Component\Config\Loader\LoaderResolver'                 => 'loader_resolver.class',
-            'Symfony\Component\Config\Loader\DelegatingLoader'               => 'delegating_loader.class',
-        );
-        foreach ($expected as $className => $serviceId) {
-            $this->assertTrue($container->getValue($register)->hasParameter("{$this->getCacheId()}.{$serviceId}"));
-            $this->assertSame(
-                $className,
-                $container->getValue($register)->getParameter("{$this->getCacheId()}.{$serviceId}")
-            );
-        }
-    }
-
     /**
      * test setCacheDefinition and createCacheDefinition in this method
      *
