@@ -1,6 +1,3 @@
-imports:
-    - { resource: parameters.yml }
-
 services:
     yahoo_japan_config_cache.component.config_cache:
         class: YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache

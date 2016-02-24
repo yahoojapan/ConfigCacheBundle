@@ -383,7 +383,7 @@ class Register
             ->setPublic(true)
             ->setArguments(array(
                 new Reference($cacheId),
-                new Reference($this->container->getParameter('config.delegating_loader.id')),
+                new Reference('yahoo_japan_config_cache.component.delegating_loader'),
                 $this->appConfig,
             ))
             ;

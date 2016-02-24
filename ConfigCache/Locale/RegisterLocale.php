@@ -73,7 +73,7 @@ class RegisterLocale extends Register
     protected function createCacheDefinition()
     {
         $definition = parent::createCacheDefinition();
-        $definition->setClass($this->container->getParameter('config.locale.config_cache.class'));
+        $definition->setClass('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache');
 
         return $definition;
     }
