@@ -13,8 +13,9 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Resource;
 
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\FileResourceConfiguration;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class FileResourceTest extends \PHPUnit_Framework_TestCase
+class FileResourceTest extends TestCase
 {
     public function testConstruct()
     {
@@ -67,7 +68,7 @@ class FileResourceTest extends \PHPUnit_Framework_TestCase
     public function testSetConfiguration()
     {
         $resource = $this->createFileResourceMock();
-        $configuration = $this->getMock('Symfony\Component\Config\Definition\ConfigurationInterface');
+        $configuration = $this->util->createInterfaceMock('Symfony\Component\Config\Definition\ConfigurationInterface');
         $this->assertSame($configuration, $resource->setConfiguration($configuration)->getConfiguration());
     }
 
@@ -126,17 +127,6 @@ class FileResourceTest extends \PHPUnit_Framework_TestCase
 
     protected function createFileResourceMock(array $methods = null)
     {
-        return $this->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource', $methods);
-    }
-
-    protected function createMock($name, array $methods = null)
-    {
-        $mock = $this->getMockBuilder($name)
-            ->disableOriginalConstructor()
-            ->setMethods($methods)
-            ->getMock()
-            ;
-
-        return $mock;
+        return $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource', $methods);
     }
 }

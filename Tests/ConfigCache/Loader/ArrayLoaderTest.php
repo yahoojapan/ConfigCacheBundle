@@ -11,17 +11,18 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Loader;
 
-class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
+
+class ArrayLoaderTest extends TestCase
 {
     protected $loader;
 
     public function setUp()
     {
+        parent::setUp();
+
         // re-create each test case (if not, fail to run expects method)
-        $this->loader = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoader')
-            ->setMethods(array('walkAllLeaves', 'walkInternal'))
-            ->getMockForAbstractClass()
-            ;
+        $this->loader = $this->createLoaderMock(array('walkAllLeaves', 'walkInternal'));
     }
 
     public function testLoad()
@@ -44,10 +45,7 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
     public function testWalkAllLeaves()
     {
         // mock only walkInternal
-        $this->loader = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoader')
-            ->setMethods(array('walkInternal'))
-            ->getMockForAbstractClass()
-            ;
+        $this->loader = $this->createLoaderMock(array('walkInternal'));
         // three leaves data, called walkInternal three times
         $data = array(
             'aaa' => 'bbb',
@@ -73,7 +71,7 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
     public function testWalkInternal()
     {
         // not use mock method
-        $this->loader = $this->getMockForAbstractClass('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoader');
+        $this->loader = $this->createLoaderMock();
         $method = new \ReflectionMethod($this->loader, 'walkInternal');
         $method->setAccessible(true);
         list($key, $value) = array('key', 'prefix_value');
@@ -89,5 +87,10 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
         $method = new \ReflectionMethod($this->loader, 'getInternalMethod');
         $method->setAccessible(true);
         $this->assertSame('walkInternal', $method->invoke($this->loader));
+    }
+
+    protected function createLoaderMock(array $methods = null)
+    {
+        return $this->util->createAbstractMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoader', $methods);
     }
 }

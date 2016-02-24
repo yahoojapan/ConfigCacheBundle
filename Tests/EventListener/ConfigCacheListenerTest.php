@@ -21,22 +21,15 @@ class ConfigCacheListenerTest extends TestCase
      */
     public function testOnKernelRequest($isMasterRequest, $configCount)
     {
-        $request = $this->getMockBuilder('Symfony\Component\HttpFoundation\Request')
-            ->disableOriginalConstructor()
-            ->setMethods(array('getLocale'))
-            ->getMock()
-            ;
-        $locale = 'uk';
+        $locale  = 'uk';
+        $request = $this->util->createMock('Symfony\Component\HttpFoundation\Request', array('getLocale'));
         $request
             ->expects($isMasterRequest ? $this->once() : $this->never())
             ->method('getLocale')
             ->willReturn($locale)
             ;
-        $event = $this->getMockBuilder('Symfony\Component\HttpKernel\Event\GetResponseEvent')
-            ->disableOriginalConstructor()
-            ->setMethods(array('isMasterRequest', 'getRequest'))
-            ->getMock()
-            ;
+        $name  = 'Symfony\Component\HttpKernel\Event\GetResponseEvent';
+        $event = $this->util->createMock($name, array('isMasterRequest', 'getRequest'));
         $event
             ->expects($this->once())
             ->method('isMasterRequest')
@@ -51,11 +44,8 @@ class ConfigCacheListenerTest extends TestCase
         // test with new for nothing constructor
         $listener = new ConfigCacheListener();
         for ($i = 0; $i < $configCount; $i++) {
-            $config = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCacheInterface')
-                // mock only setCurrentLocale
-                ->setMethods(array('setCurrentLocale', 'setReferableLocales', 'setDefaultLocale'))
-                ->getMock()
-                ;
+            $name   = 'YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCacheInterface';
+            $config = $this->util->createInterfaceMock($name);
             $config
                 ->expects($this->once())
                 ->method('setCurrentLocale')
@@ -92,7 +82,8 @@ class ConfigCacheListenerTest extends TestCase
         $this->assertSame(array(), $this->util->getProperty($listener, 'configs'));
 
         // after added
-        $config = $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCacheInterface');
+        $name   = 'YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCacheInterface';
+        $config = $this->util->createInterfaceMock($name);
         $listener->addConfig($config);
         $this->assertSame(array($config), $this->util->getProperty($listener, 'configs'));
     }

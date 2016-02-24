@@ -13,23 +13,19 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
 use Symfony\Component\Config\Definition\NodeInterface;
 use Symfony\Component\Finder\Finder;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheConfiguration;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheDeepConfiguration;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheMasterConfiguration;
-use YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess;
 
 class ConfigCacheTest extends ConfigCacheTestCase
 {
     public function testConstruct()
     {
-        $cache       = $this->getMock('Doctrine\Common\Cache\Cache');
-        $loader      = $this->getMock('Symfony\Component\Config\Loader\LoaderInterface');
-        $className   = 'YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache';
-        $configCache = $this->getMockBuilder($className)
-            ->disableOriginalConstructor()
-            ->getMock()
-            ;
-        $class = new \ReflectionClass($className);
+        $cache       = $this->util->createAbstractMock('Doctrine\Common\Cache\Cache');
+        $loader      = $this->util->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
+        $configCache = $this->createConfigCacheMock();
+        $class = new \ReflectionClass('YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache');
         $constructor = $class->getConstructor();
         $this->assertNull($constructor->invoke($configCache, $cache, $loader));
         $this->assertNull($constructor->invoke($configCache, $cache, $loader, array('aaa' => 'bbb')));
@@ -38,11 +34,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testFind()
     {
         // assert only calling findInterna, findAll
-        $configCache = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache')
-            ->disableOriginalConstructor()
-            ->setMethods(array('findInternal', 'findAll'))
-            ->getMock()
-            ;
+        $configCache = $this->createConfigCacheMock(array('findInternal', 'findAll'));
         $key = 'testKey';
         $default = array('default' => 'zzz');
         $findAllResult = array('aaa' => 'bbb');
@@ -485,7 +477,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testLoadOne()
     {
         self::$cache->addResource($resource = __DIR__.'/../Fixtures/test_service1.yml');
-        $loader = $this->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
+        $loader = $this->util->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
         $loader
             ->expects($this->once())
             ->method('load')
@@ -611,22 +603,8 @@ class ConfigCacheTest extends ConfigCacheTestCase
         $this->assertFalse($method->invoke(self::$cache));
     }
 
-    protected function createInterfaceMock($interfaceName)
+    protected function createConfigCacheMock(array $methods = null)
     {
-        return $this->getMockBuilder($interfaceName)
-            ->setMethods($this->getMethods($interfaceName))
-            ->getMock()
-            ;
-    }
-
-    protected function getMethods($name)
-    {
-        $methods = array();
-        $class   = new \ReflectionClass($name);
-        foreach ($class->getMethods() as $method) {
-            $methods[] = $method->getName();
-        }
-
-        return $methods;
+        return $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache', $methods);
     }
 }

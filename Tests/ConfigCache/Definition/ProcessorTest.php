@@ -14,8 +14,9 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Definition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Definition\Processor;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ProcessorConfiguration;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class ProcessorTest extends \PHPUnit_Framework_TestCase
+class ProcessorTest extends TestCase
 {
     protected static $processor;
     protected static $configuration;
@@ -31,14 +32,14 @@ class ProcessorTest extends \PHPUnit_Framework_TestCase
      */
     public function testProcessConfiguration()
     {
-        $internalMethod = 'processConfiguration';
-        $processor      = $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Definition\Processor', array($internalMethod));
-        $validated      = array('validated');
-        $validating     = array('validating');
-        $node           = self::$configuration->getConfigTreeBuilder()->buildTree();
+        $name       = 'YahooJapan\ConfigCacheBundle\ConfigCache\Definition\Processor';
+        $processor  = $this->util->createMock($name, array('processConfiguration'));
+        $validated  = array('validated');
+        $validating = array('validating');
+        $node       = self::$configuration->getConfigTreeBuilder()->buildTree();
         $processor
             ->expects($this->once())
-            ->method($internalMethod)
+            ->method('processConfiguration')
             ->with($validated, $validating, self::$configuration, $node)
             ->willReturn(null)
             ;

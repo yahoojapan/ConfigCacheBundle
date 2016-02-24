@@ -24,7 +24,7 @@ class ArrayLoaderTest extends TestCase
     {
         $catalogue  = new MessageCatalogue('en', $messages);
         $methods    = array('getCatalogue', 'trans');
-        $translator = $this->createMock('Symfony\Bundle\FrameworkBundle\Translation\Translator', $methods);
+        $translator = $this->util->createMock('Symfony\Bundle\FrameworkBundle\Translation\Translator', $methods);
         $translator
             ->expects($this->once())
             ->method('getCatalogue')
@@ -77,7 +77,7 @@ class ArrayLoaderTest extends TestCase
 
     public function testGetInternalMethod()
     {
-        $loader = $this->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader');
+        $loader = $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader');
         $method = new \ReflectionMethod($loader, 'getInternalMethod');
         $method->setAccessible(true);
         // has no locale
@@ -85,16 +85,5 @@ class ArrayLoaderTest extends TestCase
         // has locale
         $this->util->setProperty($loader, 'locale', 'en');
         $this->assertSame('walkByLocaleInternal', $method->invoke($loader));
-    }
-
-    protected function createMock($name, array $methods = null)
-    {
-        $mock = $this->getMockBuilder($name)
-            ->disableOriginalConstructor()
-            ->setMethods($methods)
-            ->getMock()
-            ;
-
-        return $mock;
     }
 }

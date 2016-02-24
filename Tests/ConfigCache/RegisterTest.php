@@ -11,7 +11,6 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Filesystem\Filesystem;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
@@ -36,14 +35,10 @@ class RegisterTest extends RegisterTestCase
 
     public function testConstruct()
     {
-        $extension = $this->getMock('Symfony\Component\DependencyInjection\Extension\ExtensionInterface');
+        $extension = $this->createExtensionMock();
         $container = $this->getContainerBuilder();
         $className = 'YahooJapan\ConfigCacheBundle\ConfigCache\Register';
-        $register  = $this->getMockBuilder($className)
-            ->disableOriginalConstructor()
-            ->setMethods(array('initialize'))
-            ->getMock()
-            ;
+        $register  = $this->util->createMock($className, array('initialize'));
         $register
             ->expects($this->exactly(2))
             ->method('initialize')
@@ -1003,7 +998,7 @@ class RegisterTest extends RegisterTestCase
     public function testSetBundleId()
     {
         $register  = $this->getRegisterMock();
-        $extension = $this->getMock('Symfony\Component\DependencyInjection\Extension\ExtensionInterface');
+        $extension = $this->createExtensionMock();
         $extension
             ->expects($this->once())
             ->method('getAlias')
@@ -1025,7 +1020,8 @@ class RegisterTest extends RegisterTestCase
     {
         list($register, ) = $this->getRegisterMockAndContainer();
         // mock of ConfigurationExtensionInterface in order to getConfiguration only
-        $extension = $this->getMock('Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface');
+        $name      = 'Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface';
+        $extension = $this->util->createInterfaceMock($name);
         $extension
             ->expects($this->once())
             ->method('getConfiguration')
@@ -1157,7 +1153,7 @@ class RegisterTest extends RegisterTestCase
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
 
         // state already registered ID
-        $mock = $this->getMock('Symfony\Component\Config\Definition\ConfigurationInterface');
+        $mock = $this->createConfigurationMock();
         $method->invoke($register, $id, $mock);
         $definition = $container->getDefinition($id);
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
@@ -1190,8 +1186,8 @@ class RegisterTest extends RegisterTestCase
             // normal
             array(
                 array(
-                    $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface'),
-                    $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface'),
+                    $this->createResourceMock(),
+                    $this->createResourceMock(),
                 ),
                 true,
             ),
@@ -1203,7 +1199,7 @@ class RegisterTest extends RegisterTestCase
             // exist resources except ResourceInterface
             array(
                 array(
-                    $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface'),
+                    $this->createResourceMock(),
                     new \StdClass(),
                 ),
                 '\Exception',
@@ -1216,10 +1212,8 @@ class RegisterTest extends RegisterTestCase
      */
     public function testValidateCacheId(array $bundles, $expected)
     {
-        $container = $this->getMockBuilder('Symfony\Component\DependencyInjection\ContainerBuilder')
-            ->disableOriginalConstructor()
-            ->getMock()
-            ;
+        $className = 'Symfony\Component\DependencyInjection\ContainerBuilder';
+        $container = $this->util->createMock($className, array('getParameter'));
         $container
             ->expects($this->once())
             ->method('getParameter')
@@ -1344,7 +1338,7 @@ class RegisterTest extends RegisterTestCase
 
     public function testFindConfigurationByResource()
     {
-        $mock = $this->getMock('Symfony\Component\Config\Definition\ConfigurationInterface');
+        $mock = $this->createConfigurationMock();
         $real = new RegisterConfiguration();
         $register = $this->getRegisterMock();
         $register->setConfiguration($real);
@@ -1375,5 +1369,22 @@ class RegisterTest extends RegisterTestCase
         $configuration = new RegisterConfiguration();
         $register->setConfiguration($configuration);
         $this->assertSame($configuration, $reflection->invoke($register));
+    }
+
+    protected function createExtensionMock()
+    {
+        return $this->util->createInterfaceMock('Symfony\Component\DependencyInjection\Extension\ExtensionInterface');
+    }
+
+    protected function createConfigurationMock()
+    {
+        return $this->util->createInterfaceMock('Symfony\Component\Config\Definition\ConfigurationInterface');
+    }
+
+    protected function createResourceMock()
+    {
+        $name = 'YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface';
+
+        return $this->findUtil()->createInterfaceMock($name);
     }
 }

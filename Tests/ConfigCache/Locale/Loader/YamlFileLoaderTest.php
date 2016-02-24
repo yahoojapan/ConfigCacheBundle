@@ -21,10 +21,12 @@ class YamlFileLoaderTest extends TestCase
 {
     public function testSetLocale()
     {
-        $translator   = $this->getTranslator($this->getMock('Symfony\Component\Translation\Loader\LoaderInterface'));
+        $transLoader  = $this->util->createInterfaceMock('Symfony\Component\Translation\Loader\LoaderInterface');
+        $translator   = $this->getTranslator($transLoader);
         $loader       = new YamlFileLoader();
         $arrayLoader1 = new ArrayLoader($translator);
-        $arrayLoader2 = $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoaderInterface');
+        $name         = 'YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoaderInterface';
+        $arrayLoader2 = $this->util->createInterfaceMock($name);
         $arrayLoader3 = new ArrayLoader($translator);
         $loader->addLoaders(array($arrayLoader1, $arrayLoader2, $arrayLoader3));
 
@@ -69,7 +71,7 @@ class YamlFileLoaderTest extends TestCase
 
     protected function getContainer($loader)
     {
-        $container = $this->getMock('Symfony\Component\DependencyInjection\ContainerInterface');
+        $container = $this->util->createInterfaceMock('Symfony\Component\DependencyInjection\ContainerInterface');
         $container
             ->expects($this->any())
             ->method('get')
