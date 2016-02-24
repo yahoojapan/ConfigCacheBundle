@@ -38,9 +38,7 @@ class ArrayLoaderTest extends TestCase
             ;
         $loader = new ArrayLoader($translator);
 
-        $method = new \ReflectionMethod($loader, 'walkInternal');
-        $method->setAccessible(true);
-        $method->invokeArgs($loader, array(&$value, 'nouse'));
+        $this->util->invokeArgs($loader, 'walkInternal', array(&$value, 'nouse'));
         $this->assertSame($expected, $value);
     }
 
@@ -78,12 +76,10 @@ class ArrayLoaderTest extends TestCase
     public function testGetInternalMethod()
     {
         $loader = $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader');
-        $method = new \ReflectionMethod($loader, 'getInternalMethod');
-        $method->setAccessible(true);
         // has no locale
-        $this->assertSame('walkInternal', $method->invoke($loader));
+        $this->assertSame('walkInternal', $this->util->invoke($loader, 'getInternalMethod'));
         // has locale
         $this->util->setProperty($loader, 'locale', 'en');
-        $this->assertSame('walkByLocaleInternal', $method->invoke($loader));
+        $this->assertSame('walkByLocaleInternal', $this->util->invoke($loader, 'getInternalMethod'));
     }
 }

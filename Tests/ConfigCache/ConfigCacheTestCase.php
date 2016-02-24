@@ -80,9 +80,7 @@ abstract class ConfigCacheTestCase extends TestCase
     public function getHashFileName($fileName)
     {
         $cache  = $this->util->getProperty(self::$cache, 'cache');
-        $method = new \ReflectionMethod($cache, 'getFilename');
-        $method->setAccessible(true);
-        $hashedFileName = $method->invoke($cache, basename($fileName, static::$extension));
+        $hashedFileName = $this->util->invoke($cache, 'getFilename', basename($fileName, static::$extension));
 
         return basename($hashedFileName);
     }

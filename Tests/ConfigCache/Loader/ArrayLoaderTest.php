@@ -62,9 +62,7 @@ class ArrayLoaderTest extends TestCase
             ->method('walkInternal')
             ->willReturn(null)
             ;
-        $method = new \ReflectionMethod($this->loader, 'walkAllLeaves');
-        $method->setAccessible(true);
-        $method->invokeArgs($this->loader, array(&$data));
+        $this->util->invokeArgs($this->loader, 'walkAllLeaves', array(&$data));
         $this->assertSame($expected, $data);
     }
 
@@ -72,11 +70,9 @@ class ArrayLoaderTest extends TestCase
     {
         // not use mock method
         $this->loader = $this->createLoaderMock();
-        $method = new \ReflectionMethod($this->loader, 'walkInternal');
-        $method->setAccessible(true);
         list($key, $value) = array('key', 'prefix_value');
         // use invokeArgs to avoid PHP Deprecated when pass by reference
-        $method->invokeArgs($this->loader, array(&$value, $key));
+        $this->util->invokeArgs($this->loader, 'walkInternal', array(&$value, $key));
         // not changed
         $this->assertSame('key', $key);
         $this->assertSame('prefix_value', $value);
@@ -84,9 +80,7 @@ class ArrayLoaderTest extends TestCase
 
     public function testGetInternalMethod()
     {
-        $method = new \ReflectionMethod($this->loader, 'getInternalMethod');
-        $method->setAccessible(true);
-        $this->assertSame('walkInternal', $method->invoke($this->loader));
+        $this->assertSame('walkInternal', $this->util->invoke($this->loader, 'getInternalMethod'));
     }
 
     protected function createLoaderMock(array $methods = null)

@@ -12,8 +12,9 @@
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Loader;
 
 use YahooJapan\ConfigCacheBundle\ConfigCache\Loader\XmlFileLoader;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class XmlFileLoaderTest extends \PHPUnit_Framework_TestCase
+class XmlFileLoaderTest extends TestCase
 {
     protected static $loader;
 
@@ -50,13 +51,10 @@ class XmlFileLoaderTest extends \PHPUnit_Framework_TestCase
      */
     public function testLoadFile($file, $expected)
     {
-        $method = new \ReflectionMethod(self::$loader, 'loadFile');
-        $method->setAccessible(true);
         if ($expected === '\Exception') {
             $this->setExpectedException($expected);
         }
-        $loaded = $method->invoke(self::$loader, $file);
-        $this->assertInstanceOf($expected, $loaded, 'Unexpected instance.');
+        $this->assertInstanceOf($expected, $this->util->invoke(self::$loader, 'loadFile', $file));
     }
 
     /**

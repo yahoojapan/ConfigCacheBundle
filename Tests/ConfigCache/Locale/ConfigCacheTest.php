@@ -179,15 +179,13 @@ class ConfigCacheTest extends ConfigCacheTestCase
         }
 
         self::$cache->setDefaultLocale($defaultLocale);
-        $method = new \ReflectionMethod(self::$cache, 'createInternal');
-        $method->setAccessible(true);
         if ($expectedException) {
             $this->setExpectedException('\Exception');
         }
         if (is_null($locale)) {
-            $result = $method->invoke(self::$cache);
+            $result = $this->util->invoke(self::$cache, 'createInternal');
         } else {
-            $result = $method->invoke(self::$cache, $locale);
+            $result = $this->util->invoke(self::$cache, 'createInternal', $locale);
         }
 
         // assert return
@@ -271,14 +269,11 @@ class ConfigCacheTest extends ConfigCacheTestCase
      */
     public function testGetKey($locale, $currentLocale, $expectedException, $expected)
     {
-        $method = new \ReflectionMethod(self::$cache, 'getKey');
-        $method->setAccessible(true);
         self::$cache->setCurrentLocale($currentLocale);
-
         if ($expectedException) {
             $this->setExpectedException('\Exception');
         }
-        $key = $method->invoke(self::$cache, $locale);
+        $key = $this->util->invoke(self::$cache, 'getKey', $locale);
 
         $this->assertSame($expected, $key);
     }
@@ -301,14 +296,11 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testGetLocale()
     {
         self::$cache->setDefaultLocale('uk');
-        $method = new \ReflectionMethod(self::$cache, 'getLocale');
-        $method->setAccessible(true);
-
         // defaultLocale when has no currentLocale
-        $this->assertSame('uk', $method->invoke(self::$cache));
+        $this->assertSame('uk', $this->util->invoke(self::$cache, 'getLocale'));
         // currentLocale when has currentLocale
         self::$cache->setCurrentLocale('en');
-        $this->assertSame('en', $method->invoke(self::$cache));
+        $this->assertSame('en', $this->util->invoke(self::$cache, 'getLocale'));
     }
 
     /**
