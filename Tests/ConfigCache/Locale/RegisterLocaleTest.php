@@ -23,7 +23,7 @@ class RegisterLocaleTest extends RegisterTestCase
 
     public function testRegister()
     {
-        $register = $this->getRegisterMock(array('setTag', 'initializeResources', 'registerInternal'));
+        $register = $this->createRegisterMock(array('setTag', 'initializeResources', 'registerInternal'));
         $register
             ->expects($this->once())
             ->method('setTag')
@@ -46,7 +46,7 @@ class RegisterLocaleTest extends RegisterTestCase
     public function testRegisterAll()
     {
         $methods = array('setTag', 'initializeAllResources', 'registerInternal');
-        $register = $this->getRegisterMock($methods);
+        $register = $this->createRegisterMock($methods);
         $this->util->setProperty($register, 'container', $this->getContainerBuilder());
         $register
             ->expects($this->once())
@@ -72,7 +72,7 @@ class RegisterLocaleTest extends RegisterTestCase
      */
     public function testSetCacheDefinition($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
@@ -120,7 +120,7 @@ class RegisterLocaleTest extends RegisterTestCase
      */
     public function testSetCacheDefinitionByAlias($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
@@ -149,7 +149,7 @@ class RegisterLocaleTest extends RegisterTestCase
     {
         $id = 'test_id';
         $definition = new Definition();
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $container->setDefinition($id, $definition);
 
         $method = new \ReflectionMethod($register, 'addLocaleMethods');
@@ -168,7 +168,7 @@ class RegisterLocaleTest extends RegisterTestCase
      */
     public function testCreateCacheDefinition()
     {
-        list($register, ) = $this->getRegisterMockAndContainer();
+        list($register, ) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
         $this->util
             ->setProperty($register, 'bundleId', $id)

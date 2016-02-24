@@ -111,13 +111,13 @@ abstract class RegisterTestCase extends TestCase
     protected function getCacheId()
     {
         if (is_null($this->cacheId)) {
-            $this->cacheId = $this->findUtil()->getProperty($this->getRegisterMock(), 'cacheId');
+            $this->cacheId = $this->findUtil()->getProperty($this->createRegisterMock(), 'cacheId');
         }
 
         return $this->cacheId;
     }
 
-    protected function getRegisterMock(array $methods = null)
+    protected function createRegisterMock(array $methods = null)
     {
         return $this->findUtil()->createMock($this->registerClass, $methods);
     }
@@ -125,10 +125,10 @@ abstract class RegisterTestCase extends TestCase
     /**
      * @return array list of Register mock, ContainerBuilder
      */
-    protected function getRegisterMockAndContainer(array $methods = null)
+    protected function createRegisterMockAndContainer(array $methods = null)
     {
         $container = $this->getContainerBuilder();
-        $register  = $this->getRegisterMock($methods);
+        $register  = $this->createRegisterMock($methods);
         $this->util->setProperty($register, 'container', $container);
 
         return array($register, $container);
