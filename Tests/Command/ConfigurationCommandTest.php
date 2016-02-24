@@ -57,7 +57,7 @@ class ConfigurationCommandTest extends KernelTestCase
         $command = $application->find('generate:configuration');
 
         // change bundlePath, fileName
-        $this
+        $this->util
             ->setProperty($command, 'bundlePath', $this->dir)
             ->setProperty($command, 'resourceDir', '/Tests/Fixtures')
             ;
@@ -97,7 +97,7 @@ class ConfigurationCommandTest extends KernelTestCase
         $configuration = new $fqcn();
         $tree = $configuration->getConfigTreeBuilder()->buildTree();
         $processor = new Processor(); // use ConfigCacheBundle Processor
-        $config    = Yaml::parse(file_get_contents($this->getProperty($command, 'fileName')));
+        $config    = Yaml::parse(file_get_contents($this->util->getProperty($command, 'fileName')));
         list($loaded, $node) = $processor->process(array(), $config, $tree);
         $alias = static::$kernel->getBundle($bundleName)->getContainerExtension()->getAlias();
         $this->assertSame($config[$alias], $loaded);
@@ -127,22 +127,5 @@ class ConfigurationCommandTest extends KernelTestCase
             // invalid root key
             array($bundleName, 'test_command_error.yml', $name, null, true),
         );
-    }
-
-    protected function getProperty($instance, $name)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-
-        return $property->getValue($instance);
-    }
-
-    protected function setProperty($instance, $name, $value)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-        $property->setValue($instance, $value);
-
-        return $this;
     }
 }
