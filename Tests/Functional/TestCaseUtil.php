@@ -63,6 +63,41 @@ class TestCaseUtil
     }
 
     /**
+     * Invokes the reflected method.
+     *
+     * After the third argument, a variable number of parameters.
+     *
+     * @param object $instance
+     * @param string $name
+     *
+     * @return mixed
+     */
+    public function invoke($instance, $name)
+    {
+        $args = func_get_args();
+        unset($args[0], $args[1]);
+
+        return $this->invokeArgs($instance, $name, $args);
+    }
+
+    /**
+     * Invokes the reflected method by args.
+     *
+     * @param object $instance
+     * @param string $name
+     * @param array  $args
+     *
+     * @return mixed
+     */
+    public function invokeArgs($instance, $name, array $args = array())
+    {
+        $method = new \ReflectionMethod($instance, $name);
+        $method->setAccessible(true);
+
+        return $method->invokeArgs($instance, $args);
+    }
+
+    /**
      * Creates a mock.
      *
      * @param string     $className to mock class name
