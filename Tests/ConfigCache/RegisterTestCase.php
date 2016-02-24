@@ -157,7 +157,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         ), $data)));
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../../Resources/config'));
-        $loader->load('pre_services.yml');
+        $loader->load('services.yml');
 
         return $container;
     }
