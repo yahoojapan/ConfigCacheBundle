@@ -13,8 +13,9 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Loader;
 
 use YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ArrayLoader;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
+class YamlFileLoaderTest extends TestCase
 {
     protected static $loader;
 
@@ -51,13 +52,10 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
      */
     public function testLoadFile($file, $expected)
     {
-        $method = new \ReflectionMethod(self::$loader, 'loadFile');
-        $method->setAccessible(true);
         if (is_string($expected) && class_exists($expected)) {
             $this->setExpectedException($expected);
         }
-        $loaded = $method->invoke(self::$loader, $file);
-        $this->assertSame($expected, $loaded);
+        $this->assertSame($expected, $this->util->invoke(self::$loader, 'loadFile', $file));
     }
 
     /**
@@ -91,13 +89,10 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
     public function testLoadFileWithArrayLoader($file, $expected)
     {
         self::$loader->addLoader(new ArrayLoader());
-        $method = new \ReflectionMethod(self::$loader, 'loadFile');
-        $method->setAccessible(true);
         if (is_string($expected) && class_exists($expected)) {
             $this->setExpectedException($expected);
         }
-        $loaded = $method->invoke(self::$loader, $file);
-        $this->assertSame($expected, $loaded);
+        $this->assertSame($expected, $this->util->invoke(self::$loader, 'loadFile', $file));
     }
 
     /**

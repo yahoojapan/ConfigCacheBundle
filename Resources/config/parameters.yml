@@ -1,3 +1,0 @@
-parameters:
-    config.delegating_loader.id:      yahoo_japan_config_cache.component.delegating_loader
-    config.locale.config_cache.class: YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache

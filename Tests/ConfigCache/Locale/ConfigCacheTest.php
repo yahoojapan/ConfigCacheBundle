@@ -38,13 +38,10 @@ class ConfigCacheTest extends ConfigCacheTestCase
 
     public function testConstruct()
     {
-        $cache       = $this->getMock('Doctrine\Common\Cache\Cache');
-        $loader      = $this->getMock('Symfony\Component\Config\Loader\LoaderInterface');
+        $cache       = $this->util->createAbstractMock('Doctrine\Common\Cache\Cache');
+        $loader      = $this->createLoaderMock();
         $className   = 'YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache';
-        $configCache = $this->getMockBuilder($className)
-            ->disableOriginalConstructor()
-            ->getMock()
-            ;
+        $configCache = $this->util->createMock($className);
         $class = new \ReflectionClass($className);
         $constructor = $class->getConstructor();
         $this->assertNull($constructor->invoke($configCache, $cache, $loader));
@@ -117,7 +114,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
         return array(
             // loader is not translation loader
             array(
-                $this->getMock('Symfony\Component\Config\Loader\LoaderInterface'),
+                $this->createLoaderMock(),
                 array(),
                 array(__DIR__.'/../../Fixtures/test_service_trans.yml'),
                 'Exception',
@@ -182,15 +179,13 @@ class ConfigCacheTest extends ConfigCacheTestCase
         }
 
         self::$cache->setDefaultLocale($defaultLocale);
-        $method = new \ReflectionMethod(self::$cache, 'createInternal');
-        $method->setAccessible(true);
         if ($expectedException) {
             $this->setExpectedException('\Exception');
         }
         if (is_null($locale)) {
-            $result = $method->invoke(self::$cache);
+            $result = $this->util->invoke(self::$cache, 'createInternal');
         } else {
-            $result = $method->invoke(self::$cache, $locale);
+            $result = $this->util->invoke(self::$cache, 'createInternal', $locale);
         }
 
         // assert return
@@ -274,14 +269,11 @@ class ConfigCacheTest extends ConfigCacheTestCase
      */
     public function testGetKey($locale, $currentLocale, $expectedException, $expected)
     {
-        $method = new \ReflectionMethod(self::$cache, 'getKey');
-        $method->setAccessible(true);
         self::$cache->setCurrentLocale($currentLocale);
-
         if ($expectedException) {
             $this->setExpectedException('\Exception');
         }
-        $key = $method->invoke(self::$cache, $locale);
+        $key = $this->util->invoke(self::$cache, 'getKey', $locale);
 
         $this->assertSame($expected, $key);
     }
@@ -304,14 +296,11 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testGetLocale()
     {
         self::$cache->setDefaultLocale('uk');
-        $method = new \ReflectionMethod(self::$cache, 'getLocale');
-        $method->setAccessible(true);
-
         // defaultLocale when has no currentLocale
-        $this->assertSame('uk', $method->invoke(self::$cache));
+        $this->assertSame('uk', $this->util->invoke(self::$cache, 'getLocale'));
         // currentLocale when has currentLocale
         self::$cache->setCurrentLocale('en');
-        $this->assertSame('en', $method->invoke(self::$cache));
+        $this->assertSame('en', $this->util->invoke(self::$cache, 'getLocale'));
     }
 
     /**
@@ -332,7 +321,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
 
     protected function getContainer($loader)
     {
-        $container = $this->getMock('Symfony\Component\DependencyInjection\ContainerInterface');
+        $container = $this->util->createInterfaceMock('Symfony\Component\DependencyInjection\ContainerInterface');
         $container
             ->expects($this->any())
             ->method('get')
@@ -347,7 +336,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
      */
     protected function getLoaderOnTranslator()
     {
-        $loader = $this->getMock('Symfony\Component\Translation\Loader\LoaderInterface');
+        $loader = $this->util->createInterfaceMock('Symfony\Component\Translation\Loader\LoaderInterface');
         $loader
             ->expects($this->exactly(2))
             ->method('load')
@@ -386,5 +375,10 @@ class ConfigCacheTest extends ConfigCacheTestCase
         }
 
         return $catalogue;
+    }
+
+    protected function createLoaderMock()
+    {
+        return $this->findUtil()->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
     }
 }

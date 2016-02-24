@@ -18,6 +18,7 @@ use Symfony\Component\HttpKernel\Kernel;
 class KernelTestCase extends BaseKernelTestCase
 {
     protected $testCase;
+    protected $util;
 
     protected function setUp()
     {
@@ -26,6 +27,9 @@ class KernelTestCase extends BaseKernelTestCase
         $this->deleteTmpDir();
         static::bootKernel();
         $this->testCase = static::$kernel->getTestCase();
+        if (is_null($this->util)) {
+            $this->util = $this->createUtil();
+        }
     }
 
     protected function deleteTmpDir($testCase = null)
@@ -50,5 +54,10 @@ class KernelTestCase extends BaseKernelTestCase
         $class = self::getKernelClass();
 
         return new $class('default', isset($options['debug']) ? $options['debug'] : true);
+    }
+
+    protected function createUtil()
+    {
+        return new TestCaseUtil($this);
     }
 }

@@ -13,23 +13,19 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
 use Symfony\Component\Config\Definition\NodeInterface;
 use Symfony\Component\Finder\Finder;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheConfiguration;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheDeepConfiguration;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheMasterConfiguration;
-use YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess;
 
 class ConfigCacheTest extends ConfigCacheTestCase
 {
     public function testConstruct()
     {
-        $cache       = $this->getMock('Doctrine\Common\Cache\Cache');
-        $loader      = $this->getMock('Symfony\Component\Config\Loader\LoaderInterface');
-        $className   = 'YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache';
-        $configCache = $this->getMockBuilder($className)
-            ->disableOriginalConstructor()
-            ->getMock()
-            ;
-        $class = new \ReflectionClass($className);
+        $cache       = $this->util->createAbstractMock('Doctrine\Common\Cache\Cache');
+        $loader      = $this->util->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
+        $configCache = $this->createConfigCacheMock();
+        $class       = new \ReflectionClass('YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache');
         $constructor = $class->getConstructor();
         $this->assertNull($constructor->invoke($configCache, $cache, $loader));
         $this->assertNull($constructor->invoke($configCache, $cache, $loader, array('aaa' => 'bbb')));
@@ -38,11 +34,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testFind()
     {
         // assert only calling findInterna, findAll
-        $configCache = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache')
-            ->disableOriginalConstructor()
-            ->setMethods(array('findInternal', 'findAll'))
-            ->getMock()
-            ;
+        $configCache = $this->createConfigCacheMock(array('findInternal', 'findAll'));
         $key = 'testKey';
         $default = array('default' => 'zzz');
         $findAllResult = array('aaa' => 'bbb');
@@ -191,12 +183,8 @@ class ConfigCacheTest extends ConfigCacheTestCase
             self::$cache->addResource($resource, $configuration);
         }
 
-        $method = new \ReflectionMethod(self::$cache, 'createInternal');
-        $method->setAccessible(true);
-        $result = $method->invoke(self::$cache);
-
         // assert return
-        $this->assertSame($expectedData, $result);
+        $this->assertSame($expectedData, $this->util->invoke(self::$cache, 'createInternal'));
 
         // assert file created and the same require data
         $expectedFileNames = array($expectedFileName, $this->getHashFileName($expectedFileName));
@@ -254,9 +242,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
 
     public function testGetKey()
     {
-        $method = new \ReflectionMethod(self::$cache, 'getKey');
-        $method->setAccessible(true);
-        $this->assertSame('cache', $method->invoke(self::$cache));
+        $this->assertSame('cache', $this->util->invoke(self::$cache, 'getKey'));
     }
 
     /**
@@ -274,14 +260,11 @@ class ConfigCacheTest extends ConfigCacheTestCase
         foreach ($resources as $resource) {
             self::$cache->addResource($resource, $configuration);
         }
-        $method = new \ReflectionMethod(self::$cache, 'findInternal');
-        $method->setAccessible(true);
-        if (is_null($default)) {
-            $actual = $method->invoke(self::$cache, self::$cache->findAll(), $key);
-        } else {
-            $actual = $method->invoke(self::$cache, self::$cache->findAll(), $key, $default);
+        $args = array(self::$cache->findAll(), $key);
+        if (!is_null($default)) {
+            $args[] = $default;
         }
-        $this->assertSame($expected, $actual);
+        $this->assertSame($expected, $this->util->invokeArgs(self::$cache, 'findInternal', $args));
     }
 
     /**
@@ -367,7 +350,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
         foreach ($resources as $resource) {
             self::$cache->addResource($resource, $configuration);
         }
-        $this->setProperty(self::$cache, 'config', $config);
+        $this->util->setProperty(self::$cache, 'config', $config);
         if (!is_null($masterConfiguration)) {
             self::$cache->setConfiguration($masterConfiguration);
         }
@@ -375,13 +358,10 @@ class ConfigCacheTest extends ConfigCacheTestCase
             self::$cache->setStrict($strict);
         }
 
-        $method = new \ReflectionMethod(self::$cache, 'load');
-        $method->setAccessible(true);
         if (is_string($expected) && class_exists($expected)) {
             $this->setExpectedException($expected);
         }
-        $result = $method->invoke(self::$cache);
-        $this->assertSame($expected, $result);
+        $this->assertSame($expected, $this->util->invoke(self::$cache, 'load'));
     }
 
     /**
@@ -485,7 +465,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testLoadOne()
     {
         self::$cache->addResource($resource = __DIR__.'/../Fixtures/test_service1.yml');
-        $loader = $this->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
+        $loader = $this->util->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
         $loader
             ->expects($this->once())
             ->method('load')
@@ -493,10 +473,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
             ->willReturn($expected = array('aaa' => 'bbb'))
             ;
         self::$cache->setLoader($loader);
-
-        $method = new \ReflectionMethod(self::$cache, 'loadOne');
-        $method->setAccessible(true);
-        $this->assertSame($expected, $method->invoke(self::$cache));
+        $this->assertSame($expected, $this->util->invoke(self::$cache, 'loadOne'));
     }
 
     /**
@@ -507,13 +484,12 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testProcessConfiguration($validated, $validating, $expected)
     {
         $configuration  = new ConfigCacheConfiguration();
-        $method = new \ReflectionMethod(self::$cache, 'processConfiguration');
-        $method->setAccessible(true);
         if (is_string($expected) && class_exists($expected)) {
             $this->setExpectedException($expected);
         }
-        list($array, $node) = $method->invoke(
+        list($array, $node) = $this->util->invoke(
             self::$cache,
+            'processConfiguration',
             $validated,
             $validating,
             $configuration,
@@ -557,14 +533,14 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testCreateMasterNode($configuration, $expected)
     {
         // use reflection to set null
-        $this->setProperty(self::$cache, 'configuration', $configuration);
-
-        $method = new \ReflectionMethod(self::$cache, 'createMasterNode');
-        $method->setAccessible(true);
+        $actual = $this->util
+            ->setProperty(self::$cache, 'configuration', $configuration)
+            ->invoke(self::$cache, 'createMasterNode')
+            ;
         if ($expected instanceof NodeInterface) {
-            $this->assertEquals($expected, $method->invoke(self::$cache));
+            $this->assertEquals($expected, $actual);
         } else {
-            $this->assertSame($expected, $method->invoke(self::$cache));
+            $this->assertSame($expected, $actual);
         }
     }
 
@@ -593,7 +569,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     {
         // OK
         self::$cache->setKey($expected = 'test');
-        $this->assertSame($expected, $this->getProperty(self::$cache, 'key'));
+        $this->assertSame($expected, $this->util->getProperty(self::$cache, 'key'));
         // exception
         $this->setExpectedException('\RuntimeException');
         self::$cache->setKey('zzz');
@@ -604,29 +580,13 @@ class ConfigCacheTest extends ConfigCacheTestCase
      */
     public function testStrict()
     {
-        $method = new \ReflectionMethod(self::$cache, 'isStrict');
-        $method->setAccessible(true);
-        $this->assertTrue($method->invoke(self::$cache));
+        $this->assertTrue($this->util->invoke(self::$cache, 'isStrict'));
         self::$cache->setStrict(false);
-        $this->assertFalse($method->invoke(self::$cache));
+        $this->assertFalse($this->util->invoke(self::$cache, 'isStrict'));
     }
 
-    protected function createInterfaceMock($interfaceName)
+    protected function createConfigCacheMock(array $methods = null)
     {
-        return $this->getMockBuilder($interfaceName)
-            ->setMethods($this->getMethods($interfaceName))
-            ->getMock()
-            ;
-    }
-
-    protected function getMethods($name)
-    {
-        $methods = array();
-        $class   = new \ReflectionClass($name);
-        foreach ($class->getMethods() as $method) {
-            $methods[] = $method->getName();
-        }
-
-        return $methods;
+        return $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache', $methods);
     }
 }

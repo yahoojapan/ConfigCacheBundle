@@ -11,11 +11,13 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Loader;
 
-class LoaderTest extends \PHPUnit_Framework_TestCase
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
+
+class LoaderTest extends TestCase
 {
     public function testLoad()
     {
-        $loader = $this->getMockForAbstractClass('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\Loader');
+        $loader = $this->createLoaderMock(array('loadFile'));
         $loader
             ->expects($this->once())
             ->method('loadFile')
@@ -26,12 +28,10 @@ class LoaderTest extends \PHPUnit_Framework_TestCase
 
     public function testAddLoader()
     {
-        $arrayLoader = $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoaderInterface');
-        $loader      = $this->getMockForAbstractClass('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\Loader');
+        $arrayLoader = $this->createArrayLoaderMock();
+        $loader      = $this->createLoaderMock();
         $loader->addLoader($arrayLoader);
-        $loaders = new \ReflectionProperty($loader, 'loaders');
-        $loaders->setAccessible(true);
-        $actual = $loaders->getValue($loader);
+        $actual = $this->util->getProperty($loader, 'loaders');
         if (isset($actual[0])) {
             $this->assertSame($arrayLoader, $actual[0]);
         } else {
@@ -41,13 +41,11 @@ class LoaderTest extends \PHPUnit_Framework_TestCase
 
     public function testAddLoaders()
     {
-        $arrayLoader1 = $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoaderInterface');
-        $arrayLoader2 = $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoaderInterface');
-        $loader      = $this->getMockForAbstractClass('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\Loader');
+        $arrayLoader1 = $this->createArrayLoaderMock();
+        $arrayLoader2 = $this->createArrayLoaderMock();
+        $loader       = $this->createLoaderMock();
         $loader->addLoaders(array($arrayLoader1, $arrayLoader2));
-        $loaders = new \ReflectionProperty($loader, 'loaders');
-        $loaders->setAccessible(true);
-        $actual = $loaders->getValue($loader);
+        $actual = $this->util->getProperty($loader, 'loaders');
         if (isset($actual[0]) && isset($actual[1])) {
             $this->assertSame($arrayLoader1, $actual[0]);
             $this->assertSame($arrayLoader2, $actual[1]);
@@ -58,9 +56,19 @@ class LoaderTest extends \PHPUnit_Framework_TestCase
 
     public function testGetResolver()
     {
-        $loader   = $this->getMockForAbstractClass('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\Loader');
-        $resolver = $this->getMock('Symfony\Component\Config\Loader\LoaderResolverInterface');
+        $loader   = $this->createLoaderMock();
+        $resolver = $this->util->createInterfaceMock('Symfony\Component\Config\Loader\LoaderResolverInterface');
         $loader->setResolver($resolver);
         $this->assertSame($resolver, $loader->getResolver());
+    }
+
+    protected function createLoaderMock(array $methods = null)
+    {
+        return $this->util->createAbstractMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\Loader', $methods);
+    }
+
+    protected function createArrayLoaderMock()
+    {
+        return $this->util->createInterfaceMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoaderInterface');
     }
 }

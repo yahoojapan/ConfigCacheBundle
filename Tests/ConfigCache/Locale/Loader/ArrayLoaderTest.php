@@ -13,8 +13,9 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Locale\Loader;
 
 use Symfony\Component\Translation\MessageCatalogue;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
+class ArrayLoaderTest extends TestCase
 {
     /**
      * @dataProvider walkInternalProvider
@@ -23,7 +24,7 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
     {
         $catalogue  = new MessageCatalogue('en', $messages);
         $methods    = array('getCatalogue', 'trans');
-        $translator = $this->createMock('Symfony\Bundle\FrameworkBundle\Translation\Translator', $methods);
+        $translator = $this->util->createMock('Symfony\Bundle\FrameworkBundle\Translation\Translator', $methods);
         $translator
             ->expects($this->once())
             ->method('getCatalogue')
@@ -37,9 +38,7 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
             ;
         $loader = new ArrayLoader($translator);
 
-        $method = new \ReflectionMethod($loader, 'walkInternal');
-        $method->setAccessible(true);
-        $method->invokeArgs($loader, array(&$value, 'nouse'));
+        $this->util->invokeArgs($loader, 'walkInternal', array(&$value, 'nouse'));
         $this->assertSame($expected, $value);
     }
 
@@ -76,33 +75,11 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
 
     public function testGetInternalMethod()
     {
-        $loader = $this->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader');
-        $method = new \ReflectionMethod($loader, 'getInternalMethod');
-        $method->setAccessible(true);
+        $loader = $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader');
         // has no locale
-        $this->assertSame('walkInternal', $method->invoke($loader));
+        $this->assertSame('walkInternal', $this->util->invoke($loader, 'getInternalMethod'));
         // has locale
-        $this->setProperty($loader, 'locale', 'en');
-        $this->assertSame('walkByLocaleInternal', $method->invoke($loader));
-    }
-
-    protected function createMock($name, array $methods = null)
-    {
-        $mock = $this->getMockBuilder($name)
-            ->disableOriginalConstructor()
-            ->setMethods($methods)
-            ->getMock()
-            ;
-
-        return $mock;
-    }
-
-    protected function setProperty($instance, $name, $value)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-        $property->setValue($instance, $value);
-
-        return $this;
+        $this->util->setProperty($loader, 'locale', 'en');
+        $this->assertSame('walkByLocaleInternal', $this->util->invoke($loader, 'getInternalMethod'));
     }
 }

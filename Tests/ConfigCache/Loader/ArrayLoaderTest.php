@@ -11,17 +11,18 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Loader;
 
-class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
+
+class ArrayLoaderTest extends TestCase
 {
     protected $loader;
 
     public function setUp()
     {
+        parent::setUp();
+
         // re-create each test case (if not, fail to run expects method)
-        $this->loader = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoader')
-            ->setMethods(array('walkAllLeaves', 'walkInternal'))
-            ->getMockForAbstractClass()
-            ;
+        $this->loader = $this->createLoaderMock(array('walkAllLeaves', 'walkInternal'));
     }
 
     public function testLoad()
@@ -44,10 +45,7 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
     public function testWalkAllLeaves()
     {
         // mock only walkInternal
-        $this->loader = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoader')
-            ->setMethods(array('walkInternal'))
-            ->getMockForAbstractClass()
-            ;
+        $this->loader = $this->createLoaderMock(array('walkInternal'));
         // three leaves data, called walkInternal three times
         $data = array(
             'aaa' => 'bbb',
@@ -64,21 +62,17 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
             ->method('walkInternal')
             ->willReturn(null)
             ;
-        $method = new \ReflectionMethod($this->loader, 'walkAllLeaves');
-        $method->setAccessible(true);
-        $method->invokeArgs($this->loader, array(&$data));
+        $this->util->invokeArgs($this->loader, 'walkAllLeaves', array(&$data));
         $this->assertSame($expected, $data);
     }
 
     public function testWalkInternal()
     {
         // not use mock method
-        $this->loader = $this->getMockForAbstractClass('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoader');
-        $method = new \ReflectionMethod($this->loader, 'walkInternal');
-        $method->setAccessible(true);
+        $this->loader = $this->createLoaderMock();
         list($key, $value) = array('key', 'prefix_value');
         // use invokeArgs to avoid PHP Deprecated when pass by reference
-        $method->invokeArgs($this->loader, array(&$value, $key));
+        $this->util->invokeArgs($this->loader, 'walkInternal', array(&$value, $key));
         // not changed
         $this->assertSame('key', $key);
         $this->assertSame('prefix_value', $value);
@@ -86,8 +80,11 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
 
     public function testGetInternalMethod()
     {
-        $method = new \ReflectionMethod($this->loader, 'getInternalMethod');
-        $method->setAccessible(true);
-        $this->assertSame('walkInternal', $method->invoke($this->loader));
+        $this->assertSame('walkInternal', $this->util->invoke($this->loader, 'getInternalMethod'));
+    }
+
+    protected function createLoaderMock(array $methods = null)
+    {
+        return $this->util->createAbstractMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoader', $methods);
     }
 }

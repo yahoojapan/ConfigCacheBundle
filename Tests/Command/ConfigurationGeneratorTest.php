@@ -11,21 +11,18 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\Command;
 
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
+
 /**
  * Only exception test.
  */
-class ConfigurationGeneratorTest extends \PHPUnit_Framework_TestCase
+class ConfigurationGeneratorTest extends TestCase
 {
     /**
      * @expectedException \LogicException
      */
     public function testGenerateException()
     {
-        $generator = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\Command\ConfigurationGenerator')
-            ->disableOriginalConstructor()
-            ->setMethods(null)
-            ->getMock()
-            ;
-        $generator->generate();
+        $this->util->createMock('YahooJapan\ConfigCacheBundle\Command\ConfigurationGenerator')->generate();
     }
 }

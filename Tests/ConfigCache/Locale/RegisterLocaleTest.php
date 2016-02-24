@@ -23,7 +23,7 @@ class RegisterLocaleTest extends RegisterTestCase
 
     public function testRegister()
     {
-        $register = $this->getRegisterMock(array('setTag', 'initializeResources', 'registerInternal'));
+        $register = $this->createRegisterMock(array('setTag', 'initializeResources', 'registerInternal'));
         $register
             ->expects($this->once())
             ->method('setTag')
@@ -46,8 +46,8 @@ class RegisterLocaleTest extends RegisterTestCase
     public function testRegisterAll()
     {
         $methods = array('setTag', 'initializeAllResources', 'registerInternal');
-        $register = $this->getRegisterMock($methods);
-        $this->setProperty($register, 'container', $this->getContainerBuilder());
+        $register = $this->createRegisterMock($methods);
+        $this->util->setProperty($register, 'container', $this->getContainerBuilder());
         $register
             ->expects($this->once())
             ->method('setTag')
@@ -72,18 +72,17 @@ class RegisterLocaleTest extends RegisterTestCase
      */
     public function testSetCacheDefinition($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
         // differ by setCacheDefinitionByAlias
         $configuration = new RegisterConfiguration();
-        $this->setProperty($register, 'configuration', $configuration);
-
-        // setCacheDefinition
-        $method = new \ReflectionMethod($register, 'setCacheDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
+        $this->util
+            ->setProperty($register, 'configuration', $configuration)
+            // setCacheDefinition
+            ->invoke($register, 'setCacheDefinition')
+            ;
 
         // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id);
@@ -120,15 +119,12 @@ class RegisterLocaleTest extends RegisterTestCase
      */
     public function testSetCacheDefinitionByAlias($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
         // setCacheDefinition
-        $alias  = 'test_alias';
-        $method = new \ReflectionMethod($register, 'setCacheDefinitionByAlias');
-        $method->setAccessible(true);
-        $method->invoke($register, $alias);
+        $this->util->invoke($register, 'setCacheDefinitionByAlias', $alias = 'test_alias');
 
         // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id, $alias);
@@ -149,12 +145,10 @@ class RegisterLocaleTest extends RegisterTestCase
     {
         $id = 'test_id';
         $definition = new Definition();
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $container->setDefinition($id, $definition);
 
-        $method = new \ReflectionMethod($register, 'addLocaleMethods');
-        $method->setAccessible(true);
-        $method->invoke($register, $id);
+        $this->util->invoke($register, 'addLocaleMethods', $id);
 
         $calls = $definition->getMethodCalls();
         $this->assertSame('setDefaultLocale', $calls[0][0]);
@@ -168,19 +162,15 @@ class RegisterLocaleTest extends RegisterTestCase
      */
     public function testCreateCacheDefinition()
     {
-        list($register, ) = $this->getRegisterMockAndContainer();
+        list($register, ) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
-        $this
+        // $register->createCacheDefinition()
+        $definition = $this->util
             ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'appConfig', array('aaa' => 'bbb'))
             ->setProperty($register, 'configuration', new RegisterConfiguration())
+            ->invoke($register, 'createCacheDefinition')
             ;
-
-        // $register->createCacheDefinition()
-        $method = new \ReflectionMethod($register, 'createCacheDefinition');
-        $method->setAccessible(true);
-        $definition = $method->invoke($register);
-
         // assert(ConfigCache)
         $this->assertSame('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache', $definition->getClass());
     }

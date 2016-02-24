@@ -13,17 +13,14 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Resource;
 
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\DirectoryResourceConfiguration;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class DirectoryResourceTest extends \PHPUnit_Framework_TestCase
+class DirectoryResourceTest extends TestCase
 {
     public function testConstruct()
     {
-        $className = 'YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource';
-        $resource  = $this->getMockBuilder($className)
-            ->disableOriginalConstructor()
-            ->getMock()
-            ;
-        $class = new \ReflectionClass($className);
+        $resource = $this->createResourceMock();
+        $class = new \ReflectionClass('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource');
         $constructor = $class->getConstructor();
         // assert OK with no Configuration
         $this->assertNull($constructor->invoke($resource, __DIR__.'/../../Fixtures'));
@@ -58,23 +55,20 @@ class DirectoryResourceTest extends \PHPUnit_Framework_TestCase
 
     public function testSetConfiguration()
     {
-        $resource = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource')
-            ->disableOriginalConstructor()
-            ->setMethods(null)
-            ->getMock()
-            ;
-        $configuration = $this->getMock('Symfony\Component\Config\Definition\ConfigurationInterface');
+        $resource      = $this->createResourceMock();
+        $configuration = $this->util->createInterfaceMock('Symfony\Component\Config\Definition\ConfigurationInterface');
         $this->assertSame($configuration, $resource->setConfiguration($configuration)->getConfiguration());
     }
 
     public function testSetResource()
     {
-        $resource = $this->getMockBuilder('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource')
-            ->disableOriginalConstructor()
-            ->setMethods(null)
-            ->getMock()
-            ;
-        $dir = __DIR__.'/../../Fixtures';
+        $resource = $this->createResourceMock();
+        $dir      = __DIR__.'/../../Fixtures';
         $this->assertSame($dir, $resource->setResource($dir)->getResource());
+    }
+
+    protected function createResourceMock(array $methods = null)
+    {
+        return $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource', $methods);
     }
 }

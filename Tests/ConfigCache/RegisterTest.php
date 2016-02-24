@@ -11,7 +11,6 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Filesystem\Filesystem;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
@@ -36,14 +35,10 @@ class RegisterTest extends RegisterTestCase
 
     public function testConstruct()
     {
-        $extension = $this->getMock('Symfony\Component\DependencyInjection\Extension\ExtensionInterface');
+        $extension = $this->createExtensionMock();
         $container = $this->getContainerBuilder();
         $className = 'YahooJapan\ConfigCacheBundle\ConfigCache\Register';
-        $register  = $this->getMockBuilder($className)
-            ->disableOriginalConstructor()
-            ->setMethods(array('initialize'))
-            ->getMock()
-            ;
+        $register  = $this->util->createMock($className, array('initialize'));
         $register
             ->expects($this->exactly(2))
             ->method('initialize')
@@ -61,7 +56,7 @@ class RegisterTest extends RegisterTestCase
      */
     public function testRegister()
     {
-        $register = $this->getRegisterMock(array('initializeResources', 'registerInternal'));
+        $register = $this->createRegisterMock(array('initializeResources', 'registerInternal'));
         $register
             ->expects($this->once())
             ->method('initializeResources')
@@ -81,8 +76,8 @@ class RegisterTest extends RegisterTestCase
      */
     public function testRegisterAll()
     {
-        $register = $this->getRegisterMock(array('initializeAllResources', 'registerInternal'));
-        $this->setProperty($register, 'container', $this->getContainerBuilder());
+        $register = $this->createRegisterMock(array('initializeAllResources', 'registerInternal'));
+        $this->util->setProperty($register, 'container', $this->getContainerBuilder());
         $register
             ->expects($this->once())
             ->method('initializeAllResources')
@@ -98,18 +93,18 @@ class RegisterTest extends RegisterTestCase
 
     public function testSetAppConfig()
     {
-        $register = $this->getRegisterMock();
+        $register = $this->createRegisterMock();
         $config   = array('aaa' => 'bbb');
         $register->setAppConfig($config);
-        $this->assertSame($config, $this->getProperty($register, 'appConfig'));
+        $this->assertSame($config, $this->util->getProperty($register, 'appConfig'));
     }
 
     public function testSetTag()
     {
-        $register = $this->getRegisterMock();
+        $register = $this->createRegisterMock();
         $tag      = 'test_tag';
         $register->setTag($tag);
-        $this->assertSame($tag, $this->getProperty($register, 'tag'));
+        $this->assertSame($tag, $this->util->getProperty($register, 'tag'));
     }
 
     /**
@@ -124,7 +119,7 @@ class RegisterTest extends RegisterTestCase
             'validateResources',
             'validateCacheId',
         );
-        $register = $this->getRegisterMock($internalMethods);
+        $register = $this->createRegisterMock($internalMethods);
         foreach ($internalMethods as $method) {
             $register
                 ->expects($this->once())
@@ -132,9 +127,7 @@ class RegisterTest extends RegisterTestCase
                 ->willReturn(null)
                 ;
         }
-        $method = new \ReflectionMethod($register, 'initialize');
-        $method->setAccessible(true);
-        $method->invoke($register);
+        $this->util->invoke($register, 'initialize');
     }
 
     /**
@@ -151,7 +144,7 @@ class RegisterTest extends RegisterTestCase
         $expConfigIds,
         $expAddMethodCalls
     ) {
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
 
         // create directory/file
@@ -166,7 +159,7 @@ class RegisterTest extends RegisterTestCase
         }
 
         // initialization
-        $this
+        $this->util
             ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'resources', $resources)
             ->setProperty($register, 'configuration', new RegisterConfiguration())
@@ -178,9 +171,7 @@ class RegisterTest extends RegisterTestCase
         $definitions = count($container->getDefinitions());
 
         // registerInternal
-        $method = new \ReflectionMethod($register, $all ? 'registerAll' : 'register');
-        $method->setAccessible(true);
-        $method->invoke($register);
+        $this->util->invoke($register, $all ? 'registerAll' : 'register');
 
         // whether user cache service defined
         $this->assertSame(
@@ -457,7 +448,7 @@ class RegisterTest extends RegisterTestCase
         array $expected,
         $expectedException
     ) {
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
 
         // create directory/file
@@ -472,7 +463,7 @@ class RegisterTest extends RegisterTestCase
         }
 
         // initialization
-        $this
+        $this->util
             ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'resources', $resources)
             ->setProperty($register, 'configuration', new RegisterConfiguration())
@@ -488,9 +479,7 @@ class RegisterTest extends RegisterTestCase
         }
 
         // register
-        $method = new \ReflectionMethod($register, 'register');
-        $method->setAccessible(true);
-        $method->invoke($register);
+        $this->util->invoke($register, 'register');
 
         // whether user cache service defined
         foreach ($expected as $serviceId => $expectedCalls) {
@@ -604,25 +593,22 @@ class RegisterTest extends RegisterTestCase
     public function testInitializeResources($resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
     {
         $internalMethod = 'setCacheDefinition';
-        list($register, ) = $this->getRegisterMockAndContainer(array($internalMethod));
+        list($register, ) = $this->createRegisterMockAndContainer(array($internalMethod));
         $id = 'register_test';
-        $this
-            ->setProperty($register, 'bundleId', $id)
-            ->setProperty($register, 'resources', $resources)
-            ;
-
         // only assert calling method
         $register
             ->expects($this->exactly($expectedMethodCalls))
             ->method($internalMethod)
             ->willReturn(null)
             ;
+        $this->util
+            ->setProperty($register, 'bundleId', $id)
+            ->setProperty($register, 'resources', $resources)
+            ->invoke($register, 'initializeResources')
+            ;
 
-        $method = new \ReflectionMethod($register, 'initializeResources');
-        $method->setAccessible(true);
-        $method->invoke($register);
-        $this->assertSame($expectedDirs, $this->getProperty($register, 'dirs'));
-        $this->assertSame($expectedFiles, $this->getProperty($register, 'files'));
+        $this->assertSame($expectedDirs, $this->util->getProperty($register, 'dirs'));
+        $this->assertSame($expectedFiles, $this->util->getProperty($register, 'files'));
     }
 
     /**
@@ -696,22 +682,20 @@ class RegisterTest extends RegisterTestCase
     public function testInitializeAllResources($bundles, $resources, $expectedDirs, $expectedFiles, $expectedMethodCalls)
     {
         $internalMethod = 'setCacheDefinition';
-        list($register, ) = $this->getRegisterMockAndContainer(array($internalMethod));
-        $this->setProperty($register, 'resources', $resources);
-
+        list($register, ) = $this->createRegisterMockAndContainer(array($internalMethod));
         // only assert calling method
         $register
             ->expects($this->exactly($expectedMethodCalls))
             ->method($internalMethod)
             ->willReturn(null)
             ;
-
         // $register->initializeAllResources()
-        $method = new \ReflectionMethod($register, 'initializeAllResources');
-        $method->setAccessible(true);
-        $method->invoke($register, $bundles);
-        $dirs  = $this->getProperty($register, 'dirs');
-        $files = $this->getProperty($register, 'files');
+        $this->util
+            ->setProperty($register, 'resources', $resources)
+            ->invoke($register, 'initializeAllResources', $bundles)
+            ;
+        $dirs  = $this->util->getProperty($register, 'dirs');
+        $files = $this->util->getProperty($register, 'files');
 
         // regard OK as asserting according with count(), getResource(), getConfiguration()
         $this->assertSame(count($expectedDirs), count($dirs));
@@ -830,20 +814,17 @@ class RegisterTest extends RegisterTestCase
      */
     public function testPostInitializeResources(array $files, array $dirs, $expectedMethodCalls)
     {
-        $register = $this->getRegisterMock(array('setCacheDefinition'));
-        $this
-            ->setProperty($register, 'files', $files)
-            ->setProperty($register, 'dirs', $dirs)
-            ;
+        $register = $this->createRegisterMock(array('setCacheDefinition'));
         $register
             ->expects($expectedMethodCalls ? $this->once() : $this->never())
             ->method('setCacheDefinition')
             ->willReturn(null)
             ;
-
-        $method = new \ReflectionMethod($register, 'postInitializeResources');
-        $method->setAccessible(true);
-        $method->invoke($register);
+        $this->util
+            ->setProperty($register, 'files', $files)
+            ->setProperty($register, 'dirs', $dirs)
+            ->invoke($register, 'postInitializeResources')
+            ;
     }
 
     /**
@@ -878,11 +859,12 @@ class RegisterTest extends RegisterTestCase
      */
     public function testHasFileResourceWithoutAlias(array $files, $expected)
     {
-        $register = $this->getRegisterMock();
-        $this->setProperty($register, 'files', $files);
-        $method = new \ReflectionMethod($register, 'hasFileResourcesWithoutAlias');
-        $method->setAccessible(true);
-        $this->assertSame($expected, $method->invoke($register));
+        $register = $this->createRegisterMock();
+        $actual   = $this->util
+            ->setProperty($register, 'files', $files)
+            ->invoke($register, 'hasFileResourcesWithoutAlias')
+            ;
+        $this->assertSame($expected, $actual);
     }
 
     /**
@@ -928,14 +910,11 @@ class RegisterTest extends RegisterTestCase
             }
         }
 
-        $register = $this->getRegisterMock();
-        $method = new \ReflectionMethod($register, 'findFilesByDirectory');
-        $method->setAccessible(true);
-
+        $register = $this->createRegisterMock();
         if (is_string($expected) && class_exists($expected)) {
             $this->setExpectedException($expected);
         }
-        $finder = $method->invoke($register, $resource, $excludes);
+        $finder = $this->util->invoke($register, 'findFilesByDirectory', $resource, $excludes);
 
         $results = array();
         foreach ($finder as $file) {
@@ -1002,20 +981,18 @@ class RegisterTest extends RegisterTestCase
 
     public function testSetBundleId()
     {
-        $register  = $this->getRegisterMock();
-        $extension = $this->getMock('Symfony\Component\DependencyInjection\Extension\ExtensionInterface');
+        $register  = $this->createRegisterMock();
+        $extension = $this->createExtensionMock();
         $extension
             ->expects($this->once())
             ->method('getAlias')
             ->willReturn('register_test')
             ;
-
-        $this->setProperty($register, 'extension', $extension);
-        $method = new \ReflectionMethod($register, 'setBundleId');
-        $method->setAccessible(true);
-        $method->invoke($register);
-
-        $this->assertSame('register_test', $this->getProperty($register, 'bundleId'));
+        $this->util
+            ->setProperty($register, 'extension', $extension)
+            ->invoke($register, 'setBundleId')
+            ;
+        $this->assertSame('register_test', $this->util->getProperty($register, 'bundleId'));
     }
 
     /**
@@ -1023,21 +1000,20 @@ class RegisterTest extends RegisterTestCase
      */
     public function testSetConfigurationByExtension($configuration, $expected)
     {
-        list($register, ) = $this->getRegisterMockAndContainer();
+        list($register, ) = $this->createRegisterMockAndContainer();
         // mock of ConfigurationExtensionInterface in order to getConfiguration only
-        $extension = $this->getMock('Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface');
+        $name      = 'Symfony\Component\DependencyInjection\Extension\ConfigurationExtensionInterface';
+        $extension = $this->util->createInterfaceMock($name);
         $extension
             ->expects($this->once())
             ->method('getConfiguration')
             ->willReturn($configuration)
             ;
-        $this->setProperty($register, 'extension', $extension);
-
-        $method = new \ReflectionMethod($register, 'setConfigurationByExtension');
-        $method->setAccessible(true);
-        $method->invoke($register);
-
-        $this->assertSame($expected, $this->getProperty($register, 'configuration'));
+        $this->util
+            ->setProperty($register, 'extension', $extension)
+            ->invoke($register, 'setConfigurationByExtension')
+            ;
+        $this->assertSame($expected, $this->util->getProperty($register, 'configuration'));
     }
 
     /**
@@ -1062,18 +1038,17 @@ class RegisterTest extends RegisterTestCase
      */
     public function testSetCacheDefinition($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
         // differ by setCacheDefinitionByAlias
         $configuration = new RegisterConfiguration();
-        $this->setProperty($register, 'configuration', $configuration);
-
-        // setCacheDefinition
-        $method = new \ReflectionMethod($register, 'setCacheDefinition');
-        $method->setAccessible(true);
-        $method->invoke($register);
+        $this->util
+            ->setProperty($register, 'configuration', $configuration)
+            // setCacheDefinition
+            ->invoke($register, 'setCacheDefinition')
+            ;
 
         // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id);
@@ -1089,9 +1064,7 @@ class RegisterTest extends RegisterTestCase
         $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[1][1][0]);
 
         // assert(Configuration)
-        $method = new \ReflectionMethod($register, 'buildConfigurationId');
-        $method->setAccessible(true);
-        $configId = $method->invoke($register, $configuration);
+        $configId = $this->util->invoke($register, 'buildConfigurationId', $configuration);
         $this->assertTrue($container->hasDefinition($configId));
         $definition = $container->getDefinition($configId);
         $this->assertFalse($definition->isPublic());
@@ -1117,15 +1090,12 @@ class RegisterTest extends RegisterTestCase
      */
     public function testSetCacheDefinitionByAlias($tag)
     {
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
         $this->preSetCacheDefinition($register, $tag, $id);
 
         // setCacheDefinitionByAlias
-        $alias  = 'test_alias';
-        $method = new \ReflectionMethod($register, 'setCacheDefinitionByAlias');
-        $method->setAccessible(true);
-        $method->invoke($register, $alias);
+        $this->util->invoke($register, 'setCacheDefinitionByAlias', $alias = 'test_alias');
 
         // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id, $alias);
@@ -1142,23 +1112,20 @@ class RegisterTest extends RegisterTestCase
 
     public function testSetConfigurationDefinition()
     {
-        list($register, $container) = $this->getRegisterMockAndContainer();
+        list($register, $container) = $this->createRegisterMockAndContainer();
         $configuration = new RegisterConfiguration();
         $id            = 'register_test';
 
-        $method = new \ReflectionMethod($register, 'setConfigurationDefinition');
-        $method->setAccessible(true);
-
         // state not registered ID
-        $method->invoke($register, $id, $configuration);
+        $this->util->invoke($register, 'setConfigurationDefinition', $id, $configuration);
         $this->assertTrue($container->hasDefinition($id));
         $definition = $container->getDefinition($id);
         $this->assertFalse($definition->isPublic());
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
 
         // state already registered ID
-        $mock = $this->getMock('Symfony\Component\Config\Definition\ConfigurationInterface');
-        $method->invoke($register, $id, $mock);
+        $mock = $this->createConfigurationMock();
+        $this->util->invoke($register, 'setConfigurationDefinition', $id, $mock);
         $definition = $container->getDefinition($id);
         $this->assertSame('YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration', $definition->getClass());
         $this->assertFalse(strpos('Mock_ConfigurationInterface', $definition->getClass()) === 0);
@@ -1169,15 +1136,14 @@ class RegisterTest extends RegisterTestCase
      */
     public function testValidateResources($resources, $expected)
     {
-        $register = $this->getRegisterMock();
-        $this->setProperty($register, 'resources', $resources);
-        $method = new \ReflectionMethod($register, 'validateResources');
-        $method->setAccessible(true);
-
         if (is_string($expected) && class_exists($expected)) {
             $this->setExpectedException($expected);
         }
-        $method->invoke($register);
+        $register = $this->createRegisterMock();
+        $this->util
+            ->setProperty($register, 'resources', $resources)
+            ->invoke($register, 'validateResources')
+            ;
         $this->assertTrue($expected);
     }
 
@@ -1190,8 +1156,8 @@ class RegisterTest extends RegisterTestCase
             // normal
             array(
                 array(
-                    $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface'),
-                    $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface'),
+                    $this->createResourceMock(),
+                    $this->createResourceMock(),
                 ),
                 true,
             ),
@@ -1203,7 +1169,7 @@ class RegisterTest extends RegisterTestCase
             // exist resources except ResourceInterface
             array(
                 array(
-                    $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface'),
+                    $this->createResourceMock(),
                     new \StdClass(),
                 ),
                 '\Exception',
@@ -1216,26 +1182,23 @@ class RegisterTest extends RegisterTestCase
      */
     public function testValidateCacheId(array $bundles, $expected)
     {
-        $container = $this->getMockBuilder('Symfony\Component\DependencyInjection\ContainerBuilder')
-            ->disableOriginalConstructor()
-            ->getMock()
-            ;
+        if (is_string($expected) && class_exists($expected)) {
+            $this->setExpectedException($expected);
+        }
+
+        $className = 'Symfony\Component\DependencyInjection\ContainerBuilder';
+        $container = $this->util->createMock($className, array('getParameter'));
         $container
             ->expects($this->once())
             ->method('getParameter')
             ->with('kernel.bundles')
             ->willReturn($bundles)
             ;
-
-        $register = $this->getRegisterMock();
-        $this->setProperty($register, 'container', $container);
-        $method = new \ReflectionMethod($register, 'validateCacheId');
-        $method->setAccessible(true);
-
-        if (is_string($expected) && class_exists($expected)) {
-            $this->setExpectedException($expected);
-        }
-        $method->invoke($register);
+        $register = $this->createRegisterMock();
+        $this->util
+            ->setProperty($register, 'container', $container)
+            ->invoke($register, 'validateCacheId')
+            ;
         $this->assertTrue($expected);
     }
 
@@ -1269,10 +1232,8 @@ class RegisterTest extends RegisterTestCase
      */
     public function testParseServiceId($name, $expected)
     {
-        $register = $this->getRegisterMock();
-        $method = new \ReflectionMethod($register, 'parseServiceId');
-        $method->setAccessible(true);
-        $this->assertSame($expected, $method->invoke($register, $name));
+        $register = $this->createRegisterMock();
+        $this->assertSame($expected, $this->util->invoke($register, 'parseServiceId', $name));
     }
 
     /**
@@ -1295,10 +1256,8 @@ class RegisterTest extends RegisterTestCase
      */
     public function testBuildId($suffix, $expected)
     {
-        $register = $this->getRegisterMock();
-        $method = new \ReflectionMethod($register, 'buildId');
-        $method->setAccessible(true);
-        $this->assertSame($expected, $method->invoke($register, $suffix));
+        $register = $this->createRegisterMock();
+        $this->assertSame($expected, $this->util->invoke($register, 'buildId', $suffix));
     }
 
     /**
@@ -1317,10 +1276,8 @@ class RegisterTest extends RegisterTestCase
      */
     public function testBuildConfigurationId($configuration, $expected)
     {
-        $register = $this->getRegisterMock();
-        $method = new \ReflectionMethod($register, 'buildConfigurationId');
-        $method->setAccessible(true);
-        $this->assertSame($expected, $method->invoke($register, $configuration));
+        $register = $this->createRegisterMock();
+        $this->assertSame($expected, $this->util->invoke($register, 'buildConfigurationId', $configuration));
     }
 
     /**
@@ -1344,36 +1301,48 @@ class RegisterTest extends RegisterTestCase
 
     public function testFindConfigurationByResource()
     {
-        $mock = $this->getMock('Symfony\Component\Config\Definition\ConfigurationInterface');
+        $mock = $this->createConfigurationMock();
         $real = new RegisterConfiguration();
-        $register = $this->getRegisterMock();
+        $register = $this->createRegisterMock();
         $register->setConfiguration($real);
-
-        $reflection = new \ReflectionMethod($register, 'findConfigurationByResource');
-        $reflection->setAccessible(true);
 
         // enabled configuration setting on resource
         $resource = new FileResource(__DIR__.'/../Fixtures/test_service1.yml', $mock);
-        $this->assertSame($mock, $reflection->invoke($register, $resource));
+        $this->assertSame($mock, $this->util->invoke($register, 'findConfigurationByResource', $resource));
         // disabled configuration setting on resource
         $resource = new FileResource(__DIR__.'/../Fixtures/test_service1.yml');
-        $this->assertSame($real, $reflection->invoke($register, $resource));
+        $this->assertSame($real, $this->util->invoke($register, 'findConfigurationByResource', $resource));
     }
 
     public function testGetInitializedConfiguration()
     {
-        $register = $this->getRegisterMock();
-        $reflection = new \ReflectionMethod($register, 'getInitializedConfiguration');
-        $reflection->setAccessible(true);
+        $register = $this->createRegisterMock();
 
         // configuration not set
         $this->setExpectedException('\Exception');
         // throw \Exception
-        $reflection->invoke($register);
+        $this->util->invoke($register, 'getInitializedConfiguration');
 
         // configuration set
         $configuration = new RegisterConfiguration();
         $register->setConfiguration($configuration);
-        $this->assertSame($configuration, $reflection->invoke($register));
+        $this->assertSame($configuration, $this->util->invoke($register, 'getInitializedConfiguration'));
+    }
+
+    protected function createExtensionMock()
+    {
+        return $this->util->createInterfaceMock('Symfony\Component\DependencyInjection\Extension\ExtensionInterface');
+    }
+
+    protected function createConfigurationMock()
+    {
+        return $this->util->createInterfaceMock('Symfony\Component\Config\Definition\ConfigurationInterface');
+    }
+
+    protected function createResourceMock()
+    {
+        $name = 'YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface';
+
+        return $this->findUtil()->createInterfaceMock($name);
     }
 }

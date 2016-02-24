@@ -15,11 +15,12 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
 /**
  * This is an abstract class for preprocessing RegisterTest, Locale\RegisterLocaleTest
  */
-abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
+abstract class RegisterTestCase extends TestCase
 {
     protected $cacheId;
     protected $registerClass    = 'YahooJapan\ConfigCacheBundle\ConfigCache\Register';
@@ -30,7 +31,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function preSetCacheDefinition($register, $tag, $id)
     {
-        $this
+        $this->util
             ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'appConfig', array('aaa' => 'bbb'))
             ;
@@ -110,33 +111,25 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     protected function getCacheId()
     {
         if (is_null($this->cacheId)) {
-            $this->cacheId = $this->getProperty($this->getRegisterMock(), 'cacheId');
+            $this->cacheId = $this->findUtil()->getProperty($this->createRegisterMock(), 'cacheId');
         }
 
         return $this->cacheId;
     }
 
-    protected function getRegisterMock(array $methods = array())
+    protected function createRegisterMock(array $methods = null)
     {
-        $register = $this->getMockBuilder($this->registerClass)
-            ->disableOriginalConstructor()
-            ->setMethods($methods ?: null)
-            ->getMock()
-            ;
-
-        return $register;
+        return $this->findUtil()->createMock($this->registerClass, $methods);
     }
 
     /**
      * @return array list of Register mock, ContainerBuilder
      */
-    protected function getRegisterMockAndContainer(array $methods = array())
+    protected function createRegisterMockAndContainer(array $methods = null)
     {
         $container = $this->getContainerBuilder();
-        $register  = $this->getRegisterMock($methods);
-        $property  = new \ReflectionProperty($register, 'container');
-        $property->setAccessible(true);
-        $property->setValue($register, $container);
+        $register  = $this->createRegisterMock($methods);
+        $this->util->setProperty($register, 'container', $container);
 
         return array($register, $container);
     }
@@ -157,25 +150,8 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         ), $data)));
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../../Resources/config'));
-        $loader->load('pre_services.yml');
+        $loader->load('services.yml');
 
         return $container;
-    }
-
-    protected function getProperty($instance, $name)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-
-        return $property->getValue($instance);
-    }
-
-    protected function setProperty($instance, $name, $value)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-        $property->setValue($instance, $value);
-
-        return $this;
     }
 }
