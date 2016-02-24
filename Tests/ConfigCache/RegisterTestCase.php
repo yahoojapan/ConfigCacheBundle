@@ -15,11 +15,12 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
 /**
  * This is an abstract class for preprocessing RegisterTest, Locale\RegisterLocaleTest
  */
-abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
+abstract class RegisterTestCase extends TestCase
 {
     protected $cacheId;
     protected $registerClass    = 'YahooJapan\ConfigCacheBundle\ConfigCache\Register';
@@ -30,7 +31,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
      */
     protected function preSetCacheDefinition($register, $tag, $id)
     {
-        $this
+        $this->util
             ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'appConfig', array('aaa' => 'bbb'))
             ;
@@ -110,7 +111,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     protected function getCacheId()
     {
         if (is_null($this->cacheId)) {
-            $this->cacheId = $this->getProperty($this->getRegisterMock(), 'cacheId');
+            $this->cacheId = $this->findUtil()->getProperty($this->getRegisterMock(), 'cacheId');
         }
 
         return $this->cacheId;
@@ -134,9 +135,7 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
     {
         $container = $this->getContainerBuilder();
         $register  = $this->getRegisterMock($methods);
-        $property  = new \ReflectionProperty($register, 'container');
-        $property->setAccessible(true);
-        $property->setValue($register, $container);
+        $this->util->setProperty($register, 'container', $container);
 
         return array($register, $container);
     }
@@ -160,22 +159,5 @@ abstract class RegisterTestCase extends \PHPUnit_Framework_TestCase
         $loader->load('services.yml');
 
         return $container;
-    }
-
-    protected function getProperty($instance, $name)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-
-        return $property->getValue($instance);
-    }
-
-    protected function setProperty($instance, $name, $value)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-        $property->setValue($instance, $value);
-
-        return $this;
     }
 }

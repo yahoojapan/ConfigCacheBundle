@@ -47,7 +47,7 @@ class RegisterLocaleTest extends RegisterTestCase
     {
         $methods = array('setTag', 'initializeAllResources', 'registerInternal');
         $register = $this->getRegisterMock($methods);
-        $this->setProperty($register, 'container', $this->getContainerBuilder());
+        $this->util->setProperty($register, 'container', $this->getContainerBuilder());
         $register
             ->expects($this->once())
             ->method('setTag')
@@ -78,7 +78,7 @@ class RegisterLocaleTest extends RegisterTestCase
 
         // differ by setCacheDefinitionByAlias
         $configuration = new RegisterConfiguration();
-        $this->setProperty($register, 'configuration', $configuration);
+        $this->util->setProperty($register, 'configuration', $configuration);
 
         // setCacheDefinition
         $method = new \ReflectionMethod($register, 'setCacheDefinition');
@@ -170,7 +170,7 @@ class RegisterLocaleTest extends RegisterTestCase
     {
         list($register, ) = $this->getRegisterMockAndContainer();
         $id = 'register_test';
-        $this
+        $this->util
             ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'appConfig', array('aaa' => 'bbb'))
             ->setProperty($register, 'configuration', new RegisterConfiguration())

@@ -15,11 +15,12 @@ use Doctrine\Common\Cache\PhpFileCache;
 use Symfony\Component\Filesystem\Filesystem;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheConfiguration;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
 /**
  * This is an abstract class for preprocessing ConfigCacheTest, Locale\ConfigCacheTest.
  */
-abstract class ConfigCacheTestCase extends \PHPUnit_Framework_TestCase
+abstract class ConfigCacheTestCase extends TestCase
 {
     protected $delete = true;
     protected static $tmpDir;
@@ -49,7 +50,7 @@ abstract class ConfigCacheTestCase extends \PHPUnit_Framework_TestCase
 
     protected function reload()
     {
-        $this
+        $this->util
             ->setProperty(self::$cache, 'resources', array())
             ->setProperty(self::$cache, 'config', array())
             ->setProperty(self::$cache, 'configuration', null)
@@ -78,28 +79,11 @@ abstract class ConfigCacheTestCase extends \PHPUnit_Framework_TestCase
      */
     public function getHashFileName($fileName)
     {
-        $cache  = $this->getProperty(self::$cache, 'cache');
+        $cache  = $this->util->getProperty(self::$cache, 'cache');
         $method = new \ReflectionMethod($cache, 'getFilename');
         $method->setAccessible(true);
         $hashedFileName = $method->invoke($cache, basename($fileName, static::$extension));
 
         return basename($hashedFileName);
-    }
-
-    protected function getProperty($instance, $name)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-
-        return $property->getValue($instance);
-    }
-
-    protected function setProperty($instance, $name, $value)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-        $property->setValue($instance, $value);
-
-        return $this;
     }
 }

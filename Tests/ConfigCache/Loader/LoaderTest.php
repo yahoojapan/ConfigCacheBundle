@@ -11,7 +11,9 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Loader;
 
-class LoaderTest extends \PHPUnit_Framework_TestCase
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
+
+class LoaderTest extends TestCase
 {
     public function testLoad()
     {
@@ -29,9 +31,7 @@ class LoaderTest extends \PHPUnit_Framework_TestCase
         $arrayLoader = $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoaderInterface');
         $loader      = $this->getMockForAbstractClass('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\Loader');
         $loader->addLoader($arrayLoader);
-        $loaders = new \ReflectionProperty($loader, 'loaders');
-        $loaders->setAccessible(true);
-        $actual = $loaders->getValue($loader);
+        $actual = $this->util->getProperty($loader, 'loaders');
         if (isset($actual[0])) {
             $this->assertSame($arrayLoader, $actual[0]);
         } else {
@@ -45,9 +45,7 @@ class LoaderTest extends \PHPUnit_Framework_TestCase
         $arrayLoader2 = $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoaderInterface');
         $loader      = $this->getMockForAbstractClass('YahooJapan\ConfigCacheBundle\ConfigCache\Loader\Loader');
         $loader->addLoaders(array($arrayLoader1, $arrayLoader2));
-        $loaders = new \ReflectionProperty($loader, 'loaders');
-        $loaders->setAccessible(true);
-        $actual = $loaders->getValue($loader);
+        $actual = $this->util->getProperty($loader, 'loaders');
         if (isset($actual[0]) && isset($actual[1])) {
             $this->assertSame($arrayLoader1, $actual[0]);
             $this->assertSame($arrayLoader2, $actual[1]);

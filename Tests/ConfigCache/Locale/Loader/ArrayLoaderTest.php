@@ -13,8 +13,9 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Locale\Loader;
 
 use Symfony\Component\Translation\MessageCatalogue;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
+class ArrayLoaderTest extends TestCase
 {
     /**
      * @dataProvider walkInternalProvider
@@ -82,7 +83,7 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
         // has no locale
         $this->assertSame('walkInternal', $method->invoke($loader));
         // has locale
-        $this->setProperty($loader, 'locale', 'en');
+        $this->util->setProperty($loader, 'locale', 'en');
         $this->assertSame('walkByLocaleInternal', $method->invoke($loader));
     }
 
@@ -95,14 +96,5 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase
             ;
 
         return $mock;
-    }
-
-    protected function setProperty($instance, $name, $value)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-        $property->setValue($instance, $value);
-
-        return $this;
     }
 }

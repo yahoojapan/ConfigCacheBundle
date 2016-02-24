@@ -12,8 +12,9 @@
 namespace YahooJapan\ConfigCacheBundle\Tests\EventListener;
 
 use YahooJapan\ConfigCacheBundle\EventListener\ConfigCacheListener;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class ConfigCacheListenerTest extends \PHPUnit_Framework_TestCase
+class ConfigCacheListenerTest extends TestCase
 {
     /**
      * @dataProvider onKernelRequestProvider
@@ -88,13 +89,11 @@ class ConfigCacheListenerTest extends \PHPUnit_Framework_TestCase
         $listener = new ConfigCacheListener();
 
         // state initialization
-        $property = new \ReflectionProperty($listener, 'configs');
-        $property->setAccessible(true);
-        $this->assertSame(array(), $property->getValue($listener));
+        $this->assertSame(array(), $this->util->getProperty($listener, 'configs'));
 
         // after added
         $config = $this->getMock('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCacheInterface');
         $listener->addConfig($config);
-        $this->assertSame(array($config), $property->getValue($listener));
+        $this->assertSame(array($config), $this->util->getProperty($listener, 'configs'));
     }
 }

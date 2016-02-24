@@ -12,18 +12,19 @@
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Util;
 
 use YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class ArrayAccessTest extends \PHPUnit_Framework_TestCase
+class ArrayAccessTest extends TestCase
 {
     public function testConstruct()
     {
         // has no arguments
         $arrayAccess = new ArrayAccess();
-        $this->assertSame(array(), $this->getProperty($arrayAccess, 'parameters'));
+        $this->assertSame(array(), $this->util->getProperty($arrayAccess, 'parameters'));
         // has arguments
         $parameters  = array('aaa' => 'bbb');
         $arrayAccess = new ArrayAccess($parameters);
-        $this->assertSame($parameters, $this->getProperty($arrayAccess, 'parameters'));
+        $this->assertSame($parameters, $this->util->getProperty($arrayAccess, 'parameters'));
     }
 
     /**
@@ -136,20 +137,12 @@ class ArrayAccessTest extends \PHPUnit_Framework_TestCase
         $parameters  = array('aaa' => 'bbb');
         $arrayAccess = new ArrayAccess();
         $arrayAccess->replace($parameters);
-        $this->assertSame($parameters, $this->getProperty($arrayAccess, 'parameters'));
+        $this->assertSame($parameters, $this->util->getProperty($arrayAccess, 'parameters'));
     }
 
     public function testCreate()
     {
         $parameters = array('aaa' => 'bbb');
         $this->assertEquals(new ArrayAccess($parameters), ArrayAccess::create($parameters));
-    }
-
-    protected function getProperty($instance, $name)
-    {
-        $property = new \ReflectionProperty($instance, $name);
-        $property->setAccessible(true);
-
-        return $property->getValue($instance);
     }
 }

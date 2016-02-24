@@ -15,8 +15,9 @@ use Symfony\Bundle\FrameworkBundle\Translation\Translator;
 use Symfony\Component\Translation\MessageSelector;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\YamlFileLoader;
+use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
+class YamlFileLoaderTest extends TestCase
 {
     public function testSetLocale()
     {
@@ -29,9 +30,7 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
 
         $loader->setLocale('ja');
 
-        $property = new \ReflectionProperty($loader, 'loaders');
-        $property->setAccessible(true);
-        $loaders = $property->getValue($loader);
+        $loaders = $this->util->getProperty($loader, 'loaders');
         if (isset($loaders[0]) && isset($loaders[1]) && isset($loaders[2])) {
             // the same added loaders
             $this->assertSame($arrayLoader1, $loaders[0]);
@@ -39,15 +38,11 @@ class YamlFileLoaderTest extends \PHPUnit_Framework_TestCase
             $this->assertSame($arrayLoader3, $loaders[2]);
 
             // the same locale
-            $property = new \ReflectionProperty($loaders[0], 'locale');
-            $property->setAccessible(true);
-            $this->assertSame('ja', $property->getValue($loaders[0]));
+            $this->assertSame('ja', $this->util->getProperty($loaders[0], 'locale'));
 
             // nothing to be set $loaders[1] because of not TranslationLoader
 
-            $property = new \ReflectionProperty($loaders[2], 'locale');
-            $property->setAccessible(true);
-            $this->assertSame('ja', $property->getValue($loaders[2]));
+            $this->assertSame('ja', $this->util->getProperty($loaders[2], 'locale'));
         } else {
             $this->fail('Unexpected setLocale.');
         }

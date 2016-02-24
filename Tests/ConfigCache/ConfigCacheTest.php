@@ -367,7 +367,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
         foreach ($resources as $resource) {
             self::$cache->addResource($resource, $configuration);
         }
-        $this->setProperty(self::$cache, 'config', $config);
+        $this->util->setProperty(self::$cache, 'config', $config);
         if (!is_null($masterConfiguration)) {
             self::$cache->setConfiguration($masterConfiguration);
         }
@@ -557,7 +557,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     public function testCreateMasterNode($configuration, $expected)
     {
         // use reflection to set null
-        $this->setProperty(self::$cache, 'configuration', $configuration);
+        $this->util->setProperty(self::$cache, 'configuration', $configuration);
 
         $method = new \ReflectionMethod(self::$cache, 'createMasterNode');
         $method->setAccessible(true);
@@ -593,7 +593,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     {
         // OK
         self::$cache->setKey($expected = 'test');
-        $this->assertSame($expected, $this->getProperty(self::$cache, 'key'));
+        $this->assertSame($expected, $this->util->getProperty(self::$cache, 'key'));
         // exception
         $this->setExpectedException('\RuntimeException');
         self::$cache->setKey('zzz');
