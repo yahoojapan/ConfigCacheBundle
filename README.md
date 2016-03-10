@@ -5,14 +5,14 @@ ConfigCacheBundle
 [![Code Coverage](https://scrutinizer-ci.com/g/yahoojapan/ConfigCacheBundle/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/yahoojapan/ConfigCacheBundle/?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/yahoojapan/ConfigCacheBundle/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/yahoojapan/ConfigCacheBundle/?branch=master)
 
-ConfigCacheBundleは設定ファイルキャッシュを扱うバンドルです。
+The ConfigCacheBundle is a bundle that handles configuration file caches.
 
-ドキュメント
-------------
+Documentation
+-------------
 
-インストール手順および使い方は[ドキュメント](Resources/doc/index.md)を参照ください。
+See the [documentation](Resources/doc/index.md) for installation and usage.
 
-ライセンス
-----------
+License
+-------
 
-このバンドルは[MITライセンス](Resources/meta/LICENSE)の下で利用できます。
+This bundle is under the [MIT license](Resources/meta/LICENSE).

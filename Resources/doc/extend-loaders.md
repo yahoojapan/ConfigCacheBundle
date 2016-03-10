@@ -1,11 +1,11 @@
-ローダを拡張する
-----------------
+Extend loaders
+--------------
 
-`ConfigCache`サービスは設定ファイルをロードする際にConfigCacheBundle付属の`YamlFileLoader`または`XmlFileLoader`を使います。  
-これらのファイルローダの内部には`ArrayLoader`を持たせることもできます。  
-`ArrayLoader`を実装して`YamlFileLoader`に追加することで設定ファイルのロード後に何か処理をさせることができます。
+When the `ConfigCache` service loads configuration files, the service uses `YamlFileLoader` or `XmlFileLoader` this bundle includes.  
+You can also give these file loaders `ArrayLoader`.  
+Implementing `ArrayLoader` and adding it to `YamlFileLoader`, you can let the loader do something after loading configuration files.
 
-例えば以下のような`ArrayLoader`を実装したとします。
+We suppose `ArrayLoader` implementation below:
 
 ```php
 <?php
@@ -30,7 +30,7 @@ class ArrayLoader implements ArrayLoaderInterface
 }
 ```
 
-これをAcmeDemoBundleでサービスにします。
+Create `ArrayLoader` service in AcmeDemoBundle:
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/services.yml
@@ -44,7 +44,7 @@ services:
             - [addLoader, ['@acme_demo.array_loader']]
 ```
 
-`Bundle`クラスでキャッシュ生成前に`YamlFileLoader`を差し替えます。
+Replace `YamlFileLoader` before creating a cache in `AcmeDemoBundle`:
 
 ```php
 <?php
@@ -67,7 +67,7 @@ class AcmeDemoBundle extends Bundle
 }
 ```
 
-これで`config.acme_demo.sample`は`ArrayLoader`による置き換え後の配列データを持った状態になります。
+As a result, the `config.acme_demo.sample` service has a content that is replaced by `ArrayLoader`:
 
 ```php
 <?php

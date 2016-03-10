@@ -1,6 +1,6 @@
-設定ファイルについて
-====================
+About configuration files
+-------------------------
 
-ここで述べている設定ファイルとはアプリケーション設定に依らないバンドル固有の設定ファイルのことを指します。  
-例えばAcmeDemoBundleならsrc/Acme/DemoBundle/Resources/config/sample.ymlなどです。  
-ConfigCacheBundleではこのようなバンドル固有の設定ファイルをキャッシュすることを目的としています。
+The configuration files we describe are bundle-specific files without dependence on application configuration.  
+For example, in AcmeDemoBundle the configuration file is `src/Acme/DemoBundle/Resources/config/sample.yml`, etc.  
+The purpose of this bundle is to cache files like this.

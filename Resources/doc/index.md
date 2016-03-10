@@ -1,38 +1,39 @@
 ConfigCacheBundle
 =================
 
-ConfigCacheBundleは設定ファイルキャッシュを扱うバンドルです。
+The ConfigCacheBundle is a bundle that handles configuration file caches.
 
-主な機能
+Features
 --------
 
-* [設定ファイル](about-config.md)をキャッシュとして生成  
-Symfonyが生成するサービスコンテナなどのキャッシュではなく別途ファイルキャッシュを持ちます
-* キャッシュオブジェクトをSymfonyのサービスコンテナに登録
-* 複数ファイルのマージ、バリデーション
-* ローダの拡張による事前処理
-* 多言語対応
+* Create a cache from [configuration files](about-config.md)  
+A file cache is created separately from caches the Symfony creates as a service container.
+* Register cache objects to the Symfony service container
+* Merge and validate configuration files
+* Preprocess by extending loaders
+* Translations
 
-動作環境
---------
-
-PHP 5.3.9以上  
-またSymfony 2.7以上のコンポーネントおよびdoctrine/cacheが必要です。  
-Symfonyのセットアップには[Symfonyのドキュメント](http://symfony.com/doc/current/book/installation.html)を参照ください。  
-パッケージの依存関係は[composer.json](../../composer.json)を参照ください。
-
-インストール
+Requirements
 ------------
 
-##### バンドルの入手
+PHP >= 5.3.9  
+Symfony >= 2.7  
+doctrine/cache >= 1.3
+
+See the [composer.json](../../composer.json) for details.
+
+Installation
+------------
+
+##### Get the bundle
 
 ```sh
 $ composer require yahoojapan/config-cache-bundle
 ```
 
-##### バンドルを有効にする
+##### Enable the bundle
 
-app/AppKernel.phpにConfigCacheBundleを追加してください。
+Add the ConfigCacheBundle in `app/AppKernel.php`:
 
 ```php
 <?php
@@ -50,19 +51,19 @@ class AppKernel extends Kernel
 }
 ```
 
-使い方
-------
+Usage
+-----
 
-* [基本的な使い方](basic-usage.md)
-* [複数ファイル指定](specify-files.md)
-* [マージ](merge-files.md)
-* [ディレクトリ指定](specify-directory.md)
-* [バンドルをまたいで設定ファイルを集める](config-over-bundles.md)
-* [ローダを拡張する](extends-loader.md)
-* [多言語対応](multi-languages.md)
-* [Configuration自動生成](generate-configuration.md)
+* [Basic usage](basic-usage.md)
+* [Specify files](specify-files.md)
+* [Merge files](merge-files.md)
+* [Specify directories](specify-directories.md)
+* [Merge files of all bundles](merge-files-of-all-bundles.md)
+* [Extend loaders](extend-loaders.md)
+* [Translations](translations.md)
+* [Generate Configurations](generate-configurations.md)
 
-補足
-----
+Appendix
+--------
 
-* [設定ファイルについて](about-config.md)
+* [About configuration files](about-config.md)

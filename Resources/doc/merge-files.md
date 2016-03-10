@@ -1,17 +1,17 @@
-マージ
-------
+Merge files
+-----------
 
-複数のファイルをマージして1つのキャッシュを生成することができます。  
-ただしマージをする際は以下の条件を満たす必要があります。
+This bundle creates a cache of the content into which this bundle merges configuration files.  
+However, some conditions below are required to merge files:
 
-* 設定ファイルのトップレベルキーを固定
-* `Configuration`クラスの実装
-* `FileResource`のエイリアスを指定しない
+* Fix a top-level key of configuration files
+* Implement a `Configuration` class
+* Don't specify `FileResource` aliases
 
-##### 設定ファイルのトップレベルキーを固定
+##### Fix a top-level key of configuration files
 
-設定ファイルのトップレベルキーはバンドル名に一致させる必要があります。  
-例えばAcmeDemoBundleならトップレベルキーは`acme_demo`になります。
+You need to match a top-level key of configuration files and a bundle name.  
+For example, if the bundle name is "AcmeDemoBundle", the top-level key is `acme_demo`:
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample1.yml
@@ -31,9 +31,9 @@ acme_demo:
         family : Yahoo
 ```
 
-##### Configurationクラスの実装
+##### Implement a Configuration class
 
-DependencyInjection/Configuration.phpを以下のように記述します。
+Implement the `DependencyInjection/Configuration.php`:
 
 ```php
 <?php
@@ -82,11 +82,11 @@ class Configuration implements ConfigurationInterface
 }
 ```
 
-`Configuration`クラスを自動生成したい場合は[自動生成ツール](generate-configuration.md)を用意していますのでそちらをお試しください。
+If you would like to generate this `Configuration` automatically, you can use [Configuration generator](generate-configurations.md).
 
-##### FileResourceのエイリアスを指定しない
+##### Don't specify FileResource aliases
 
-以下のように`Register`生成時の`FileResource`を記述するときに第3引数のエイリアスを指定しないようにします。
+When you define `Register` arguments, you don't have to specify the third argument aliases:
 
 ```php
 <?php
@@ -111,7 +111,7 @@ class AcmeDemoExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container)
     {
-        // マージする際はFileResourceのalias(第3引数)を指定しない
+        // Don't specify the third argument when merging
         $cache = new Register($this, $container, array(
             new FileResource(__DIR__.'/../Resources/config/sample1.yml'),
             new FileResource(__DIR__.'/../Resources/config/sample2.yml'),
@@ -121,7 +121,7 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-あとは同様に`Bundle`でキャッシュを生成します。
+Create a cache in `AcmeDemoBundle` the same way:
 
 ```php
 <?php
@@ -140,8 +140,8 @@ class AcmeDemoBundle extends Bundle
 }
 ```
 
-すべてのファイルの内容をマージして1個のキャッシュが生成されます。  
-サービスIDは末尾にエイリアスがつかない`config.acme_demo`になります。
+All files are merged, and a cache is created.  
+The service ID is `config.acme_demo` without an alias:
 
 ```php
 <?php

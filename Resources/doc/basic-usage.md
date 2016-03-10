@@ -1,11 +1,16 @@
-基本的な使い方
---------------
+Basic usage
+-----------
 
-AcmeDemoBundleに設定ファイルsample.ymlを配置するケースを例にして、キャッシュ生成までの手順を示します。
+The following is a procedure to create a cache as an example of setting sample.yml in AcmeDemoBundle.
 
-##### AcmeDemoBundle生成
+##### Setup Symfony
 
-Symfonyのバンドルを1つ作成しておきます。
+This bundle requires the Symfony framework.
+See the Symfony [documentation](http://symfony.com/doc/current/book/installation.html) for setup Symfony.
+
+##### Generate AcmeDemoBundle
+
+Prepare a Symfony sample bundle beforehand:
 
 ```sh
 # Symfony 2.x
@@ -14,9 +19,9 @@ $ app/console generate:bundle --namespace=Acme/DemoBundle --format=yml
 $ bin/console generate:bundle --namespace=Acme/DemoBundle --format=yml
 ```
 
-##### 設定ファイル
+##### Configuration file
 
-Resources/config配下に定義したい設定ファイルを配置します。
+Set a configuration file on `Resources/config`:
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample.yml
@@ -27,9 +32,9 @@ bill-to:
     family : Dumars
 ```
 
-##### Extensionクラス
+##### Extension
 
-DependencyInjection/AcmeDemoExtension.phpにサービス登録の記述を追加します。
+Add a service definition in `DependencyInjection/AcmeDemoExtension.php`:
 
 ```php
 <?php
@@ -56,7 +61,7 @@ class AcmeDemoExtension extends Extension
     {
         $cache = new Register($this, $container, array(
             new FileResource(__DIR__.'/../Resources/config/sample.yml', null, 'sample'),
-            // 以下でも同じ
+            // the following is the same
             //FileResource::create(__DIR__.'/../Resources/config/sample.yml')->setAlias('sample'),
         ));
         $cache->register();
@@ -64,9 +69,9 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-##### Bundleクラス
+##### Bundle
 
-AcmeDemoBundle.phpにキャッシュ生成の記述を追加します。
+Add a description to create a cache in `AcmeDemoBundle.php`:
 
 ```php
 <?php
@@ -85,12 +90,12 @@ class AcmeDemoBundle extends Bundle
 }
 ```
 
-ここで登場するサービスID`config.acme_demo.sample`はバンドル名と`FileResource`で指定したエイリアスをもとに自動的に割り振られます。  
-バンドル名が`AcmeDemoBundle`でエイリアスがsampleなら`config.acme_demo.sample`となります。
+This service ID `config.acme_demo.sample` is generated automatically based on an alias you specify in `FileResource` and the bundle name "AcmeDemoBundle".  
+If a bundle name is "AcmeDemoBundle" and `FileResource` alias is "sample", the service name is `config.acme_demo.sample`.
 
-##### キャッシュ生成
+##### Create a cache
 
-Symfonyのconsoleを使ってキャッシュ生成します。
+Create a cache with the Symfony console:
 
 ```sh
 # Symfony 2.x
@@ -99,7 +104,7 @@ $ app/console cache:warmup
 $ bin/console cache:warmup
 ```
 
-ここまで完了するとキャッシュオブジェクト`ConfigCache`がサービス化された状態になります。
+In this way, a cache object `ConfigCache` is registered as a service:
 
 ```sh
 # Symfony 2.x
@@ -118,7 +123,7 @@ Synchronized     no
 Abstract         no
 ```
 
-生成されたキャッシュはSymfonyのキャッシュディレクトリ配下に配置されます。
+A cache file is created and set under the Symfony cache directory:
 
 ```sh
 // Symfony 2.x : app/cache/dev/acme_demo/75/5b73616d706c655d5b315d.php
@@ -138,9 +143,9 @@ Abstract         no
 );
 ```
 
-##### サービスを使う
+##### Use the service
 
-コンテナから直接サービスを取り出すか、またはservices.ymlに記述することで`ConfigCache`サービスを使えるようになります。
+Getting the service container directly or defining in services.yml, you can use the `ConfigCache` service named `config.acme_demo.sample`:
 
 ```php
 <?php

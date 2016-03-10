@@ -1,8 +1,8 @@
-複数ファイル指定
-----------------
+Specify files
+-------------
 
-複数のファイルをキャッシュの対象にすることができます。  
-`Register`の第3引数でリスト指定します。
+This bundle creates caches for each configuration file.  
+Specify an array that consists of the third argument of `Register`:
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample1.yml
@@ -52,7 +52,7 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-ファイルごとにキャッシュおよびサービスが生成されます。
+Caches and services are created for each file:
 
 ```php
 <?php
