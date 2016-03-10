@@ -1,20 +1,20 @@
-Configuration自動生成
----------------------
+Generate configurations
+-----------------------
 
-設定ファイルを指定して`Configuration`クラスのひな形を生成するコマンドを用意しました。  
-[バンドルを有効にする](index.md#バンドルを有効にする)を実施した後にSymfonyのキャッシュを生成した状態で以下コマンドを実行してください。
+This bundle provides a command that generates a `Configuration` skeleton.  
+Execute a console command with the Symfony cache created after "[Enable the bundle](index.md#enable-the-bundle)":
 
 ```sh
+# Symfony 2.x
 $ app/console generate:configuration -b AcmeDemoBundle -f sample.yml
+# Symfony 3.x
+$ bin/console generate:configuration -b AcmeDemoBundle -f sample.yml
 Generated file $ROOT_DIR/src/Acme/DemoBundle/DependencyInjection/Configuration.php
 ```
 
-コマンドを実行すると[Configurationクラス](merge-files.md#configurationクラスの実装)で示したようなConfiguration.phpファイルが自動生成されます。
+The console command generates `Configuration.php` as described [above](merge-files.md#implement-a-configuration-class).
 
-##### 生成されるファイルについて
+##### Generated Configuration
 
-このコマンドで生成されるのはあくまでひな形のため、`Configuration`による厳密なバリデーションはされません。  
-設定ファイルの細かいバリデーションを実施したい場合は[公式ドキュメント](http://symfony.com/doc/current/components/config/definition.html)を参考に自動生成されたConfiguration.phpを修正してください。
-
-また自動生成されたConfiguration.phpは冗長な記述になることがあります。  
-`prototype()`、`useAttributeAsKey()`などを使うことで`Configuration`の記述を簡潔にできる場合があります。
+Generated `Configuration` is a skeleton, so the validation of configuration files is not strict.  
+For more details of the validation, see the Symfony [documentation](http://symfony.com/doc/current/components/config/definition.html).

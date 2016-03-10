@@ -1,8 +1,8 @@
-ディレクトリ指定
-----------------
+Specify directories
+-------------------
 
-指定したディレクトリ配下すべてのファイルをキャッシュの対象にすることができます。  
-`DirectoryResource`にディレクトリ名を指定します。
+This bundle creates a cache of the content that covers all files under the directory.  
+Specify a directory name in `DirectoryResource`:
 
 ```php
 <?php

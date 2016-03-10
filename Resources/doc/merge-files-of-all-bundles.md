@@ -1,8 +1,8 @@
-バンドルをまたいで設定ファイルを集める
---------------------------------------
+Merge files of all bundles
+--------------------------
 
-AppKernel.phpに登録されているすべてのバンドルを対象として設定ファイルを集めることができます。  
-`registerAll()`を使います。
+This bundle creates a cache of the content into which this bundle merges configuration files of all bundles in `AppKernel.php`.  
+Use `registerAll()`:
 
 ```php
 <?php
@@ -35,7 +35,6 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-`FileResource`のエイリアス(第3引数)指定はしないようにします。
-エイリアス指定をしたときは`register()`と同様の効果になります。
-
-このサンプルではすべてのバンドルの/Resources/config/sample.ymlをマージして1個のキャッシュを生成します。
+You don't have to specify the third argument aliases.  
+If specifying, a cache has the general effects of the `register()`.  
+In this sample code, `/Resources/config/sample.yml` of all bundles are merged.

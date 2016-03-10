@@ -1,11 +1,11 @@
-多言語対応
-----------
+Translations
+------------
 
-以下のようなケースを考えます。
-* Symfonyの[translator](http://symfony.com/doc/current/book/translation.html)を使って多言語対応をする
-* 設定ファイルに多言語の文言を定義してmodelなどで使う
+We consider the following cases:
+* Translate with the Symfony [translator](http://symfony.com/doc/current/book/translation.html)
+* Define message IDs in configuration files and use them in a Controller or a model class.
 
-通常は[設定ファイル](#sample_config)のデータを取り出した後にtranslatorを使って都度翻訳する必要があります。
+Normally, we need to translate each time with the [translator](http://symfony.com/doc/current/book/translation.html) after taking the contents from the [configuration files](#sample_config).
 
 ```php
 <?php
@@ -34,21 +34,21 @@ class WelcomeController extends Controller
 }
 ```
 
-ここで都度翻訳するのではなく事前に翻訳済みのキャッシュを用意しておけば、使うときはそれを取り出すだけなので翻訳の余計な処理を省くことができます。
+By creating the translated caches beforehand without the need to translate each time, we can skip this translation process.
 
-ConfigCacheBundleでは設定ファイルに記述した文言を事前に翻訳した状態でキャッシュさせることができます。  
-そのためには多言語対応のサービス登録クラス`RegisterLocale`を使います。  
-`RegisterLocale`を使うと翻訳用のローダをサービス化します。  
-キャッシュ生成前に翻訳用のローダとSymfonyのtranslatorを使って翻訳し、翻訳された状態の配列データをキャッシュします。  
-キャッシュは言語の数だけ生成され、キャッシュ取得時は現在の言語設定に応じたキャッシュを自動的に選択して設定値を取得します。
+This bundle enables a service to create caches that have translated messages beforehand in configuration files.  
+To do so, use the `RegisterLocale`.  
+The `RegisterLocale` registers a loader service of translations even as `ConfigCache` services.  
+The `ConfigCache` service translates them by using the Symfony [translator]((http://symfony.com/doc/current/book/translation.html)) and a translational loader and caches translated contents.  
+This service creates the same number of caches as locales and gets a setting value automatically selected according to the current locale.
 
-以下多言語対応のための実装例を示します。
+The following is a sample implementation for translations.
 
 <a id="sample_config">
-##### 設定ファイル
+##### Configuration files
 
-AcmeDemoBundleに配置する設定ファイルを以下のように定義します。  
-設定ファイルの値(葉要素)が翻訳の対象になります。
+Define a configuration file in AcmeDemoBundle.  
+The leaf nodes of the content are translated:
 
 ```yml
 # src/Acme/DemoBundle/Resources/config/sample.yml
@@ -60,7 +60,7 @@ bill-to:
     family : id.002
 ```
 
-翻訳のためのcatalogueを用意します。
+Prepare catalogues for translations:
 
 ```yml
 # app/Resources/translations/messages.en.yml
@@ -76,7 +76,7 @@ id.002: デュマース
 
 ##### app/config/config.yml
 
-app/config/config.ymlに以下の記述を追加します。
+Add a description in `app/config/config.yml`:
 
 ```yml
 # app/config/config.yml
@@ -89,11 +89,11 @@ yahoo_japan_config_cache:
         locales: [ja, en]
 ```
 
-`locales`には取りうる言語をすべて記述してください。
+Describe all locales as a "locales" key.
 
-##### Extensionクラス
+##### Extension
 
-`RegisterLocale`を使って`Extension`に記述を追加します。
+Create `RegisterLocale` in `AcmeDemoExtension`:
 
 ```php
 <?php
@@ -126,9 +126,9 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-##### サービスを使う
+##### Use the service
 
-後述の[現在の言語設定](#現在の言語設定)がされていれば、以下のように翻訳済みの設定値を取得できます。
+You can get translated contents if you set the current locale as described [below](#the-current-locale):
 
 ```php
 <?php
@@ -154,30 +154,27 @@ class WelcomeController extends Controller
 }
 ```
 
-##### 現在の言語設定
+##### The current locale
 
-多言語対応した`ConfigCache`サービスを使う際には現在の言語設定が必要になります。  
-生成されたキャッシュのうち言語に対応したものを使うためです。
+When you use a `ConfigCache` service of translations, you need the current locale setting.  
+The reason is to use the cache according to the locale any one of created caches.
 
-現在の言語設定をするためには以下が必要になります。
+For this setting, you need some processes:
 
-* `ConfigCache`サービスに現在の言語設定を反映する
-* `ConfigCacheListener`が参照するSymfonyのRequest::localeの設定をする
+* Set the current locale to the `ConfigCache` service
+* Set the Symfony Request::locale the `ConfigCacheListener` refers to
 
-##### ConfigCacheサービスに現在の言語設定を反映する
+##### Set the current locale to the ConfigCache service
 
-`ConfigCache`サービスへの現在の言語設定の反映はConfigCacheBundle付属の`ConfigCacheListener`が行います。  
-`ConfigCacheListener`は自動的に登録されます。([app/config/config.yml](#appconfigconfigyml)の設定が有効のとき)
+The `ConfigCacheListener` this bundle provides sets the current locale to the `ConfigCache` service.  
+If [app/config/config.yml](#appconfigconfigyml) is enabled, this listener is registered automatically.
+This listener refers to the Symfony `Request::locale` and sets it.
 
-`ConfigCacheListener`ではSymfonyの`Request::locale`を参照して現在の言語設定を`ConfigCache`サービスに反映します。  
-`ConfigCache`サービスへの反映は`RegisterLocale`を使ってサービス登録されていれば自動的に行われます。
+##### Set the Symfony Request::locale the ConfigCacheListener refers to
 
-##### ConfigCacheListenerが参照するSymfonyのRequest::localeの設定をする
+This bundle doesn't set the Symfony `Request::locale`, so you need to implement additionally.  
+There are some solutions to implement:
+* Include a parameter `_locale` in your request URL
+* Implement an event listener
 
-ConfigCacheBundleではSymfonyの`Request::locale`の設定はされません。別途実装が必要になります。
-
-`Request::locale`を適切に設定するためには以下のような方法があります。
-* URLに`_locale`パラメータを含める
-* リスナーを実装する
-
-これらの実装方法の詳細については[公式ドキュメント](http://symfony.com/doc/current/book/translation.html#handling-the-user-s-locale)を参照ください。
+For details of these implementations, see the Symfony [documentation](http://symfony.com/doc/current/book/translation.html#handling-the-user-s-locale).
