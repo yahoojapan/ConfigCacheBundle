@@ -17,7 +17,7 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCacheInterface;
 /**
  * Sets the locale which the Request holds to each ConfigCache service.
  */
-class ConfigCacheListener
+class LocaleListener
 {
     protected $configs = array();
 
@@ -42,7 +42,7 @@ class ConfigCacheListener
      *
      * @param ConfigCacheInterface $config
      *
-     * @return ConfigCacheListener
+     * @return LocaleListener
      */
     public function addConfig(ConfigCacheInterface $config)
     {

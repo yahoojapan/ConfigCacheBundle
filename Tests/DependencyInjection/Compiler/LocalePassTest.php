@@ -31,7 +31,7 @@ class LocalePassTest extends \PHPUnit_Framework_TestCase
         $hasLoaderDefinition,
         $replaceLoader
     ) {
-        $listenerId       = 'yahoo_japan_config_cache.config_cache_listener';
+        $listenerId       = 'yahoo_japan_config_cache.locale_listener';
         $defaultLoaderId  = 'yahoo_japan_config_cache.loader';
         $replacedLoaderId = 'test_loader';
 

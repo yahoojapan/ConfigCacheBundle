@@ -24,7 +24,7 @@ class RegisterLocale extends Register
     /**
      * Registers a service by a bundle with locale.
      *
-     * Registers Locale\ConfigCache services, and tags to set locale with ConfigCacheListener.
+     * Registers Locale\ConfigCache services, and tags to set locale with ConfigCache LocaleListener.
      */
     public function register()
     {

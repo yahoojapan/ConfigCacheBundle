@@ -39,7 +39,7 @@ class YahooJapanConfigCacheExtension extends Extension
             $container->setParameter('yahoo_japan_config_cache.listener_priority', $config['locale']['listener_priority']);
             $container->setParameter('yahoo_japan_config_cache.loader', $config['locale']['loader']);
         } else {
-            $container->removeDefinition('yahoo_japan_config_cache.config_cache_listener');
+            $container->removeDefinition('yahoo_japan_config_cache.locale_listener');
         }
     }
 }
