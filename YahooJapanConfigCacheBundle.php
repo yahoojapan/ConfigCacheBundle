@@ -13,7 +13,7 @@ namespace YahooJapan\ConfigCacheBundle;
 
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
-use YahooJapan\ConfigCacheBundle\DependencyInjection\Compiler\ConfigCachePass;
+use YahooJapan\ConfigCacheBundle\DependencyInjection\Compiler\LocalePass;
 
 class YahooJapanConfigCacheBundle extends Bundle
 {
@@ -22,6 +22,6 @@ class YahooJapanConfigCacheBundle extends Bundle
      */
     public function build(ContainerBuilder $container)
     {
-        $container->addCompilerPass(new ConfigCachePass());
+        $container->addCompilerPass(new LocalePass());
     }
 }

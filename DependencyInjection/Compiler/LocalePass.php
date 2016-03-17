@@ -19,7 +19,7 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache;
 /**
  * Adds tagged config.locale services to config_cache.listener
  */
-class ConfigCachePass implements CompilerPassInterface
+class LocalePass implements CompilerPassInterface
 {
     protected $loaderParameter  = 'yahoo_japan_config_cache.loader';
     protected $localesParameter = 'yahoo_japan_config_cache.locales';
