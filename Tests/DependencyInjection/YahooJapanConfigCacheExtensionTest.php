@@ -214,4 +214,48 @@ class YahooJapanConfigCacheExtensionTest extends \PHPUnit_Framework_TestCase
             ),
         );
     }
+
+    /**
+     * @dataProvider loadCacheWarmupProvider
+     */
+    public function testLoadCacheWarmup($configs, $expected)
+    {
+        $container     = new ContainerBuilder();
+        $extension     = new YahooJapanConfigCacheExtension();
+        $configuration = new Configuration();
+        $extension->load($configs, $container);
+        $this->assertSame($expected, $container->hasDefinition('yahoo_japan_config_cache.cache_warmer'));
+    }
+
+    /**
+     * @return array($configs, $expected)
+     */
+    public function loadCacheWarmupProvider()
+    {
+        return array(
+            // no setting( = default true)
+            array(
+                array(),
+                true,
+            ),
+            // true
+            array(
+                array(
+                    'yahoo_japan_config_cache' => array(
+                        'cache_warmup' => true,
+                    ),
+                ),
+                true,
+            ),
+            // false
+            array(
+                array(
+                    'yahoo_japan_config_cache' => array(
+                        'cache_warmup' => false,
+                    ),
+                ),
+                false,
+            ),
+        );
+    }
 }

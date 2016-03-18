@@ -15,6 +15,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
+use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
 use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
 /**
@@ -100,7 +101,7 @@ abstract class RegisterTestCase extends TestCase
         if (!is_null($tag)) {
             $this->assertTrue($definition->hasTag($tag));
         } else {
-            $this->assertSame(array(), $definition->getTags());
+            $this->assertSame(array(ConfigCache::TAG_CACHE_WARMER), array_keys($definition->getTags()));
         }
 
         // addMethodCalls is asserted on test method
