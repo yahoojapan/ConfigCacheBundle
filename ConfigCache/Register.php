@@ -386,6 +386,7 @@ class Register
                 new Reference('yahoo_japan_config_cache.component.delegating_loader'),
                 $this->appConfig,
             ))
+            ->addTag(ConfigCache::TAG_CACHE_WARMER)
             ;
         if (!is_null($this->tag)) {
             $definition->addTag($this->tag);

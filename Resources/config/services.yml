@@ -13,9 +13,14 @@ services:
         tags:
             - { name: kernel.event_listener, event: kernel.request, method: onKernelRequest, priority: %yahoo_japan_config_cache.listener_priority% }
 
+    yahoo_japan_config_cache.cache_warmer:
+        class: YahooJapan\ConfigCacheBundle\CacheWarmer\CacheWarmer
+        tags:
+            - { name: kernel.cache_warmer, priority: 0 }
+
     yahoo_japan_config_cache.component.config_cache:
         class: YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
-        # The arguments will be added by DefinitionDecorator
+        # The arguments and tags will be added by DefinitionDecorator
         calls:
             - [setArrayAccess, ['@yahoo_japan_config_cache.component.array_access']]
         public: false
