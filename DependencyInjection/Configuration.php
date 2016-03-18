@@ -32,6 +32,7 @@ class Configuration implements ConfigurationInterface
         $rootNode = $treeBuilder->root('yahoo_japan_config_cache');
         $rootNode
             ->children()
+                ->booleanNode('cache_warmup')->defaultValue(true)->end()
                 ->arrayNode('locale')
                     ->children()
                         ->booleanNode('enabled')->defaultValue(false)->end()
