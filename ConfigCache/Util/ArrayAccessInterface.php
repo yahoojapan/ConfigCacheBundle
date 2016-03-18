@@ -3,7 +3,7 @@
 /*
  * This file is part of the ConfigCacheBundle package.
  *
- * Copyright (c) 2015 Yahoo Japan Corporation
+ * Copyright (c) 2015-2016 Yahoo Japan Corporation
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
