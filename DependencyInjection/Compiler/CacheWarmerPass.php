@@ -30,11 +30,13 @@ class CacheWarmerPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container)
     {
+        if (!$container->hasDefinition($this->warmerId)) {
+            return;
+        }
+        $definition = $container->getDefinition($this->warmerId);
+
         foreach ($container->findTaggedServiceIds(ConfigCache::TAG_CACHE_WARMER) as $configId => $attributes) {
-            if ($container->hasDefinition($this->warmerId)) {
-                $definition = $container->getDefinition($this->warmerId);
-                $definition->addMethodCall('addConfig', array(new Reference($configId)));
-            }
+            $definition->addMethodCall('addConfig', array(new Reference($configId)));
         }
     }
 }
