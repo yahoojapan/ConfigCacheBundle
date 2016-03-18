@@ -57,24 +57,6 @@ Caches and services are created for each file:
 ```php
 <?php
 
-// src/Acme/DemoBundle/AcmeDemoBundle.php
-namespace Acme\DemoBundle;
-
-use Symfony\Component\HttpKernel\Bundle\Bundle;
-
-class AcmeDemoBundle extends Bundle
-{
-    public function boot()
-    {
-        $this->container->get('config.acme_demo.sample1')->create();
-        $this->container->get('config.acme_demo.sample2')->create();
-    }
-}
-```
-
-```php
-<?php
-
 // src/Acme/DemoBundle/Controller/WelcomeController.php
 namespace Acme\DemoBundle\Controller;
 

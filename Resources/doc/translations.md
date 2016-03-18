@@ -162,15 +162,15 @@ The reason is to use the cache according to the locale any one of created caches
 For this setting, you need some processes:
 
 * Set the current locale to the `ConfigCache` service
-* Set the Symfony Request::locale the `ConfigCacheListener` refers to
+* Set the Symfony Request::locale the `LocaleListener` refers to
 
 ##### Set the current locale to the ConfigCache service
 
-The `ConfigCacheListener` this bundle provides sets the current locale to the `ConfigCache` service.  
+The `LocaleListener` this bundle provides sets the current locale to the `ConfigCache` service.  
 If [app/config/config.yml](#appconfigconfigyml) is enabled, this listener is registered automatically.
 This listener refers to the Symfony `Request::locale` and sets it.
 
-##### Set the Symfony Request::locale the ConfigCacheListener refers to
+##### Set the Symfony Request::locale the LocaleListener refers to
 
 This bundle doesn't set the Symfony `Request::locale`, so you need to implement additionally.  
 There are some solutions to implement:

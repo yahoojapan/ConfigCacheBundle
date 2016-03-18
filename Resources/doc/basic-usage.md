@@ -69,30 +69,6 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-##### Bundle
-
-Add a description to create a cache in `AcmeDemoBundle.php`:
-
-```php
-<?php
-
-// src/Acme/DemoBundle/AcmeDemoBundle.php
-namespace Acme\DemoBundle;
-
-use Symfony\Component\HttpKernel\Bundle\Bundle;
-
-class AcmeDemoBundle extends Bundle
-{
-    public function boot()
-    {
-        $this->container->get('config.acme_demo.sample')->create();
-    }
-}
-```
-
-This service ID `config.acme_demo.sample` is generated automatically based on an alias you specify in `FileResource` and the bundle name "AcmeDemoBundle".  
-If a bundle name is "AcmeDemoBundle" and `FileResource` alias is "sample", the service name is `config.acme_demo.sample`.
-
 ##### Create a cache
 
 Create a cache with the Symfony console:
@@ -122,6 +98,9 @@ Lazy             yes
 Synchronized     no
 Abstract         no
 ```
+
+This service ID `config.acme_demo.sample` is generated automatically based on an alias you specify in `FileResource` and the bundle name "AcmeDemoBundle".  
+If a bundle name is "AcmeDemoBundle" and `FileResource` alias is "sample", the service name is `config.acme_demo.sample`.
 
 A cache file is created and set under the Symfony cache directory:
 
