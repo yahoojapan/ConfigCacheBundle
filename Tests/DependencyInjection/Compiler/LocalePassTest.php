@@ -15,9 +15,9 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache;
-use YahooJapan\ConfigCacheBundle\DependencyInjection\Compiler\ConfigCachePass;
+use YahooJapan\ConfigCacheBundle\DependencyInjection\Compiler\LocalePass;
 
-class ConfigCachePassTest extends \PHPUnit_Framework_TestCase
+class LocalePassTest extends \PHPUnit_Framework_TestCase
 {
     /**
      * @dataProvider processProvider
@@ -31,7 +31,7 @@ class ConfigCachePassTest extends \PHPUnit_Framework_TestCase
         $hasLoaderDefinition,
         $replaceLoader
     ) {
-        $listenerId       = 'yahoo_japan_config_cache.config_cache_listener';
+        $listenerId       = 'yahoo_japan_config_cache.locale_listener';
         $defaultLoaderId  = 'yahoo_japan_config_cache.loader';
         $replacedLoaderId = 'test_loader';
 
@@ -59,7 +59,7 @@ class ConfigCachePassTest extends \PHPUnit_Framework_TestCase
             }
         }
 
-        $pass = new ConfigCachePass();
+        $pass = new LocalePass();
         $pass->process($container);
 
         foreach ($configIds as $index => $configId) {

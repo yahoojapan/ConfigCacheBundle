@@ -32,6 +32,7 @@ class Configuration implements ConfigurationInterface
         $rootNode = $treeBuilder->root('yahoo_japan_config_cache');
         $rootNode
             ->children()
+                ->booleanNode('cache_warmup')->defaultValue(true)->end()
                 ->arrayNode('locale')
                     ->children()
                         ->booleanNode('enabled')->defaultValue(false)->end()
@@ -45,7 +46,7 @@ class Configuration implements ConfigurationInterface
                                 ->ifTrue(function ($priority) {
                                     return $priority >= Configuration::getPriorityMax();
                                 })
-                                ->thenInvalid('ConfigCacheListener priority[%s] must be less than LocaleListener priority['.Configuration::getPriorityMax().']')
+                                ->thenInvalid('LocaleListener priority[%s] must be less than LocaleListener priority['.Configuration::getPriorityMax().']')
                             ->end()
                         ->end()
                         ->scalarNode('loader')->defaultValue(null)->end()

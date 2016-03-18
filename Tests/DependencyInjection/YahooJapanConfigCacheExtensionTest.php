@@ -40,7 +40,7 @@ class YahooJapanConfigCacheExtensionTest extends \PHPUnit_Framework_TestCase
 
         $arrayLoaderId     = 'yahoo_japan_config_cache.array_loader';
         $yamlLoaderId      = 'yahoo_japan_config_cache.yaml_file_loader';
-        $listenerId        = 'yahoo_japan_config_cache.config_cache_listener';
+        $listenerId        = 'yahoo_japan_config_cache.locale_listener';
         $localesParameter  = 'yahoo_japan_config_cache.locales';
         $priorityParameter = 'yahoo_japan_config_cache.listener_priority';
         $loaderParameter   = 'yahoo_japan_config_cache.loader';
@@ -210,6 +210,50 @@ class YahooJapanConfigCacheExtensionTest extends \PHPUnit_Framework_TestCase
                 $locales,
                 $priority,
                 $loader,
+                false,
+            ),
+        );
+    }
+
+    /**
+     * @dataProvider loadCacheWarmupProvider
+     */
+    public function testLoadCacheWarmup($configs, $expected)
+    {
+        $container     = new ContainerBuilder();
+        $extension     = new YahooJapanConfigCacheExtension();
+        $configuration = new Configuration();
+        $extension->load($configs, $container);
+        $this->assertSame($expected, $container->hasDefinition('yahoo_japan_config_cache.cache_warmer'));
+    }
+
+    /**
+     * @return array($configs, $expected)
+     */
+    public function loadCacheWarmupProvider()
+    {
+        return array(
+            // no setting( = default true)
+            array(
+                array(),
+                true,
+            ),
+            // true
+            array(
+                array(
+                    'yahoo_japan_config_cache' => array(
+                        'cache_warmup' => true,
+                    ),
+                ),
+                true,
+            ),
+            // false
+            array(
+                array(
+                    'yahoo_japan_config_cache' => array(
+                        'cache_warmup' => false,
+                    ),
+                ),
                 false,
             ),
         );

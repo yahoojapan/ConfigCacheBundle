@@ -61,7 +61,6 @@ class AcmeDemoBundle extends Bundle
         $loader = $this->container->get('acme_demo.yaml_file_loader');
         $this->container->get('config.acme_demo.sample')
             ->setLoader($loader)
-            ->create()
             ;
     }
 }

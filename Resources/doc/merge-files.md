@@ -121,25 +121,6 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-Create a cache in `AcmeDemoBundle` the same way:
-
-```php
-<?php
-
-// src/Acme/DemoBundle/AcmeDemoBundle.php
-namespace Acme\DemoBundle;
-
-use Symfony\Component\HttpKernel\Bundle\Bundle;
-
-class AcmeDemoBundle extends Bundle
-{
-    public function boot()
-    {
-        $this->container->get('config.acme_demo')->create();
-    }
-}
-```
-
 All files are merged, and a cache is created.  
 The service ID is `config.acme_demo` without an alias:
 

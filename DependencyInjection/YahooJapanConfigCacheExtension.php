@@ -34,12 +34,16 @@ class YahooJapanConfigCacheExtension extends Extension
         $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
 
+        if (!$config['cache_warmup']) {
+            $container->removeDefinition('yahoo_japan_config_cache.cache_warmer');
+        }
+
         if (isset($config['locale']) && $this->isConfigEnabled($container, $config['locale'])) {
             $container->setParameter('yahoo_japan_config_cache.locales', $config['locale']['locales']);
             $container->setParameter('yahoo_japan_config_cache.listener_priority', $config['locale']['listener_priority']);
             $container->setParameter('yahoo_japan_config_cache.loader', $config['locale']['loader']);
         } else {
-            $container->removeDefinition('yahoo_japan_config_cache.config_cache_listener');
+            $container->removeDefinition('yahoo_japan_config_cache.locale_listener');
         }
     }
 }

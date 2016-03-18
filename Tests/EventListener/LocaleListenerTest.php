@@ -11,10 +11,10 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\EventListener;
 
-use YahooJapan\ConfigCacheBundle\EventListener\ConfigCacheListener;
+use YahooJapan\ConfigCacheBundle\EventListener\LocaleListener;
 use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
-class ConfigCacheListenerTest extends TestCase
+class LocaleListenerTest extends TestCase
 {
     /**
      * @dataProvider onKernelRequestProvider
@@ -42,7 +42,7 @@ class ConfigCacheListenerTest extends TestCase
             ;
 
         // test with new for nothing constructor
-        $listener = new ConfigCacheListener();
+        $listener = new LocaleListener();
         for ($i = 0; $i < $configCount; $i++) {
             $name   = 'YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCacheInterface';
             $config = $this->util->createInterfaceMock($name);
@@ -76,7 +76,7 @@ class ConfigCacheListenerTest extends TestCase
 
     public function testAddConfig()
     {
-        $listener = new ConfigCacheListener();
+        $listener = new LocaleListener();
 
         // state initialization
         $this->assertSame(array(), $this->util->getProperty($listener, 'configs'));
