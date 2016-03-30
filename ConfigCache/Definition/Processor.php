@@ -12,6 +12,7 @@
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Definition;
 
 use Symfony\Component\Config\Definition\ArrayNode;
+use Symfony\Component\Config\Definition\NodeInterface;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
@@ -24,18 +25,18 @@ class Processor
     /**
      * Processes an array of configurations.
      *
-     * @param array     $validated  merged and validated array
-     * @param array     $validating merging and validating array
-     * @param ArrayNode $node       merging node
-     * @param ArrayNode $masterNode merged node (master node)
+     * @param array         $validated  merged and validated array
+     * @param array         $validating merging and validating array
+     * @param NodeInterface $node       merging node
+     * @param ArrayNode     $masterNode merged node (master node)
      *
      * @return array list of (validated array, merged node)
      */
     public function process(
-        array $validated,
-        array $validating,
-        ArrayNode $node,
-        ArrayNode $masterNode = null
+        array         $validated,
+        array         $validating,
+        NodeInterface $node,
+        ArrayNode     $masterNode = null
     ) {
         // no setting master node
         if (is_null($masterNode)) {
@@ -92,7 +93,7 @@ class Processor
      * @param array                  $validated     merged/validated array
      * @param array                  $validating    merging/validating array
      * @param ConfigurationInterface $configuration configuration
-     * @param ArrayNode              $node          master node
+     * @param ArrayNode              $masterNode    master node
      *
      * @return array list of (validated array, merged ArrayNode)
      */
