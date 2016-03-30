@@ -19,7 +19,7 @@ interface ResourceInterface
     /**
      * Returns the configuration.
      *
-     * @return Symfony\Component\Config\Definition\ConfigurationInterface
+     * @return \Symfony\Component\Config\Definition\ConfigurationInterface
      */
     public function getConfiguration();
 
