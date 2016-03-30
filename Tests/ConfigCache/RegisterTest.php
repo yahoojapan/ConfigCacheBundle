@@ -1266,7 +1266,7 @@ class RegisterTest extends RegisterTestCase
     public function buildIdProvider()
     {
         return array(
-            array('hoge', "{$this->getCacheId()}.hoge"),
+            array(array('hoge'), "{$this->getCacheId()}.hoge"),
             array(array('hoge', 'fuga'), "{$this->getCacheId()}.hoge.fuga"),
         );
     }

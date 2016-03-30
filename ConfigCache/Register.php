@@ -150,7 +150,7 @@ class Register
      */
     protected function registerInternal()
     {
-        $cacheId = $this->buildId($this->bundleId);
+        $cacheId = $this->buildId(array($this->bundleId));
 
         foreach ($this->dirs as $resource) {
             $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
@@ -345,7 +345,7 @@ class Register
      */
     protected function setCacheDefinition()
     {
-        $id         = $this->buildId($this->bundleId);
+        $id         = $this->buildId(array($this->bundleId));
         $definition = $this->createCacheDefinition();
         $this->addConfigurationMethod($definition);
         $this->container->setDefinition($id, $definition);
@@ -478,13 +478,13 @@ class Register
     /**
      * Builds a cache service ID.
      *
-     * @param string $suffix ex) "yahoo_japan_config_cache"
+     * @param array $suffixes ex) array("yahoo_japan_config_cache")
      *
      * @return string ex) "config.yahoo_japan_config_cache"
      */
-    protected function buildId($suffix)
+    protected function buildId(array $suffixes)
     {
-        return implode('.', array_merge(array($this->cacheId), (array) $suffix));
+        return implode('.', array_merge(array($this->cacheId), $suffixes));
     }
 
     /**

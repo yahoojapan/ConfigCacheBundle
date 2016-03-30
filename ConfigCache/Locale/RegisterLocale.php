@@ -54,7 +54,7 @@ class RegisterLocale extends Register
     {
         parent::setCacheDefinition();
 
-        $this->addLocaleMethods($this->buildId($this->bundleId));
+        $this->addLocaleMethods($this->buildId(array($this->bundleId)));
     }
 
     /**
