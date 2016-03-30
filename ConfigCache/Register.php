@@ -95,6 +95,10 @@ class Register
 
     /**
      * Sets a master configuration.
+     *
+     * @param ConfigurationInterface $configuration
+     *
+     * @return Register
      */
     public function setConfiguration(ConfigurationInterface $configuration)
     {
@@ -520,9 +524,9 @@ class Register
     /**
      * Gets a initialized configuration.
      *
-     * Throws exception if not set when this method executed
-     *
      * @return ConfigurationInterface
+     *
+     * @throws \Exception thrown if the configuration is not set.
      */
     protected function getInitializedConfiguration()
     {

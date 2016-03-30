@@ -91,7 +91,7 @@ abstract class Loader implements LoaderInterface
      *
      * @param string $file
      *
-     * @return array
+     * @return array|\SimpleXMLElement
      */
     abstract protected function loadFile($file);
 }
