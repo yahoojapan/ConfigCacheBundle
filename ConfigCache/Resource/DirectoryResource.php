@@ -12,12 +12,11 @@
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Resource;
 
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\Config\Resource\DirectoryResource as BaseDirectoryResource;
 
 /**
  * DirectoryResource represents a resources stored in a subdirectory tree.
  */
-class DirectoryResource extends BaseDirectoryResource implements ResourceInterface
+class DirectoryResource implements ResourceInterface
 {
     protected $resource;
     protected $configuration;
@@ -27,13 +26,11 @@ class DirectoryResource extends BaseDirectoryResource implements ResourceInterfa
      *
      * @param string                 $resource      The file path to the resource
      * @param ConfigurationInterface $configuration
-     * @param string                 $pattern       A pattern to restrict monitored files
      */
-    public function __construct($resource, ConfigurationInterface $configuration = null, $pattern = null)
+    public function __construct($resource, ConfigurationInterface $configuration = null)
     {
         $this->resource      = $resource;
         $this->configuration = $configuration;
-        $this->pattern       = $pattern;
     }
 
     /**
