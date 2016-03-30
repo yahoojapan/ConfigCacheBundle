@@ -38,7 +38,7 @@ class ConfigurationGenerator
         $this->bundle    = $bundle;
         $this->className = $className;
 
-        $this->initialize($config, $bundle);
+        $this->initialize($config);
     }
 
     /**
@@ -67,10 +67,9 @@ class ConfigurationGenerator
     /**
      * Initializes iterator, namespace, rootKey to generate.
      *
-     * @param array  $config
-     * @param Bundle $bundle
+     * @param array $config
      */
-    protected function initialize(array $config, Bundle $bundle)
+    protected function initialize(array $config)
     {
         $this->iterator  = $this->createIterator($config);
         $this->queue     = $this->createQueue();
