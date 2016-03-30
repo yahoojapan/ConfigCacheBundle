@@ -25,18 +25,18 @@ class Processor
     /**
      * Processes an array of configurations.
      *
-     * @param array         $validated  merged and validated array
-     * @param array         $validating merging and validating array
-     * @param NodeInterface $node       merging node
-     * @param ArrayNode     $masterNode merged node (master node)
+     * @param array     $validated  merged and validated array
+     * @param array     $validating merging and validating array
+     * @param ArrayNode $node       merging node
+     * @param ArrayNode $masterNode merged node (master node)
      *
      * @return array list of (validated array, merged node)
      */
     public function process(
-        array         $validated,
-        array         $validating,
-        NodeInterface $node,
-        ArrayNode     $masterNode = null
+        array     $validated,
+        array     $validating,
+        ArrayNode $node,
+        ArrayNode $masterNode = null
     ) {
         // no setting master node
         if (is_null($masterNode)) {
@@ -103,11 +103,12 @@ class Processor
         ConfigurationInterface $configuration,
         ArrayNode $masterNode = null
     ) {
-        return $this->process(
-            $validated,
-            $validating,
-            $configuration->getConfigTreeBuilder()->buildTree(),
-            $masterNode
-        );
+        $node = $configuration->getConfigTreeBuilder()->buildTree();
+        // skip if the node is not an ArrayNode (normally never happen)
+        if (!($node instanceof ArrayNode)) {
+            return array($validated, $masterNode);
+        }
+
+        return $this->process($validated, $validating, $node, $masterNode);
     }
 }

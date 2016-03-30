@@ -47,6 +47,41 @@ class ProcessorTest extends TestCase
     }
 
     /**
+     * The node is not an ArrayNode case.
+     */
+    public function testProcessConfigurationWithoutArrayNode()
+    {
+        $processor     = $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Definition\Processor');
+        $configuration = $this->util->createInterfaceMock('Symfony\Component\Config\Definition\ConfigurationInterface');
+        $builderName   = 'Symfony\Component\Config\Definition\Builder\TreeBuilder';
+        $treeBuilder   = $this->util->createMock($builderName, array('buildTree'));
+        $node          = $this->util->createInterfaceMock('Symfony\Component\Config\Definition\NodeInterface');
+        $masterNode    = $this->util->createMock('Symfony\Component\Config\Definition\ArrayNode');
+        $validated     = array('validated');
+        $validating    = array('validating');
+        $configuration
+            ->expects($this->once())
+            ->method('getConfigTreeBuilder')
+            ->willReturn($treeBuilder)
+            ;
+        $treeBuilder
+            ->expects($this->once())
+            ->method('buildTree')
+            ->willReturn($node)
+            ;
+
+        list($expectedLoaded, $expectedNode) = $processor->processConfiguration(
+            $validated,
+            $validating,
+            $configuration,
+            $masterNode
+        );
+        // Parameters and returns are the same
+        $this->assertSame($expectedLoaded, $validated);
+        $this->assertSame($expectedNode, $masterNode);
+    }
+
+    /**
      * @dataProvider processProvider
      */
     public function testProcess(
