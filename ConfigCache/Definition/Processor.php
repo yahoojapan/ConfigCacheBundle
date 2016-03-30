@@ -12,7 +12,6 @@
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Definition;
 
 use Symfony\Component\Config\Definition\ArrayNode;
-use Symfony\Component\Config\Definition\NodeInterface;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
