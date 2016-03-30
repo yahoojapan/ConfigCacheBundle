@@ -38,9 +38,9 @@ class YahooJapanConfigCacheExtensionTest extends \PHPUnit_Framework_TestCase
         }
         $extension->load($configs, $container);
 
-        $arrayLoaderId     = 'yahoo_japan_config_cache.array_loader';
-        $yamlLoaderId      = 'yahoo_japan_config_cache.yaml_file_loader';
-        $listenerId        = 'yahoo_japan_config_cache.locale_listener';
+        $arrayLoaderId     = 'yahoo_japan_config_cache.locale.array_loader';
+        $yamlLoaderId      = 'yahoo_japan_config_cache.locale.yaml_file_loader';
+        $listenerId        = 'yahoo_japan_config_cache.locale.listener';
         $localesParameter  = 'yahoo_japan_config_cache.locales';
         $priorityParameter = 'yahoo_japan_config_cache.listener_priority';
         $loaderParameter   = 'yahoo_japan_config_cache.loader';

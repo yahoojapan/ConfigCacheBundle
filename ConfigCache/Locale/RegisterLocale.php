@@ -19,7 +19,7 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Register;
  */
 class RegisterLocale extends Register
 {
-    protected $loaderId = 'yahoo_japan_config_cache.yaml_file_loader';
+    protected $loaderId = 'yahoo_japan_config_cache.locale.yaml_file_loader';
 
     /**
      * Registers a service by a bundle with locale.

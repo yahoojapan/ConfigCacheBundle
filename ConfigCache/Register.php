@@ -371,19 +371,19 @@ class Register
     protected function createCacheDefinition()
     {
         // doctrine/cache
-        $cache = new DefinitionDecorator('yahoo_japan_config_cache.component.php_file_cache');
+        $cache = new DefinitionDecorator('yahoo_japan_config_cache.php_file_cache');
         // only replace cache directory
         $cache->replaceArgument(0, $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}");
         $cacheId = $this->buildId(array('doctrine', 'cache', $this->bundleId));
         $this->container->setDefinition($cacheId, $cache);
 
         // user cache
-        $definition = new DefinitionDecorator('yahoo_japan_config_cache.component.config_cache');
+        $definition = new DefinitionDecorator('yahoo_japan_config_cache.config_cache');
         $definition
             ->setPublic(true)
             ->setArguments(array(
                 new Reference($cacheId),
-                new Reference('yahoo_japan_config_cache.component.delegating_loader'),
+                new Reference('yahoo_japan_config_cache.delegating_loader'),
                 $this->appConfig,
             ))
             ->addTag(ConfigCache::TAG_CACHE_WARMER)

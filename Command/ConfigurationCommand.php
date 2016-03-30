@@ -49,7 +49,7 @@ class ConfigurationCommand extends ContainerAwareCommand
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->bundle   = $this->getContainer()->get('kernel')->getBundle($input->getOption('bundle'));
-        $this->loader   = $this->getContainer()->get('yahoo_japan_config_cache.component.delegating_loader');
+        $this->loader   = $this->getContainer()->get('yahoo_japan_config_cache.delegating_loader');
         $this->fileName = $this->bundle->getPath().$this->resourceDir.'/'.$input->getOption('file');
     }
 
