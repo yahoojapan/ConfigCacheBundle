@@ -95,6 +95,10 @@ class Register
 
     /**
      * Sets a master configuration.
+     *
+     * @param ConfigurationInterface $configuration
+     *
+     * @return Register
      */
     public function setConfiguration(ConfigurationInterface $configuration)
     {
@@ -150,7 +154,7 @@ class Register
      */
     protected function registerInternal()
     {
-        $cacheId = $this->buildId($this->bundleId);
+        $cacheId = $this->buildId(array($this->bundleId));
 
         foreach ($this->dirs as $resource) {
             $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
@@ -345,7 +349,7 @@ class Register
      */
     protected function setCacheDefinition()
     {
-        $id         = $this->buildId($this->bundleId);
+        $id         = $this->buildId(array($this->bundleId));
         $definition = $this->createCacheDefinition();
         $this->addConfigurationMethod($definition);
         $this->container->setDefinition($id, $definition);
@@ -371,19 +375,19 @@ class Register
     protected function createCacheDefinition()
     {
         // doctrine/cache
-        $cache = new DefinitionDecorator('yahoo_japan_config_cache.component.php_file_cache');
+        $cache = new DefinitionDecorator('yahoo_japan_config_cache.php_file_cache');
         // only replace cache directory
         $cache->replaceArgument(0, $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}");
         $cacheId = $this->buildId(array('doctrine', 'cache', $this->bundleId));
         $this->container->setDefinition($cacheId, $cache);
 
         // user cache
-        $definition = new DefinitionDecorator('yahoo_japan_config_cache.component.config_cache');
+        $definition = new DefinitionDecorator('yahoo_japan_config_cache.config_cache');
         $definition
             ->setPublic(true)
             ->setArguments(array(
                 new Reference($cacheId),
-                new Reference('yahoo_japan_config_cache.component.delegating_loader'),
+                new Reference('yahoo_japan_config_cache.delegating_loader'),
                 $this->appConfig,
             ))
             ->addTag(ConfigCache::TAG_CACHE_WARMER)
@@ -478,13 +482,13 @@ class Register
     /**
      * Builds a cache service ID.
      *
-     * @param string $suffix ex) "yahoo_japan_config_cache"
+     * @param array $suffixes ex) array("yahoo_japan_config_cache")
      *
      * @return string ex) "config.yahoo_japan_config_cache"
      */
-    protected function buildId($suffix)
+    protected function buildId(array $suffixes)
     {
-        return implode('.', array_merge(array($this->cacheId), (array) $suffix));
+        return implode('.', array_merge(array($this->cacheId), $suffixes));
     }
 
     /**
@@ -520,9 +524,9 @@ class Register
     /**
      * Gets a initialized configuration.
      *
-     * Throws exception if not set when this method executed
-     *
      * @return ConfigurationInterface
+     *
+     * @throws \Exception thrown if the configuration is not set.
      */
     protected function getInitializedConfiguration()
     {

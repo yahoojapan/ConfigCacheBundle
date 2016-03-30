@@ -39,7 +39,7 @@ interface ConfigCacheInterface
     /**
      * Sets a current locale to find cache file array.
      *
-     * @param string $locale
+     * @param string $currentLocale
      *
      * @return ConfigCache
      */

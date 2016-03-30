@@ -38,7 +38,7 @@ class ConfigurationGenerator
         $this->bundle    = $bundle;
         $this->className = $className;
 
-        $this->initialize($config, $bundle);
+        $this->initialize($config);
     }
 
     /**
@@ -53,7 +53,7 @@ class ConfigurationGenerator
         }
 
         foreach ($this->iterator as $key => $node) {
-            // add children(), end(), and arrayNode(), scalarNode()
+            // add children, end, arrayNode, and scalarNode
             $this->addArrayNodeOnAndOff()->addNodes($key, $node);
             $this->previousDepth = $this->iterator->getDepth();
         }
@@ -67,10 +67,9 @@ class ConfigurationGenerator
     /**
      * Initializes iterator, namespace, rootKey to generate.
      *
-     * @param Bundle $bundle
-     * @param string $className
+     * @param array $config
      */
-    protected function initialize(array $config, Bundle $bundle)
+    protected function initialize(array $config)
     {
         $this->iterator  = $this->createIterator($config);
         $this->queue     = $this->createQueue();
@@ -109,11 +108,7 @@ class ConfigurationGenerator
 
         // forward into root(one or more operation)
         } else {
-            for ($i = $this->previousDepth; $i > $currentDepth; $i--) {
-                $innerIndent = $this->getIndentCount($i);
-                $this->queue->enqueue($this->codeEnd($innerIndent));
-                $this->queue->enqueue($this->codeEnd($innerIndent - $this->width));
-            }
+            $this->codeEndByCurrentDepth($currentDepth);
         }
 
         return $this;
@@ -150,11 +145,7 @@ class ConfigurationGenerator
      */
     protected function postIteration()
     {
-        for ($i = $this->previousDepth; $i > 0; $i--) {
-            $innerIndent = $this->getIndentCount($i);
-            $this->queue->enqueue($this->codeEnd($innerIndent));
-            $this->queue->enqueue($this->codeEnd($innerIndent - $this->width));
-        }
+        $this->codeEndByCurrentDepth(0);
         $this->queue->enqueue($this->codeEnd($this->width));
         $this->queue->enqueue($this->codeSemicolon($this->width));
     }
@@ -257,6 +248,20 @@ CONFIGURATION_SUFFIX
     protected function codeEnd($indent)
     {
         return $this->indent($indent).'->end()'.PHP_EOL;
+    }
+
+    /**
+     * Codes end() by current depth.
+     *
+     * @param int $currentDepth
+     */
+    protected function codeEndByCurrentDepth($currentDepth)
+    {
+        for ($i = $this->previousDepth; $i > $currentDepth; $i--) {
+            $innerIndent = $this->getIndentCount($i);
+            $this->queue->enqueue($this->codeEnd($innerIndent));
+            $this->queue->enqueue($this->codeEnd($innerIndent - $this->width));
+        }
     }
 
     /**

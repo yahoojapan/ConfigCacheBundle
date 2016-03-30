@@ -223,8 +223,6 @@ class ConfigCache
      */
     protected function findInternal(array $data, $key, $default = array())
     {
-        $result = array();
-
         if (is_null($this->arrayAccess)) {
             $result = isset($data[$key]) ? $data[$key] : $default;
         } else {
@@ -301,8 +299,6 @@ class ConfigCache
 
     /**
      * Creates master node.
-     *
-     * @param ConfigurationInterface $configuration
      *
      * @return ArrayNode
      */

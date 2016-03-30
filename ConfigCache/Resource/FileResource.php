@@ -12,14 +12,13 @@
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Resource;
 
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\Config\Resource\FileResource as BaseFileResource;
 
 /**
  * FileResource represents a resource stored on the filesystem.
  *
  * The resource can be a file or a directory.
  */
-class FileResource extends BaseFileResource implements ResourceInterface
+class FileResource implements ResourceInterface
 {
     protected $resource;
     protected $configuration;

@@ -11,7 +11,7 @@
 
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader;
 
-use Symfony\Component\Translation\TranslatorInterface;
+use Symfony\Component\Translation\Translator;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Loader\ArrayLoader as BaseArrayLoader;
 
 /**
@@ -25,9 +25,9 @@ class ArrayLoader extends BaseArrayLoader implements TranslationLoaderInterface
     /**
      * Constructor.
      *
-     * @param TranslatorInterface $translator
+     * @param Translator $translator
      */
-    public function __construct(TranslatorInterface $translator)
+    public function __construct(Translator $translator)
     {
         $this->translator = $translator;
     }
@@ -37,7 +37,7 @@ class ArrayLoader extends BaseArrayLoader implements TranslationLoaderInterface
      *
      * @param string $locale
      *
-     * @return YamlFileLoader
+     * @return ArrayLoader
      */
     public function setLocale($locale)
     {
