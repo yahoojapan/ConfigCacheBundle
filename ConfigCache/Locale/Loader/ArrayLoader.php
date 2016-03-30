@@ -37,7 +37,7 @@ class ArrayLoader extends BaseArrayLoader implements TranslationLoaderInterface
      *
      * @param string $locale
      *
-     * @return YamlFileLoader
+     * @return ArrayLoader
      */
     public function setLocale($locale)
     {
