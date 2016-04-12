@@ -325,7 +325,7 @@ class Register
      */
     protected function setBundleId()
     {
-        $this->idBuilder->setBundleId($this->extension->getalias());
+        $this->idBuilder->setBundleId($this->extension->getAlias());
 
         return $this;
     }
