@@ -159,8 +159,8 @@ class RegisterTest extends RegisterTestCase
         }
 
         // initialization
+        $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
         $this->util
-            ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'resources', $resources)
             ->setProperty($register, 'configuration', new RegisterConfiguration())
             // not assert excluding setting test here for asserting on testFindFilesByDirectory
@@ -463,8 +463,8 @@ class RegisterTest extends RegisterTestCase
         }
 
         // initialization
+        $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
         $this->util
-            ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'resources', $resources)
             ->setProperty($register, 'configuration', new RegisterConfiguration())
             // not assert excluding setting test here for asserting on testFindFilesByDirectory
@@ -601,8 +601,8 @@ class RegisterTest extends RegisterTestCase
             ->method($internalMethod)
             ->willReturn(null)
             ;
+        $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
         $this->util
-            ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'resources', $resources)
             ->invoke($register, 'initializeResources')
             ;
@@ -992,7 +992,7 @@ class RegisterTest extends RegisterTestCase
             ->setProperty($register, 'extension', $extension)
             ->invoke($register, 'setBundleId')
             ;
-        $this->assertSame('register_test', $this->util->getProperty($register, 'bundleId'));
+        $this->assertSame('register_test', $this->util->getProperty($register, 'idBuilder')->getBundleId());
     }
 
     /**
@@ -1064,7 +1064,7 @@ class RegisterTest extends RegisterTestCase
         $this->assertInstanceOf('Symfony\Component\DependencyInjection\Reference', $actualCalls[1][1][0]);
 
         // assert(Configuration)
-        $configId = $this->util->invoke($register, 'buildConfigurationId', $configuration);
+        $configId = $this->util->getProperty($register, 'idBuilder')->buildConfigurationId($configuration);
         $this->assertTrue($container->hasDefinition($configId));
         $definition = $container->getDefinition($configId);
         $this->assertFalse($definition->isPublic());
@@ -1223,78 +1223,6 @@ class RegisterTest extends RegisterTestCase
                     'ConfigBundle'    => 'YahooJapan\\ConfigBundle\\YahooJapanConfigBundle',
                 ),
                 '\Exception',
-            ),
-        );
-    }
-
-    /**
-     * @dataProvider parseServiceIdProvider
-     */
-    public function testParseServiceId($name, $expected)
-    {
-        $register = $this->createRegisterMock();
-        $this->assertSame($expected, $this->util->invoke($register, 'parseServiceId', $name));
-    }
-
-    /**
-     * @return array($name, $expected)
-     */
-    public function parseServiceIdProvider()
-    {
-        return array(
-            // "Bundle" suffix
-            array('YahooJapanConfigCacheBundle', 'yahoo_japan_config_cache'),
-            // "Bundle" include (generally not occurring)
-            array('YahooJapanConfigCacheBundleTest', 'yahoo_japan_config_cache_bundle_test'),
-            // "Bundle" not include (generaty not occurring)
-            array('YahooJapanConfigCacheTest', 'yahoo_japan_config_cache_test'),
-        );
-    }
-
-    /**
-     * @dataProvider buildIdProvider
-     */
-    public function testBuildId($suffix, $expected)
-    {
-        $register = $this->createRegisterMock();
-        $this->assertSame($expected, $this->util->invoke($register, 'buildId', $suffix));
-    }
-
-    /**
-     * @return array ($suffix, $expected)
-     */
-    public function buildIdProvider()
-    {
-        return array(
-            array(array('hoge'), "{$this->getCacheId()}.hoge"),
-            array(array('hoge', 'fuga'), "{$this->getCacheId()}.hoge.fuga"),
-        );
-    }
-
-    /**
-     * @dataProvider buildConfigurationIdProvider
-     */
-    public function testBuildConfigurationId($configuration, $expected)
-    {
-        $register = $this->createRegisterMock();
-        $this->assertSame($expected, $this->util->invoke($register, 'buildConfigurationId', $configuration));
-    }
-
-    /**
-     * @return array ($bundleId, $configuration, $expected)
-     */
-    public function buildConfigurationIdProvider()
-    {
-        return array(
-            // Configuration but no "_" has
-            array(
-                new \YahooJapan\ConfigCacheBundle\Tests\Fixtures\Configuration(),
-                "{$this->getCacheId()}.configuration.yahoo_japan.config_cache_bundle.tests.fixtures.configuration",
-            ),
-            // Configuration and "_" has
-            array(
-                new RegisterConfiguration(),
-                "{$this->getCacheId()}.configuration.yahoo_japan.config_cache_bundle.tests.fixtures.register_configuration",
             ),
         );
     }

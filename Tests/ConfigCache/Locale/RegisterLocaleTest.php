@@ -165,8 +165,8 @@ class RegisterLocaleTest extends RegisterTestCase
         list($register, ) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
         // $register->createCacheDefinition()
+        $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
         $definition = $this->util
-            ->setProperty($register, 'bundleId', $id)
             ->setProperty($register, 'appConfig', array('aaa' => 'bbb'))
             ->setProperty($register, 'configuration', new RegisterConfiguration())
             ->invoke($register, 'createCacheDefinition')

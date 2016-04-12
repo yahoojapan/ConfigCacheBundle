@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
 /**
@@ -32,10 +33,8 @@ abstract class RegisterTestCase extends TestCase
      */
     protected function preSetCacheDefinition($register, $tag, $id)
     {
-        $this->util
-            ->setProperty($register, 'bundleId', $id)
-            ->setProperty($register, 'appConfig', array('aaa' => 'bbb'))
-            ;
+        $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
+        $this->util->setProperty($register, 'appConfig', array('aaa' => 'bbb'));
         if (!is_null($tag)) {
             $register->setTag($tag);
         }
@@ -112,7 +111,8 @@ abstract class RegisterTestCase extends TestCase
     protected function getCacheId()
     {
         if (is_null($this->cacheId)) {
-            $this->cacheId = $this->findUtil()->getProperty($this->createRegisterMock(), 'cacheId');
+            $builder       = new ServiceIdBuilder();
+            $this->cacheId = $builder->getPrefix();
         }
 
         return $this->cacheId;
@@ -120,7 +120,11 @@ abstract class RegisterTestCase extends TestCase
 
     protected function createRegisterMock(array $methods = null)
     {
-        return $this->findUtil()->createMock($this->registerClass, $methods);
+        $util     = $this->findUtil();
+        $register = $util->createMock($this->registerClass, $methods);
+        $util->setProperty($register, 'idBuilder', new ServiceIdBuilder());
+
+        return $register;
     }
 
     /**
