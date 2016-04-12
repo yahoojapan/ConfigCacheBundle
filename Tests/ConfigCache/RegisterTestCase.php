@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ConfigurationRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
@@ -122,7 +123,10 @@ abstract class RegisterTestCase extends TestCase
     {
         $util     = $this->findUtil();
         $register = $util->createMock($this->registerClass, $methods);
-        $util->setProperty($register, 'idBuilder', new ServiceIdBuilder());
+        $util
+            ->setProperty($register, 'idBuilder', new ServiceIdBuilder())
+            ->setProperty($register, 'configuration', new ConfigurationRegister())
+            ;
 
         return $register;
     }

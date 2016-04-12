@@ -77,12 +77,9 @@ class RegisterLocaleTest extends RegisterTestCase
         $this->preSetCacheDefinition($register, $tag, $id);
 
         // differ by setCacheDefinitionByAlias
-        $configuration = new RegisterConfiguration();
-        $this->util
-            ->setProperty($register, 'configuration', $configuration)
-            // setCacheDefinition
-            ->invoke($register, 'setCacheDefinition')
-            ;
+        $register->setConfiguration(new RegisterConfiguration());
+        // setCacheDefinition
+        $this->util->invoke($register, 'setCacheDefinition');
 
         // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id);
@@ -165,10 +162,10 @@ class RegisterLocaleTest extends RegisterTestCase
         list($register, ) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
         // $register->createCacheDefinition()
+        $register->setConfiguration(new RegisterConfiguration());
         $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
         $definition = $this->util
             ->setProperty($register, 'appConfig', array('aaa' => 'bbb'))
-            ->setProperty($register, 'configuration', new RegisterConfiguration())
             ->invoke($register, 'createCacheDefinition')
             ;
         // assert(ConfigCache)

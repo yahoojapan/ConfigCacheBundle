@@ -159,10 +159,10 @@ class RegisterTest extends RegisterTestCase
         }
 
         // initialization
+        $register->setConfiguration(new RegisterConfiguration());
         $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
         $this->util
             ->setProperty($register, 'resources', $resources)
-            ->setProperty($register, 'configuration', new RegisterConfiguration())
             // not assert excluding setting test here for asserting on testFindFilesByDirectory
             ->setProperty($register, 'excludes', array())
             ;
@@ -463,10 +463,10 @@ class RegisterTest extends RegisterTestCase
         }
 
         // initialization
+        $register->setConfiguration(new RegisterConfiguration());
         $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
         $this->util
             ->setProperty($register, 'resources', $resources)
-            ->setProperty($register, 'configuration', new RegisterConfiguration())
             // not assert excluding setting test here for asserting on testFindFilesByDirectory
             ->setProperty($register, 'excludes', array())
             ;
@@ -1013,7 +1013,10 @@ class RegisterTest extends RegisterTestCase
             ->setProperty($register, 'extension', $extension)
             ->invoke($register, 'setConfigurationByExtension')
             ;
-        $this->assertSame($expected, $this->util->getProperty($register, 'configuration'));
+        $this->assertSame(
+            $expected,
+            $this->util->getProperty($this->util->getProperty($register, 'configuration'), 'configuration')
+        );
     }
 
     /**
@@ -1043,12 +1046,9 @@ class RegisterTest extends RegisterTestCase
         $this->preSetCacheDefinition($register, $tag, $id);
 
         // differ by setCacheDefinitionByAlias
-        $configuration = new RegisterConfiguration();
-        $this->util
-            ->setProperty($register, 'configuration', $configuration)
-            // setCacheDefinition
-            ->invoke($register, 'setCacheDefinition')
-            ;
+        $register->setConfiguration($configuration = new RegisterConfiguration());
+        // setCacheDefinition
+        $this->util->invoke($register, 'setCacheDefinition');
 
         // Definition
         $definition = $this->postSetCacheDefinition($container, $tag, $id);
@@ -1225,36 +1225,6 @@ class RegisterTest extends RegisterTestCase
                 '\Exception',
             ),
         );
-    }
-
-    public function testFindConfigurationByResource()
-    {
-        $mock = $this->createConfigurationMock();
-        $real = new RegisterConfiguration();
-        $register = $this->createRegisterMock();
-        $register->setConfiguration($real);
-
-        // enabled configuration setting on resource
-        $resource = new FileResource(__DIR__.'/../Fixtures/test_service1.yml', $mock);
-        $this->assertSame($mock, $this->util->invoke($register, 'findConfigurationByResource', $resource));
-        // disabled configuration setting on resource
-        $resource = new FileResource(__DIR__.'/../Fixtures/test_service1.yml');
-        $this->assertSame($real, $this->util->invoke($register, 'findConfigurationByResource', $resource));
-    }
-
-    public function testGetInitializedConfiguration()
-    {
-        $register = $this->createRegisterMock();
-
-        // configuration not set
-        $this->setExpectedException('\Exception');
-        // throw \Exception
-        $this->util->invoke($register, 'getInitializedConfiguration');
-
-        // configuration set
-        $configuration = new RegisterConfiguration();
-        $register->setConfiguration($configuration);
-        $this->assertSame($configuration, $this->util->invoke($register, 'getInitializedConfiguration'));
     }
 
     protected function createExtensionMock()
