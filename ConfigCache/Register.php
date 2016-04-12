@@ -20,6 +20,7 @@ use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ConfigurationRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
@@ -99,7 +100,7 @@ class Register
      */
     public function setConfiguration(ConfigurationInterface $configuration)
     {
-        $this->configuration = $configuration;
+        $this->configuration->setConfiguration($configuration);
 
         return $this;
     }
@@ -137,7 +138,8 @@ class Register
      */
     protected function initialize()
     {
-        $this->idBuilder = $this->createIdBuilder();
+        $this->idBuilder     = $this->createIdBuilder();
+        $this->configuration = $this->createConfigurationRegister();
 
         // set bundleId, configuration based on extension
         $this->setBundleId();
@@ -159,8 +161,8 @@ class Register
             $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
 
             // private configuration definition, finally discarded because of private service
-            $privateId = $this->idBuilder->buildConfigurationId($this->findConfigurationByResource($resource));
-            $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
+            $privateId = $this->idBuilder->buildConfigurationId($this->configuration->find($resource));
+            $this->setConfigurationDefinition($privateId, $this->configuration->find($resource));
 
             // find files under directories
             $finder = $this->findFilesByDirectory($resource, $this->excludes);
@@ -193,8 +195,8 @@ class Register
                 $this->container->addResource(new BaseFileResource($resource->getResource()));
 
                 // private configuration definition, finally discarded because of private service
-                $privateId = $this->idBuilder->buildConfigurationId($this->findConfigurationByResource($resource));
-                $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
+                $privateId = $this->idBuilder->buildConfigurationId($this->configuration->find($resource));
+                $this->setConfigurationDefinition($privateId, $this->configuration->find($resource));
 
                 $this->container->findDefinition($cacheId)
                     ->addMethodCall(
@@ -252,9 +254,9 @@ class Register
             foreach ($resources as $resource) {
                 $path = dirname($reflection->getFilename()).$resource->getResource();
                 if (is_dir($path)) {
-                    $this->addDirectory(new DirectoryResource($path, $this->findConfigurationByResource($resource)));
+                    $this->addDirectory(new DirectoryResource($path, $this->configuration->find($resource)));
                 } elseif (file_exists($path)) {
-                    $this->addFile(new FileResource($path, $this->findConfigurationByResource($resource)));
+                    $this->addFile(new FileResource($path, $this->configuration->find($resource)));
                 }
             }
         }
@@ -407,8 +409,8 @@ class Register
     protected function addConfigurationMethod(Definition $definition)
     {
         // master configuration
-        $configId = $this->idBuilder->buildConfigurationId($this->getInitializedConfiguration());
-        $this->setConfigurationDefinition($configId, $this->getInitializedConfiguration());
+        $configId = $this->idBuilder->buildConfigurationId($this->configuration->findInitialized());
+        $this->setConfigurationDefinition($configId, $this->configuration->findInitialized());
         $definition->addMethodCall('setConfiguration', array(new Reference($configId)));
 
         return $definition;
@@ -469,34 +471,6 @@ class Register
     }
 
     /**
-     * Finds a configuration by a resource.
-     *
-     * @param ResourceInterface $resource
-     *
-     * @return ConfigurationInterface
-     */
-    protected function findConfigurationByResource(ResourceInterface $resource)
-    {
-        return $resource->getConfiguration() ?: $this->getInitializedConfiguration();
-    }
-
-    /**
-     * Gets a initialized configuration.
-     *
-     * @return ConfigurationInterface
-     *
-     * @throws \Exception thrown if the configuration is not set.
-     */
-    protected function getInitializedConfiguration()
-    {
-        if (is_null($this->configuration)) {
-            throw new \Exception('The Configuration must be set.');
-        }
-
-        return $this->configuration;
-    }
-
-    /**
      * Adds a directory resource.
      *
      * @param DirectoryResource $dir
@@ -532,5 +506,15 @@ class Register
     protected function createIdBuilder()
     {
         return new ServiceIdBuilder();
+    }
+
+    /**
+     * Creates a ConfigurationRegister.
+     *
+     * @return ConfigurationRegister
+     */
+    protected function createConfigurationRegister()
+    {
+        return new ConfigurationRegister();
     }
 }
