@@ -54,7 +54,7 @@ class RegisterLocale extends Register
     {
         parent::setCacheDefinition();
 
-        $this->addLocaleMethods($this->buildId(array($this->bundleId)));
+        $this->addLocaleMethods($this->idBuilder->buildCacheId());
     }
 
     /**
@@ -64,7 +64,7 @@ class RegisterLocale extends Register
     {
         parent::setCacheDefinitionByAlias($alias);
 
-        $this->addLocaleMethods($this->buildId(array($this->bundleId, $alias)));
+        $this->addLocaleMethods($this->idBuilder->buildCacheId(array($alias)));
     }
 
     /**

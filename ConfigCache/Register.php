@@ -14,13 +14,13 @@ namespace YahooJapan\ConfigCacheBundle\ConfigCache;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Resource\DirectoryResource as BaseDirectoryResource;
 use Symfony\Component\Config\Resource\FileResource as BaseFileResource;
-use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface;
@@ -42,10 +42,7 @@ class Register
     protected $dirs      = array();
     protected $files     = array();
     protected $appConfig = array();
-    // bundle ID
-    protected $bundleId;
-    // ConfigCache service ID
-    protected $cacheId = 'config';
+    protected $idBuilder;
     // ConfigCache service tag
     protected $tag;
 
@@ -140,6 +137,8 @@ class Register
      */
     protected function initialize()
     {
+        $this->idBuilder = $this->createIdBuilder();
+
         // set bundleId, configuration based on extension
         $this->setBundleId();
         $this->setConfigurationByExtension();
@@ -154,13 +153,13 @@ class Register
      */
     protected function registerInternal()
     {
-        $cacheId = $this->buildId(array($this->bundleId));
+        $cacheId = $this->idBuilder->buildCacheId();
 
         foreach ($this->dirs as $resource) {
             $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
 
             // private configuration definition, finally discarded because of private service
-            $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
+            $privateId = $this->idBuilder->buildConfigurationId($this->findConfigurationByResource($resource));
             $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
 
             // find files under directories
@@ -176,7 +175,7 @@ class Register
             if ($resource->hasAlias()) {
                 $alias = $resource->getAlias();
                 $path  = $resource->getResource();
-                $standaloneCacheId = $this->buildId(array($this->bundleId, $alias));
+                $standaloneCacheId = $this->idBuilder->buildCacheId(array($alias));
                 if ($this->container->hasDefinition($standaloneCacheId)) {
                     throw new \RuntimeException(
                         "{$standaloneCacheId} is already registered. Maybe FileResource alias[{$alias}] is duplicated."
@@ -194,7 +193,7 @@ class Register
                 $this->container->addResource(new BaseFileResource($resource->getResource()));
 
                 // private configuration definition, finally discarded because of private service
-                $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
+                $privateId = $this->idBuilder->buildConfigurationId($this->findConfigurationByResource($resource));
                 $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
 
                 $this->container->findDefinition($cacheId)
@@ -326,7 +325,7 @@ class Register
      */
     protected function setBundleId()
     {
-        $this->bundleId = $this->extension->getAlias();
+        $this->idBuilder->setBundleId($this->extension->getalias());
 
         return $this;
     }
@@ -349,7 +348,7 @@ class Register
      */
     protected function setCacheDefinition()
     {
-        $id         = $this->buildId(array($this->bundleId));
+        $id         = $this->idBuilder->buildCacheId();
         $definition = $this->createCacheDefinition();
         $this->addConfigurationMethod($definition);
         $this->container->setDefinition($id, $definition);
@@ -362,7 +361,7 @@ class Register
      */
     protected function setCacheDefinitionByAlias($alias)
     {
-        $id         = $this->buildId(array($this->bundleId, $alias));
+        $id         = $this->idBuilder->buildCacheId(array($alias));
         $definition = $this->createCacheDefinition();
         $this->container->setDefinition($id, $definition);
     }
@@ -377,8 +376,9 @@ class Register
         // doctrine/cache
         $cache = new DefinitionDecorator('yahoo_japan_config_cache.php_file_cache');
         // only replace cache directory
-        $cache->replaceArgument(0, $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}");
-        $cacheId = $this->buildId(array('doctrine', 'cache', $this->bundleId));
+        $bundleId = $this->idBuilder->getBundleId();
+        $cache->replaceArgument(0, $this->container->getParameter('kernel.cache_dir')."/{$bundleId}");
+        $cacheId = $this->idBuilder->buildId(array('doctrine', 'cache', $bundleId));
         $this->container->setDefinition($cacheId, $cache);
 
         // user cache
@@ -407,7 +407,7 @@ class Register
     protected function addConfigurationMethod(Definition $definition)
     {
         // master configuration
-        $configId = $this->buildConfigurationId($this->getInitializedConfiguration());
+        $configId = $this->idBuilder->buildConfigurationId($this->getInitializedConfiguration());
         $this->setConfigurationDefinition($configId, $this->getInitializedConfiguration());
         $definition->addMethodCall('setConfiguration', array(new Reference($configId)));
 
@@ -428,18 +428,6 @@ class Register
             $configDefinition->setPublic(false);
             $this->container->setDefinition($configId, $configDefinition);
         }
-    }
-
-    /**
-     * Parses a service ID based on bundle name.
-     *
-     * @param string $name
-     *
-     * @return string
-     */
-    protected static function parseServiceId($name)
-    {
-        return Container::underscore(preg_replace('/Bundle$/', '', $name));
     }
 
     /**
@@ -469,44 +457,15 @@ class Register
     protected function validateCacheId()
     {
         foreach ($this->container->getParameter('kernel.bundles') as $className => $fqcn) {
-            $id = static::parseServiceId($className);
-            if ($this->cacheId === $id) {
+            $id = ServiceIdBuilder::parseServiceId($className);
+            $serviceIdPrefix = $this->idBuilder->getPrefix();
+            if ($serviceIdPrefix === $id) {
                 throw new \Exception(
-                    "Cache ID[{$this->cacheId}] and Service ID[{$id}] ".
+                    "Cache ID[{$serviceIdPrefix}] and Service ID[{$id}] ".
                     "based Bundle name[{$className}] are duplicated"
                 );
             }
         }
-    }
-
-    /**
-     * Builds a cache service ID.
-     *
-     * @param array $suffixes ex) array("yahoo_japan_config_cache")
-     *
-     * @return string ex) "config.yahoo_japan_config_cache"
-     */
-    protected function buildId(array $suffixes)
-    {
-        return implode('.', array_merge(array($this->cacheId), $suffixes));
-    }
-
-    /**
-     * Builds a configuration private service ID.
-     *
-     * @param ConfigurationInterface $configuration
-     *
-     * @return string
-     *
-     * @note before : Acme\DemoBundle\DependencyInjection\Configuration
-     *       after  : acme.demo_bundle.dependency_injection.configuration
-     */
-    protected function buildConfigurationId(ConfigurationInterface $configuration)
-    {
-        $reflection = new \ReflectionClass($configuration);
-        $configId   = Container::underscore(strtr($reflection->getName(), '\\', '_'));
-
-        return $this->buildId(array('configuration', $configId));
     }
 
     /**
@@ -563,5 +522,15 @@ class Register
         $this->files[] = $file;
 
         return $this;
+    }
+
+    /**
+     * Creates a service ID builder.
+     *
+     * @return ServiceIdBuilder
+     */
+    protected function createIdBuilder()
+    {
+        return new ServiceIdBuilder();
     }
 }
