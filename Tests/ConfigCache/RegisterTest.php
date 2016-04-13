@@ -613,7 +613,7 @@ class RegisterTest extends RegisterTestCase
             ;
 
         $this->assertSame($expectedDirs, $this->util->getProperty($register, 'dirs'));
-        $this->assertSame($expectedFiles, $this->util->getProperty($register, 'files'));
+        $this->assertSame($expectedFiles, $this->util->getProperty($this->util->getProperty($register, 'file'), 'resources'));
     }
 
     /**
@@ -703,7 +703,7 @@ class RegisterTest extends RegisterTestCase
             ->invoke($register, 'initializeAllResources', $bundles)
             ;
         $dirs  = $this->util->getProperty($register, 'dirs');
-        $files = $this->util->getProperty($register, 'files');
+        $files = $this->util->getProperty($this->util->getProperty($register, 'file'), 'resources');
 
         // regard OK as asserting according with count(), getResource(), getConfiguration()
         $this->assertSame(count($expectedDirs), count($dirs));
@@ -831,8 +831,10 @@ class RegisterTest extends RegisterTestCase
             ->method('registerConfigCache')
             ->willReturn(null)
             ;
+        foreach ($files as $file) {
+            $this->util->getProperty($register, 'file')->add($file);
+        }
         $this->util
-            ->setProperty($register, 'files', $files)
             ->setProperty($register, 'dirs', $dirs)
             ->invoke($register, 'postInitializeResources')
             ;
@@ -861,46 +863,6 @@ class RegisterTest extends RegisterTestCase
                 array(new FileResource(__DIR__.'/../Fixtures/test_service1.yml', null, 'test_alias')),
                 array(),
                 false,
-            ),
-        );
-    }
-
-    /**
-     * @dataProvider hasFileResourceWithoutAliasProvider
-     */
-    public function testHasFileResourceWithoutAlias(array $files, $expected)
-    {
-        $register = $this->createRegisterMock();
-        $actual   = $this->util
-            ->setProperty($register, 'files', $files)
-            ->invoke($register, 'hasFileResourcesWithoutAlias')
-            ;
-        $this->assertSame($expected, $actual);
-    }
-
-    /**
-     * @return array($files, $expected)
-     */
-    public function hasFileResourceWithoutAliasProvider()
-    {
-        return array(
-            // FileResource without alias
-            array(
-                array(new FileResource(__DIR__.'/../Fixtures/test_service1.yml')),
-                true,
-            ),
-            // FileResource with alias
-            array(
-                array(new FileResource(__DIR__.'/../Fixtures/test_service1.yml', null, 'test_alias')),
-                false,
-            ),
-            // mixed
-            array(
-                array(
-                    new FileResource(__DIR__.'/../Fixtures/test_service1.yml'),
-                    new FileResource(__DIR__.'/../Fixtures/test_service1.yml', null, 'test_alias'),
-                ),
-                true,
             ),
         );
     }

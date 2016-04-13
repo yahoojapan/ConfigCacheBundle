@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ConfigurationRegister;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\FileRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceRegister;
 use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
@@ -129,11 +130,13 @@ abstract class RegisterTestCase extends TestCase
         $idBuilder       = new ServiceIdBuilder();
         $configuration   = new ConfigurationRegister();
         $serviceRegister = $this->createServiceRegister($container, $idBuilder, $configuration);
+        $fileRegister    = $this->createFileRegister($container, $idBuilder, $serviceRegister, $configuration);
         $util
             ->setProperty($register, 'container', $container)
             ->setProperty($register, 'idBuilder', $idBuilder)
             ->setProperty($register, 'configuration', $configuration)
             ->setProperty($register, 'serviceRegister', $serviceRegister)
+            ->setProperty($register, 'file', $fileRegister)
             ;
 
         return $register;
@@ -148,6 +151,15 @@ abstract class RegisterTestCase extends TestCase
         ConfigurationRegister $configuration
     ) {
         return new ServiceRegister($container, $idBuilder, $configuration);
+    }
+
+    protected function createFileRegister(
+        ContainerBuilder      $container,
+        ServiceIdBuilder      $idBuilder,
+        ServiceRegister       $serviceRegister,
+        ConfigurationRegister $configuration
+    ) {
+        return new FileRegister($container, $idBuilder, $serviceRegister, $configuration);
     }
 
     /**
