@@ -11,7 +11,7 @@
 
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Locale;
 
-use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Register\ServiceRegister;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Register\RegisterFactory;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register;
 
 /**
@@ -46,12 +46,10 @@ class RegisterLocale extends Register
     }
 
     /**
-     * Creates a ServiceRegister.
-     *
-     * @return ServiceRegister
+     * {@inheritdoc}
      */
-    protected function createServiceRegister()
+    protected function createRegisterFactory()
     {
-        return new ServiceRegister($this->container, $this->idBuilder, $this->configuration);
+        return new RegisterFactory();
     }
 }

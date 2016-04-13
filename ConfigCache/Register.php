@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ConfigurationRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\DirectoryRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\FileRegister;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\RegisterFactory;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
@@ -40,6 +41,7 @@ class Register
     protected $directory;
     protected $idBuilder;
     protected $serviceRegister;
+    protected $factory;
 
     /**
      * Constructor.
@@ -133,11 +135,12 @@ class Register
      */
     protected function initialize(array $excludes = array())
     {
-        $this->idBuilder       = $this->createIdBuilder();
-        $this->configuration   = $this->createConfigurationRegister();
-        $this->serviceRegister = $this->createServiceRegister();
-        $this->file            = $this->createFileRegister();
-        $this->directory       = $this->createDirectoryRegister()->setExcludes($excludes);
+        $this->factory         = $this->createRegisterFactory();
+        $this->idBuilder       = $this->factory->createIdBuilder();
+        $this->configuration   = $this->factory->createConfigurationRegister();
+        $this->serviceRegister = $this->factory->createServiceRegister($this->container);
+        $this->file            = $this->factory->createFileRegister();
+        $this->directory       = $this->factory->createDirectoryRegister()->setExcludes($excludes);
 
         // set bundleId, configuration based on extension
         $this->setBundleId();
@@ -289,52 +292,12 @@ class Register
     }
 
     /**
-     * Creates a service ID builder.
+     * Creates a RegisterFactory.
      *
-     * @return ServiceIdBuilder
+     * @return RegisterFactory
      */
-    protected function createIdBuilder()
+    protected function createRegisterFactory()
     {
-        return new ServiceIdBuilder();
-    }
-
-    /**
-     * Creates a ConfigurationRegister.
-     *
-     * @return ConfigurationRegister
-     */
-    protected function createConfigurationRegister()
-    {
-        return new ConfigurationRegister();
-    }
-
-    /**
-     * Creates a ServiceRegister.
-     *
-     * @return ServiceRegister
-     */
-    protected function createServiceRegister()
-    {
-        return new ServiceRegister($this->container, $this->idBuilder, $this->configuration);
-    }
-
-    /**
-     * Creates a FileRegister
-     *
-     * @return FileRegister
-     */
-    protected function createFileRegister()
-    {
-        return new FileRegister($this->serviceRegister);
-    }
-
-    /**
-     * Creates a DirectoryRegister
-     *
-     * @return DirectoryRegister
-     */
-    protected function createDirectoryRegister()
-    {
-        return new DirectoryRegister($this->serviceRegister);
+        return new RegisterFactory();
     }
 }
