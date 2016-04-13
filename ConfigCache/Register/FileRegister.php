@@ -14,6 +14,7 @@ namespace YahooJapan\ConfigCacheBundle\ConfigCache\Register;
 use Symfony\Component\Config\Resource\FileResource as BaseFileResource;
 use Symfony\Component\DependencyInjection\Reference;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface;
 
 /**
  * FileRegister registers the ConfigCache services with FileResource.
@@ -59,6 +60,18 @@ class FileRegister
         $this->resources[] = $resource;
 
         return $this;
+    }
+
+    /**
+     * Whether the resource is enabled or not.
+     *
+     * @param ResourceInterface $resource
+     *
+     * @return bool
+     */
+    public function enabled(ResourceInterface $resource)
+    {
+        return $resource->exists() && $resource instanceof FileResource;
     }
 
     /**

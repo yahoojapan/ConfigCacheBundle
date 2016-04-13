@@ -164,12 +164,10 @@ class Register
     protected function initializeResources()
     {
         foreach ($this->resources as $resource) {
-            if ($resource->exists()) {
-                if ($resource instanceof DirectoryResource) {
-                    $this->directory->add($resource);
-                } elseif ($resource instanceof FileResource) {
-                    $this->file->add($resource);
-                }
+            if ($this->file->enabled($resource)) {
+                $this->file->add($resource);
+            } elseif ($this->directory->enabled($resource)) {
+                $this->directory->add($resource);
             }
         }
 

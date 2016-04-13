@@ -15,6 +15,7 @@ use Symfony\Component\Config\Resource\DirectoryResource as BaseDirectoryResource
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface;
 
 /**
  * DirectoryRegister registers the ConfigCache services with DirectoryResource.
@@ -72,6 +73,18 @@ class DirectoryRegister
         $this->resources[] = $resource;
 
         return $this;
+    }
+
+    /**
+     * Whether the resource is enabled or not.
+     *
+     * @param ResourceInterface $resource
+     *
+     * @return bool
+     */
+    public function enabled(ResourceInterface $resource)
+    {
+        return $resource->exists() && $resource instanceof DirectoryResource;
     }
 
     /**
