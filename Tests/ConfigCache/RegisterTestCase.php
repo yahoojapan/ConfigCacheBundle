@@ -18,6 +18,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ConfigurationRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceRegister;
 use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
 /**
@@ -35,7 +36,8 @@ abstract class RegisterTestCase extends TestCase
     protected function preSetCacheDefinition($register, $tag, $id)
     {
         $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
-        $this->util->setProperty($register, 'appConfig', array('aaa' => 'bbb'));
+        // serviceRegister already initialized here
+        $register->setAppConfig(array('aaa' => 'bbb'));
         if (!is_null($tag)) {
             $register->setTag($tag);
         }
@@ -121,14 +123,31 @@ abstract class RegisterTestCase extends TestCase
 
     protected function createRegisterMock(array $methods = null)
     {
-        $util     = $this->findUtil();
-        $register = $util->createMock($this->registerClass, $methods);
+        $util            = $this->findUtil();
+        $container       = $this->getContainerBuilder();
+        $register        = $util->createMock($this->registerClass, $methods);
+        $idBuilder       = new ServiceIdBuilder();
+        $configuration   = new ConfigurationRegister();
+        $serviceRegister = $this->createServiceRegister($container, $idBuilder, $configuration);
         $util
-            ->setProperty($register, 'idBuilder', new ServiceIdBuilder())
-            ->setProperty($register, 'configuration', new ConfigurationRegister())
+            ->setProperty($register, 'container', $container)
+            ->setProperty($register, 'idBuilder', $idBuilder)
+            ->setProperty($register, 'configuration', $configuration)
+            ->setProperty($register, 'serviceRegister', $serviceRegister)
             ;
 
         return $register;
+    }
+
+    /**
+     * for overriding Locale\Register\ServiceRegister
+     */
+    protected function createServiceRegister(
+        ContainerBuilder $container,
+        ServiceIdBuilder $idBuilder,
+        ConfigurationRegister $configuration
+    ) {
+        return new ServiceRegister($container, $idBuilder, $configuration);
     }
 
     /**
@@ -136,11 +155,14 @@ abstract class RegisterTestCase extends TestCase
      */
     protected function createRegisterMockAndContainer(array $methods = null)
     {
-        $container = $this->getContainerBuilder();
-        $register  = $this->createRegisterMock($methods);
-        $this->util->setProperty($register, 'container', $container);
+        $register = $this->createRegisterMock($methods);
 
-        return array($register, $container);
+        return array($register, $this->util->getProperty($register, 'container'));
+    }
+
+    protected function createServiceRegisterMock(array $methods = null)
+    {
+        return $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceRegister', $methods);
     }
 
     protected function getContainerBuilder(array $data = array())
