@@ -12,7 +12,6 @@
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Register;
 
 use Symfony\Component\Config\Resource\FileResource as BaseFileResource;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
 
@@ -21,30 +20,17 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
  */
 class FileRegister
 {
-    protected $container;
-    protected $idBuilder;
     protected $serviceRegister;
-    protected $configuration;
     protected $resources = array();
 
     /**
      * Constructor.
      *
-     * @param ContainerBuilder      $container
-     * @param ServiceIdBuilder      $idBuilder
-     * @param ServiceRegister       $serviceRegister
-     * @param ConfigurationRegister $configuration
+     * @param ServiceRegister $serviceRegister
      */
-    public function __construct(
-        ContainerBuilder      $container,
-        ServiceIdBuilder      $idBuilder,
-        ServiceRegister       $serviceRegister,
-        ConfigurationRegister $configuration
-    ) {
-        $this->container       = $container;
-        $this->idBuilder       = $idBuilder;
+    public function __construct(ServiceRegister $serviceRegister)
+    {
         $this->serviceRegister = $serviceRegister;
-        $this->configuration   = $configuration;
     }
 
     /**
@@ -102,16 +88,17 @@ class FileRegister
     {
         $alias = $resource->getAlias();
         $path  = $resource->getResource();
-        $standaloneCacheId = $this->idBuilder->buildCacheId(array($alias));
-        if ($this->container->hasDefinition($standaloneCacheId)) {
+        $standaloneCacheId = $this->serviceRegister->getIdBuilder()->buildCacheId(array($alias));
+        $container = $this->serviceRegister->getContainer();
+        if ($container->hasDefinition($standaloneCacheId)) {
             throw new \RuntimeException(
                 "{$standaloneCacheId} is already registered. Maybe FileResource alias[{$alias}] is duplicated."
             );
         }
 
-        $this->container->addResource(new BaseFileResource($path));
+        $container->addResource(new BaseFileResource($path));
         $this->serviceRegister->registerConfigCacheByAlias($alias);
-        $this->container->findDefinition($standaloneCacheId)
+        $container->findDefinition($standaloneCacheId)
             ->addMethodCall('addResource', array((string) $path))
             ->addMethodCall('setStrict', array(false))
             ->addMethodCall('setKey', array($alias))
@@ -125,13 +112,16 @@ class FileRegister
      */
     protected function registerConfiguration(FileResource $resource)
     {
-        $this->container->addResource(new BaseFileResource($resource->getResource()));
+        $container = $this->serviceRegister->getContainer();
+        $container->addResource(new BaseFileResource($resource->getResource()));
 
         // private configuration definition, finally discarded because of private service
-        $privateId = $this->idBuilder->buildConfigurationId($this->configuration->find($resource));
-        $this->serviceRegister->registerConfiguration($privateId, $this->configuration->find($resource));
+        $idBuilder     = $this->serviceRegister->getIdBuilder();
+        $configuration = $this->serviceRegister->getConfiguration();
+        $privateId     = $idBuilder->buildConfigurationId($configuration->find($resource));
+        $this->serviceRegister->registerConfiguration($privateId, $configuration->find($resource));
 
-        $this->container->findDefinition($this->idBuilder->buildCacheId())
+        $container->findDefinition($idBuilder->buildCacheId())
             ->addMethodCall(
                 'addResource',
                 array((string) $resource->getResource(), new Reference($privateId))

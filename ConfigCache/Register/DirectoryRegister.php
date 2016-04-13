@@ -12,7 +12,6 @@
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Register;
 
 use Symfony\Component\Config\Resource\DirectoryResource as BaseDirectoryResource;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
@@ -22,31 +21,18 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
  */
 class DirectoryRegister
 {
-    protected $container;
-    protected $idBuilder;
     protected $serviceRegister;
-    protected $configuration;
     protected $resources = array();
     protected $excludes  = array();
 
     /**
      * Constructor.
      *
-     * @param ContainerBuilder      $container
-     * @param ServiceIdBuilder      $idBuilder
-     * @param ServiceRegister       $serviceRegister
-     * @param ConfigurationRegister $configuration
+     * @param ServiceRegister $serviceRegister
      */
-    public function __construct(
-        ContainerBuilder      $container,
-        ServiceIdBuilder      $idBuilder,
-        ServiceRegister       $serviceRegister,
-        ConfigurationRegister $configuration
-    ) {
-        $this->container       = $container;
-        $this->idBuilder       = $idBuilder;
+    public function __construct(ServiceRegister $serviceRegister)
+    {
         $this->serviceRegister = $serviceRegister;
-        $this->configuration   = $configuration;
     }
 
     /**
@@ -55,16 +41,19 @@ class DirectoryRegister
     public function register()
     {
         foreach ($this->resources as $resource) {
-            $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
+            $container = $this->serviceRegister->getContainer();
+            $container->addResource(new BaseDirectoryResource($resource->getResource()));
 
             // private configuration definition, finally discarded because of private service
-            $privateId = $this->idBuilder->buildConfigurationId($this->configuration->find($resource));
-            $this->serviceRegister->registerConfiguration($privateId, $this->configuration->find($resource));
+            $idBuilder     = $this->serviceRegister->getIdBuilder();
+            $configuration = $this->serviceRegister->getConfiguration();
+            $privateId     = $idBuilder->buildConfigurationId($configuration->find($resource));
+            $this->serviceRegister->registerConfiguration($privateId, $configuration->find($resource));
 
             // find files under directories
             $finder = $this->findFiles($resource, $this->excludes);
             foreach ($finder as $file) {
-                $this->container->findDefinition($this->idBuilder->buildCacheId())
+                $container->findDefinition($idBuilder->buildCacheId())
                     ->addMethodCall('addResource', array((string) $file, new Reference($privateId)))
                     ;
             }

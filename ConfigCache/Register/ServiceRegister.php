@@ -87,6 +87,36 @@ class ServiceRegister
     }
 
     /**
+     * Gets a ContainerBuilder.
+     *
+     * @return ContainerBuilder
+     */
+    public function getContainer()
+    {
+        return $this->container;
+    }
+
+    /**
+     * Gets a ServiceIdBuilder
+     *
+     * @return ServiceIdBuilder
+     */
+    public function getIdBuilder()
+    {
+        return $this->idBuilder;
+    }
+
+    /**
+     * Gets a ConfigurationRegister
+     *
+     * @return ConfigurationRegister
+     */
+    public function getConfiguration()
+    {
+        return $this->configuration;
+    }
+
+    /**
      * Sets a config_cache service tag.
      *
      * @param string $tag

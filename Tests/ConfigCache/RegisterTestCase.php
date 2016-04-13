@@ -131,8 +131,8 @@ abstract class RegisterTestCase extends TestCase
         $idBuilder         = new ServiceIdBuilder();
         $configuration     = new ConfigurationRegister();
         $serviceRegister   = $this->createServiceRegister($container, $idBuilder, $configuration);
-        $fileRegister      = $this->createFileRegister($container, $idBuilder, $serviceRegister, $configuration);
-        $directoryRegister = $this->createDirectoryRegister($container, $idBuilder, $serviceRegister, $configuration);
+        $fileRegister      = $this->createFileRegister($serviceRegister);
+        $directoryRegister = $this->createDirectoryRegister($serviceRegister);
         $util
             ->setProperty($register, 'container', $container)
             ->setProperty($register, 'idBuilder', $idBuilder)
@@ -156,22 +156,14 @@ abstract class RegisterTestCase extends TestCase
         return new ServiceRegister($container, $idBuilder, $configuration);
     }
 
-    protected function createFileRegister(
-        ContainerBuilder      $container,
-        ServiceIdBuilder      $idBuilder,
-        ServiceRegister       $serviceRegister,
-        ConfigurationRegister $configuration
-    ) {
-        return new FileRegister($container, $idBuilder, $serviceRegister, $configuration);
+    protected function createFileRegister(ServiceRegister $serviceRegister)
+    {
+        return new FileRegister($serviceRegister);
     }
 
-    protected function createDirectoryRegister(
-        ContainerBuilder      $container,
-        ServiceIdBuilder      $idBuilder,
-        ServiceRegister       $serviceRegister,
-        ConfigurationRegister $configuration
-    ) {
-        return new DirectoryRegister($container, $idBuilder, $serviceRegister, $configuration);
+    protected function createDirectoryRegister(ServiceRegister $serviceRegister)
+    {
+        return new DirectoryRegister($serviceRegister);
     }
 
     /**

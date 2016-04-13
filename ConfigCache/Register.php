@@ -325,7 +325,7 @@ class Register
      */
     protected function createFileRegister()
     {
-        return new FileRegister($this->container, $this->idBuilder, $this->serviceRegister, $this->configuration);
+        return new FileRegister($this->serviceRegister);
     }
 
     /**
@@ -335,6 +335,6 @@ class Register
      */
     protected function createDirectoryRegister()
     {
-        return new DirectoryRegister($this->container, $this->idBuilder, $this->serviceRegister, $this->configuration);
+        return new DirectoryRegister($this->serviceRegister);
     }
 }
