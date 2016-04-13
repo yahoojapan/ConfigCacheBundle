@@ -21,7 +21,7 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
  */
 class DirectoryRegister
 {
-    protected $serviceRegister;
+    protected $register;
     protected $resources = array();
     protected $excludes  = array();
 
@@ -30,9 +30,9 @@ class DirectoryRegister
      *
      * @param ServiceRegister $serviceRegister
      */
-    public function __construct(ServiceRegister $serviceRegister)
+    public function __construct(ServiceRegister $register)
     {
-        $this->serviceRegister = $serviceRegister;
+        $this->register = $register;
     }
 
     /**
@@ -41,14 +41,14 @@ class DirectoryRegister
     public function register()
     {
         foreach ($this->resources as $resource) {
-            $container = $this->serviceRegister->getContainer();
+            $container = $this->register->getContainer();
             $container->addResource(new BaseDirectoryResource($resource->getResource()));
 
             // private configuration definition, finally discarded because of private service
-            $idBuilder     = $this->serviceRegister->getIdBuilder();
-            $configuration = $this->serviceRegister->getConfiguration();
+            $idBuilder     = $this->register->getIdBuilder();
+            $configuration = $this->register->getConfiguration();
             $privateId     = $idBuilder->buildConfigurationId($configuration->find($resource));
-            $this->serviceRegister->registerConfiguration($privateId, $configuration->find($resource));
+            $this->register->registerConfiguration($privateId, $configuration->find($resource));
 
             // find files under directories
             $finder = $this->findFiles($resource, $this->excludes);

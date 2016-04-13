@@ -20,17 +20,17 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
  */
 class FileRegister
 {
-    protected $serviceRegister;
+    protected $register;
     protected $resources = array();
 
     /**
      * Constructor.
      *
-     * @param ServiceRegister $serviceRegister
+     * @param ServiceRegister $register
      */
-    public function __construct(ServiceRegister $serviceRegister)
+    public function __construct(ServiceRegister $register)
     {
-        $this->serviceRegister = $serviceRegister;
+        $this->register = $register;
     }
 
     /**
@@ -88,8 +88,8 @@ class FileRegister
     {
         $alias = $resource->getAlias();
         $path  = $resource->getResource();
-        $standaloneCacheId = $this->serviceRegister->getIdBuilder()->buildCacheId(array($alias));
-        $container = $this->serviceRegister->getContainer();
+        $standaloneCacheId = $this->register->getIdBuilder()->buildCacheId(array($alias));
+        $container = $this->register->getContainer();
         if ($container->hasDefinition($standaloneCacheId)) {
             throw new \RuntimeException(
                 "{$standaloneCacheId} is already registered. Maybe FileResource alias[{$alias}] is duplicated."
@@ -97,7 +97,7 @@ class FileRegister
         }
 
         $container->addResource(new BaseFileResource($path));
-        $this->serviceRegister->registerConfigCacheByAlias($alias);
+        $this->register->registerConfigCacheByAlias($alias);
         $container->findDefinition($standaloneCacheId)
             ->addMethodCall('addResource', array((string) $path))
             ->addMethodCall('setStrict', array(false))
@@ -112,14 +112,14 @@ class FileRegister
      */
     protected function registerConfiguration(FileResource $resource)
     {
-        $container = $this->serviceRegister->getContainer();
+        $container = $this->register->getContainer();
         $container->addResource(new BaseFileResource($resource->getResource()));
 
         // private configuration definition, finally discarded because of private service
-        $idBuilder     = $this->serviceRegister->getIdBuilder();
-        $configuration = $this->serviceRegister->getConfiguration();
+        $idBuilder     = $this->register->getIdBuilder();
+        $configuration = $this->register->getConfiguration();
         $privateId     = $idBuilder->buildConfigurationId($configuration->find($resource));
-        $this->serviceRegister->registerConfiguration($privateId, $configuration->find($resource));
+        $this->register->registerConfiguration($privateId, $configuration->find($resource));
 
         $container->findDefinition($idBuilder->buildCacheId())
             ->addMethodCall(
