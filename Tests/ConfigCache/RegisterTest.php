@@ -163,11 +163,9 @@ class RegisterTest extends RegisterTestCase
         // initialization
         $register->setConfiguration(new RegisterConfiguration());
         $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
-        $this->util
-            ->setProperty($register, 'resources', $resources)
-            // not assert excluding setting test here for asserting on testFindFilesByDirectory
-            ->setProperty($register, 'excludes', array())
-            ;
+        // not assert excluding setting test here for asserting on testFindFilesByDirectory
+        $this->util->getProperty($register, 'directory')->setExcludes(array());
+        $this->util->setProperty($register, 'resources', $resources);
 
         // store Definition count before registerInternal
         $definitions = count($container->getDefinitions());
@@ -408,6 +406,13 @@ class RegisterTest extends RegisterTestCase
                     ),
                     array(
                         'addResource' => array(
+                            __DIR__.'/../Fixtures/test_service1.yml',
+                            'Symfony\Component\DependencyInjection\Reference',
+                            $configId,
+                        ),
+                    ),
+                    array(
+                        'addResource' => array(
                             $this->getTmpDir().'/testRegisterInternal1',
                             'Symfony\Component\DependencyInjection\Reference',
                             $configId,
@@ -423,13 +428,6 @@ class RegisterTest extends RegisterTestCase
                     array(
                         'addResource' => array(
                             $this->getTmpDir().'/testRegisterInternal3',
-                            'Symfony\Component\DependencyInjection\Reference',
-                            $configId,
-                        ),
-                    ),
-                    array(
-                        'addResource' => array(
-                            __DIR__.'/../Fixtures/test_service1.yml',
                             'Symfony\Component\DependencyInjection\Reference',
                             $configId,
                         ),
@@ -467,11 +465,9 @@ class RegisterTest extends RegisterTestCase
         // initialization
         $register->setConfiguration(new RegisterConfiguration());
         $this->util->getProperty($register, 'idBuilder')->setBundleId($id);
-        $this->util
-            ->setProperty($register, 'resources', $resources)
-            // not assert excluding setting test here for asserting on testFindFilesByDirectory
-            ->setProperty($register, 'excludes', array())
-            ;
+        // not assert excluding setting test here for asserting on testFindFilesByDirectory
+        $this->util->getProperty($register, 'directory')->setExcludes(array());
+        $this->util->setProperty($register, 'resources', $resources);
 
         // store Definition count before register
         $definitions = count($container->getDefinitions());
@@ -612,7 +608,7 @@ class RegisterTest extends RegisterTestCase
             ->invoke($register, 'initializeResources')
             ;
 
-        $this->assertSame($expectedDirs, $this->util->getProperty($register, 'dirs'));
+        $this->assertSame($expectedDirs, $this->util->getProperty($this->util->getProperty($register, 'directory'), 'resources'));
         $this->assertSame($expectedFiles, $this->util->getProperty($this->util->getProperty($register, 'file'), 'resources'));
     }
 
@@ -702,7 +698,7 @@ class RegisterTest extends RegisterTestCase
             ->setProperty($register, 'resources', $resources)
             ->invoke($register, 'initializeAllResources', $bundles)
             ;
-        $dirs  = $this->util->getProperty($register, 'dirs');
+        $dirs  = $this->util->getProperty($this->util->getProperty($register, 'directory'), 'resources');
         $files = $this->util->getProperty($this->util->getProperty($register, 'file'), 'resources');
 
         // regard OK as asserting according with count(), getResource(), getConfiguration()
@@ -834,10 +830,10 @@ class RegisterTest extends RegisterTestCase
         foreach ($files as $file) {
             $this->util->getProperty($register, 'file')->add($file);
         }
-        $this->util
-            ->setProperty($register, 'dirs', $dirs)
-            ->invoke($register, 'postInitializeResources')
-            ;
+        foreach ($dirs as $dir) {
+            $this->util->getProperty($register, 'directory')->add($dir);
+        }
+        $this->util->invoke($register, 'postInitializeResources');
     }
 
     /**
@@ -863,91 +859,6 @@ class RegisterTest extends RegisterTestCase
                 array(new FileResource(__DIR__.'/../Fixtures/test_service1.yml', null, 'test_alias')),
                 array(),
                 false,
-            ),
-        );
-    }
-
-    /**
-     * @dataProvider findFilesByDirectoryProvider
-     */
-    public function testFindFilesByDirectory($resource, $excludes, $files, $expected)
-    {
-        // create directory/file
-        $file = new Filesystem();
-        if (!$file->exists($this->getTmpDir())) {
-            $file->mkdir($this->getTmpDir());
-        }
-        if ($files > 0) {
-            foreach (range(1, $files) as $i) {
-                $file->touch($this->getTmpDir()."/testFindFilesByDirectory{$i}");
-            }
-        }
-
-        $register = $this->createRegisterMock();
-        if (is_string($expected) && class_exists($expected)) {
-            $this->setExpectedException($expected);
-        }
-        $finder = $this->util->invoke($register, 'findFilesByDirectory', $resource, $excludes);
-
-        $results = array();
-        foreach ($finder as $file) {
-            $results[] = (string) $file;
-        }
-        sort($results); // sort by file name
-        $this->assertSame($expected, $results);
-    }
-
-    /**
-     * @return array ($resource, $excludes, $files, $expected)
-     */
-    public function findFilesByDirectoryProvider()
-    {
-        $configuration = new RegisterConfiguration();
-        return array(
-            // no file
-            array(
-                new DirectoryResource($this->getTmpDir(), $configuration),
-                array(),
-                0,
-                array(),
-            ),
-            // no directory (generally not occurring for checking is_dir())
-            array(
-                new DirectoryResource(__DIR__.'/no_exists', $configuration),
-                array(),
-                0,
-                '\InvalidArgumentException',
-            ),
-            // a file
-            array(
-                new DirectoryResource($this->getTmpDir(), $configuration),
-                array(),
-                1,
-                array($this->getTmpDir()."/testFindFilesByDirectory1"),
-            ),
-            // greater than two file
-            array(
-                new DirectoryResource($this->getTmpDir(), $configuration),
-                array(),
-                2,
-                array(
-                    $this->getTmpDir()."/testFindFilesByDirectory1",
-                    $this->getTmpDir()."/testFindFilesByDirectory2",
-                ),
-            ),
-            // file exists, enable excluding
-            array(
-                new DirectoryResource($this->getTmpDir(), $configuration),
-                array(
-                    $this->getTmpDir()."/testFindFilesByDirectory3",
-                    $this->getTmpDir()."/testFindFilesByDirectory4",
-                ),
-                5,
-                array(
-                    $this->getTmpDir()."/testFindFilesByDirectory1",
-                    $this->getTmpDir()."/testFindFilesByDirectory2",
-                    $this->getTmpDir()."/testFindFilesByDirectory5",
-                ),
             ),
         );
     }

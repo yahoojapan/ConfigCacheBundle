@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ConfigurationRegister;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\DirectoryRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\FileRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceRegister;
@@ -124,19 +125,21 @@ abstract class RegisterTestCase extends TestCase
 
     protected function createRegisterMock(array $methods = null)
     {
-        $util            = $this->findUtil();
-        $container       = $this->getContainerBuilder();
-        $register        = $util->createMock($this->registerClass, $methods);
-        $idBuilder       = new ServiceIdBuilder();
-        $configuration   = new ConfigurationRegister();
-        $serviceRegister = $this->createServiceRegister($container, $idBuilder, $configuration);
-        $fileRegister    = $this->createFileRegister($container, $idBuilder, $serviceRegister, $configuration);
+        $util              = $this->findUtil();
+        $container         = $this->getContainerBuilder();
+        $register          = $util->createMock($this->registerClass, $methods);
+        $idBuilder         = new ServiceIdBuilder();
+        $configuration     = new ConfigurationRegister();
+        $serviceRegister   = $this->createServiceRegister($container, $idBuilder, $configuration);
+        $fileRegister      = $this->createFileRegister($container, $idBuilder, $serviceRegister, $configuration);
+        $directoryRegister = $this->createDirectoryRegister($container, $idBuilder, $serviceRegister, $configuration);
         $util
             ->setProperty($register, 'container', $container)
             ->setProperty($register, 'idBuilder', $idBuilder)
             ->setProperty($register, 'configuration', $configuration)
             ->setProperty($register, 'serviceRegister', $serviceRegister)
             ->setProperty($register, 'file', $fileRegister)
+            ->setProperty($register, 'directory', $directoryRegister)
             ;
 
         return $register;
@@ -160,6 +163,15 @@ abstract class RegisterTestCase extends TestCase
         ConfigurationRegister $configuration
     ) {
         return new FileRegister($container, $idBuilder, $serviceRegister, $configuration);
+    }
+
+    protected function createDirectoryRegister(
+        ContainerBuilder      $container,
+        ServiceIdBuilder      $idBuilder,
+        ServiceRegister       $serviceRegister,
+        ConfigurationRegister $configuration
+    ) {
+        return new DirectoryRegister($container, $idBuilder, $serviceRegister, $configuration);
     }
 
     /**
