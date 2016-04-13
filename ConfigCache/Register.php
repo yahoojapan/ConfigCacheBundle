@@ -12,12 +12,10 @@
 namespace YahooJapan\ConfigCacheBundle\ConfigCache;
 
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\Config\Resource\DirectoryResource as BaseDirectoryResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
-use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\Finder\Finder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ConfigurationRegister;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\DirectoryRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\FileRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceRegister;
@@ -38,9 +36,8 @@ class Register
     protected $configuration;
     protected $container;
     protected $resources;
-    protected $excludes;
-    protected $dirs      = array();
     protected $file;
+    protected $directory;
     protected $idBuilder;
     protected $serviceRegister;
 
@@ -61,9 +58,8 @@ class Register
         $this->extension = $extension;
         $this->container = $container;
         $this->resources = $resources;
-        $this->excludes  = $excludes;
 
-        $this->initialize();
+        $this->initialize($excludes);
     }
 
     /**
@@ -131,14 +127,17 @@ class Register
     }
 
     /**
-     * Initialize.
+     * Initializes.
+     *
+     * @param array $excludes
      */
-    protected function initialize()
+    protected function initialize(array $excludes = array())
     {
         $this->idBuilder       = $this->createIdBuilder();
         $this->configuration   = $this->createConfigurationRegister();
         $this->serviceRegister = $this->createServiceRegister();
         $this->file            = $this->createFileRegister();
+        $this->directory       = $this->createDirectoryRegister()->setExcludes($excludes);
 
         // set bundleId, configuration based on extension
         $this->setBundleId();
@@ -154,25 +153,8 @@ class Register
      */
     protected function registerInternal()
     {
-        $cacheId = $this->idBuilder->buildCacheId();
-
-        foreach ($this->dirs as $resource) {
-            $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
-
-            // private configuration definition, finally discarded because of private service
-            $privateId = $this->idBuilder->buildConfigurationId($this->configuration->find($resource));
-            $this->serviceRegister->registerConfiguration($privateId, $this->configuration->find($resource));
-
-            // find files under directories
-            $finder = $this->findFilesByDirectory($resource, $this->excludes);
-            foreach ($finder as $file) {
-                $this->container->findDefinition($cacheId)
-                    ->addMethodCall('addResource', array((string) $file, new Reference($privateId)))
-                    ;
-            }
-        }
-
         $this->file->register();
+        $this->directory->register();
     }
 
     /**
@@ -185,7 +167,7 @@ class Register
         foreach ($this->resources as $resource) {
             if ($resource->exists()) {
                 if ($resource instanceof DirectoryResource) {
-                    $this->addDirectory($resource);
+                    $this->directory->add($resource);
                 } elseif ($resource instanceof FileResource) {
                     $this->file->add($resource);
                 }
@@ -221,7 +203,7 @@ class Register
             foreach ($resources as $resource) {
                 $path = dirname($reflection->getFilename()).$resource->getResource();
                 if (is_dir($path)) {
-                    $this->addDirectory(new DirectoryResource($path, $this->configuration->find($resource)));
+                    $this->directory->add(new DirectoryResource($path, $this->configuration->find($resource)));
                 } elseif (file_exists($path)) {
                     $this->file->add(new FileResource($path, $this->configuration->find($resource)));
                 }
@@ -238,37 +220,9 @@ class Register
      */
     protected function postInitializeResources()
     {
-        if ($this->file->hasNoAlias() || count($this->dirs) > 0) {
+        if ($this->file->hasNoAlias() || $this->directory->has()) {
             $this->serviceRegister->registerConfigCache();
         }
-    }
-
-    /**
-     * Finds files by a directory.
-     *
-     * @param DirectoryResource $resource
-     * @param array             $excludes
-     *
-     * @return Finder
-     */
-    protected function findFilesByDirectory(DirectoryResource $resource, $excludes = array())
-    {
-        $finder = Finder::create()
-            ->files()
-            ->filter(function (\SplFileInfo $file) use ($excludes) {
-                foreach ($excludes as $exclude) {
-                    if (strpos($file->getRealPath(), $exclude) !== false) {
-                        return false;
-                    }
-                }
-
-                return true;
-            })
-            ->in((array) $resource->getResource())
-            ->sortByName()
-            ;
-
-        return $finder;
     }
 
     /**
@@ -335,20 +289,6 @@ class Register
     }
 
     /**
-     * Adds a directory resource.
-     *
-     * @param DirectoryResource $dir
-     *
-     * @return Register
-     */
-    protected function addDirectory(DirectoryResource $dir)
-    {
-        $this->dirs[] = $dir;
-
-        return $this;
-    }
-
-    /**
      * Creates a service ID builder.
      *
      * @return ServiceIdBuilder
@@ -386,5 +326,15 @@ class Register
     protected function createFileRegister()
     {
         return new FileRegister($this->container, $this->idBuilder, $this->serviceRegister, $this->configuration);
+    }
+
+    /**
+     * Creates a DirectoryRegister
+     *
+     * @return DirectoryRegister
+     */
+    protected function createDirectoryRegister()
+    {
+        return new DirectoryRegister($this->container, $this->idBuilder, $this->serviceRegister, $this->configuration);
     }
 }
