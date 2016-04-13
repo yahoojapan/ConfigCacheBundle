@@ -15,13 +15,12 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Resource\DirectoryResource as BaseDirectoryResource;
 use Symfony\Component\Config\Resource\FileResource as BaseFileResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ConfigurationRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface;
@@ -42,10 +41,8 @@ class Register
     protected $excludes;
     protected $dirs      = array();
     protected $files     = array();
-    protected $appConfig = array();
     protected $idBuilder;
-    // ConfigCache service tag
-    protected $tag;
+    protected $serviceRegister;
 
     /**
      * Constructor.
@@ -114,7 +111,7 @@ class Register
      */
     public function setAppConfig(array $appConfig)
     {
-        $this->appConfig = $appConfig;
+        $this->serviceRegister->setAppConfig($appConfig);
 
         return $this;
     }
@@ -128,7 +125,7 @@ class Register
      */
     public function setTag($tag)
     {
-        $this->tag = $tag;
+        $this->serviceRegister->setTag($tag);
 
         return $this;
     }
@@ -138,8 +135,9 @@ class Register
      */
     protected function initialize()
     {
-        $this->idBuilder     = $this->createIdBuilder();
-        $this->configuration = $this->createConfigurationRegister();
+        $this->idBuilder       = $this->createIdBuilder();
+        $this->configuration   = $this->createConfigurationRegister();
+        $this->serviceRegister = $this->createServiceRegister();
 
         // set bundleId, configuration based on extension
         $this->setBundleId();
@@ -162,7 +160,7 @@ class Register
 
             // private configuration definition, finally discarded because of private service
             $privateId = $this->idBuilder->buildConfigurationId($this->configuration->find($resource));
-            $this->setConfigurationDefinition($privateId, $this->configuration->find($resource));
+            $this->serviceRegister->registerConfiguration($privateId, $this->configuration->find($resource));
 
             // find files under directories
             $finder = $this->findFilesByDirectory($resource, $this->excludes);
@@ -185,7 +183,7 @@ class Register
                 }
 
                 $this->container->addResource(new BaseFileResource($path));
-                $this->setCacheDefinitionByAlias($alias);
+                $this->serviceRegister->registerConfigCacheByAlias($alias);
                 $this->container->findDefinition($standaloneCacheId)
                     ->addMethodCall('addResource', array((string) $path))
                     ->addMethodCall('setStrict', array(false))
@@ -196,7 +194,7 @@ class Register
 
                 // private configuration definition, finally discarded because of private service
                 $privateId = $this->idBuilder->buildConfigurationId($this->configuration->find($resource));
-                $this->setConfigurationDefinition($privateId, $this->configuration->find($resource));
+                $this->serviceRegister->registerConfiguration($privateId, $this->configuration->find($resource));
 
                 $this->container->findDefinition($cacheId)
                     ->addMethodCall(
@@ -272,7 +270,7 @@ class Register
     protected function postInitializeResources()
     {
         if ($this->hasFileResourcesWithoutAlias() || count($this->dirs) > 0) {
-            $this->setCacheDefinition();
+            $this->serviceRegister->registerConfigCache();
         }
     }
 
@@ -343,93 +341,6 @@ class Register
         }
 
         return $this;
-    }
-
-    /**
-     * Sets a cache definition.
-     */
-    protected function setCacheDefinition()
-    {
-        $id         = $this->idBuilder->buildCacheId();
-        $definition = $this->createCacheDefinition();
-        $this->addConfigurationMethod($definition);
-        $this->container->setDefinition($id, $definition);
-    }
-
-    /**
-     * Sets a cache definition by alias (a service name).
-     *
-     * @param string $alias
-     */
-    protected function setCacheDefinitionByAlias($alias)
-    {
-        $id         = $this->idBuilder->buildCacheId(array($alias));
-        $definition = $this->createCacheDefinition();
-        $this->container->setDefinition($id, $definition);
-    }
-
-    /**
-     * Creates a cache definition without Configuration Reference.
-     *
-     * @return Definition
-     */
-    protected function createCacheDefinition()
-    {
-        // doctrine/cache
-        $cache = new DefinitionDecorator('yahoo_japan_config_cache.php_file_cache');
-        // only replace cache directory
-        $bundleId = $this->idBuilder->getBundleId();
-        $cache->replaceArgument(0, $this->container->getParameter('kernel.cache_dir')."/{$bundleId}");
-        $cacheId = $this->idBuilder->buildId(array('doctrine', 'cache', $bundleId));
-        $this->container->setDefinition($cacheId, $cache);
-
-        // user cache
-        $definition = new DefinitionDecorator('yahoo_japan_config_cache.config_cache');
-        $definition
-            ->setPublic(true)
-            ->setArguments(array(
-                new Reference($cacheId),
-                new Reference('yahoo_japan_config_cache.delegating_loader'),
-                $this->appConfig,
-            ))
-            ->addTag(ConfigCache::TAG_CACHE_WARMER)
-            ;
-        if (!is_null($this->tag)) {
-            $definition->addTag($this->tag);
-        }
-
-        return $definition;
-    }
-
-    /**
-     * Adds a Configuration set method to Definition.
-     *
-     * @return Definition
-     */
-    protected function addConfigurationMethod(Definition $definition)
-    {
-        // master configuration
-        $configId = $this->idBuilder->buildConfigurationId($this->configuration->findInitialized());
-        $this->setConfigurationDefinition($configId, $this->configuration->findInitialized());
-        $definition->addMethodCall('setConfiguration', array(new Reference($configId)));
-
-        return $definition;
-    }
-
-    /**
-     * Sets a configuration definition.
-     *
-     * @param string                 $configId
-     * @param ConfigurationInterface $configuration
-     */
-    protected function setConfigurationDefinition($configId, ConfigurationInterface $configuration)
-    {
-        if (!$this->container->hasDefinition($configId)) {
-            $reflection       = new \ReflectionClass($configuration);
-            $configDefinition = new Definition($reflection->getName());
-            $configDefinition->setPublic(false);
-            $this->container->setDefinition($configId, $configDefinition);
-        }
     }
 
     /**
@@ -516,5 +427,15 @@ class Register
     protected function createConfigurationRegister()
     {
         return new ConfigurationRegister();
+    }
+
+    /**
+     * Creates a ServiceRegister.
+     *
+     * @return ServiceRegister
+     */
+    protected function createServiceRegister()
+    {
+        return new ServiceRegister($this->container, $this->idBuilder, $this->configuration);
     }
 }
