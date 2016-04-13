@@ -13,12 +13,12 @@ namespace YahooJapan\ConfigCacheBundle\ConfigCache;
 
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Resource\DirectoryResource as BaseDirectoryResource;
-use Symfony\Component\Config\Resource\FileResource as BaseFileResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Finder\Finder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ConfigurationRegister;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\FileRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceRegister;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
@@ -40,7 +40,7 @@ class Register
     protected $resources;
     protected $excludes;
     protected $dirs      = array();
-    protected $files     = array();
+    protected $file;
     protected $idBuilder;
     protected $serviceRegister;
 
@@ -138,6 +138,7 @@ class Register
         $this->idBuilder       = $this->createIdBuilder();
         $this->configuration   = $this->createConfigurationRegister();
         $this->serviceRegister = $this->createServiceRegister();
+        $this->file            = $this->createFileRegister();
 
         // set bundleId, configuration based on extension
         $this->setBundleId();
@@ -171,39 +172,7 @@ class Register
             }
         }
 
-        foreach ($this->files as $resource) {
-            if ($resource->hasAlias()) {
-                $alias = $resource->getAlias();
-                $path  = $resource->getResource();
-                $standaloneCacheId = $this->idBuilder->buildCacheId(array($alias));
-                if ($this->container->hasDefinition($standaloneCacheId)) {
-                    throw new \RuntimeException(
-                        "{$standaloneCacheId} is already registered. Maybe FileResource alias[{$alias}] is duplicated."
-                    );
-                }
-
-                $this->container->addResource(new BaseFileResource($path));
-                $this->serviceRegister->registerConfigCacheByAlias($alias);
-                $this->container->findDefinition($standaloneCacheId)
-                    ->addMethodCall('addResource', array((string) $path))
-                    ->addMethodCall('setStrict', array(false))
-                    ->addMethodCall('setKey', array($alias))
-                    ;
-            } else {
-                $this->container->addResource(new BaseFileResource($resource->getResource()));
-
-                // private configuration definition, finally discarded because of private service
-                $privateId = $this->idBuilder->buildConfigurationId($this->configuration->find($resource));
-                $this->serviceRegister->registerConfiguration($privateId, $this->configuration->find($resource));
-
-                $this->container->findDefinition($cacheId)
-                    ->addMethodCall(
-                        'addResource',
-                        array((string) $resource->getResource(), new Reference($privateId))
-                    )
-                    ;
-            }
-        }
+        $this->file->register();
     }
 
     /**
@@ -218,7 +187,7 @@ class Register
                 if ($resource instanceof DirectoryResource) {
                     $this->addDirectory($resource);
                 } elseif ($resource instanceof FileResource) {
-                    $this->addFile($resource);
+                    $this->file->add($resource);
                 }
             }
         }
@@ -241,7 +210,7 @@ class Register
         $resources = array();
         foreach ($this->resources as $resource) {
             if ($resource instanceof FileResource && $resource->hasAlias()) {
-                $this->addFile($resource);
+                $this->file->add($resource);
             } else {
                 $resources[] = $resource;
             }
@@ -254,7 +223,7 @@ class Register
                 if (is_dir($path)) {
                     $this->addDirectory(new DirectoryResource($path, $this->configuration->find($resource)));
                 } elseif (file_exists($path)) {
-                    $this->addFile(new FileResource($path, $this->configuration->find($resource)));
+                    $this->file->add(new FileResource($path, $this->configuration->find($resource)));
                 }
             }
         }
@@ -269,25 +238,9 @@ class Register
      */
     protected function postInitializeResources()
     {
-        if ($this->hasFileResourcesWithoutAlias() || count($this->dirs) > 0) {
+        if ($this->file->hasNoAlias() || count($this->dirs) > 0) {
             $this->serviceRegister->registerConfigCache();
         }
-    }
-
-    /**
-     * Whether Register has a FileResource without alias or not.
-     *
-     * @return bool
-     */
-    protected function hasFileResourcesWithoutAlias()
-    {
-        foreach ($this->files as $resource) {
-            if (!$resource->hasAlias()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -396,20 +349,6 @@ class Register
     }
 
     /**
-     * Adds a file resource.
-     *
-     * @param FileResource $file
-     *
-     * @return Register
-     */
-    protected function addFile(FileResource $file)
-    {
-        $this->files[] = $file;
-
-        return $this;
-    }
-
-    /**
      * Creates a service ID builder.
      *
      * @return ServiceIdBuilder
@@ -437,5 +376,15 @@ class Register
     protected function createServiceRegister()
     {
         return new ServiceRegister($this->container, $this->idBuilder, $this->configuration);
+    }
+
+    /**
+     * Creates a FileRegister
+     *
+     * @return FileRegister
+     */
+    protected function createFileRegister()
+    {
+        return new FileRegister($this->container, $this->idBuilder, $this->serviceRegister, $this->configuration);
     }
 }
