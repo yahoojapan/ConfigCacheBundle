@@ -71,7 +71,19 @@ class FileRegister
      */
     public function enabled(ResourceInterface $resource)
     {
-        return $resource->exists() && $resource instanceof FileResource;
+        return $resource->exists() && $this->isFileResource($resource);
+    }
+
+    /**
+     * Whether the resource is FileResource and has Alias or not.
+     *
+     * @param ResourceInterface $resource
+     *
+     * @return bool
+     */
+    public function hasAlias(ResourceInterface $resource)
+    {
+        return $this->isFileResource($resource) && $resource->hasAlias();
     }
 
     /**
@@ -88,6 +100,18 @@ class FileRegister
         }
 
         return false;
+    }
+
+    /**
+     * Whether the resource is FileResource or not.
+     *
+     * @param ResourceInterface $resource
+     *
+     * @return bool
+     */
+    protected function isFileResource(ResourceInterface $resource)
+    {
+        return $resource instanceof FileResource;
     }
 
     /**

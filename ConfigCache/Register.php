@@ -188,7 +188,7 @@ class Register
         // extract resources without FileResource with alias
         $resources = array();
         foreach ($this->resources as $resource) {
-            if ($resource instanceof FileResource && $resource->hasAlias()) {
+            if ($this->file->hasAlias($resource)) {
                 $this->file->add($resource);
             } else {
                 $resources[] = $resource;
@@ -197,19 +197,30 @@ class Register
 
         foreach ($bundles as $fqcn) {
             $reflection = new \ReflectionClass($fqcn);
-            foreach ($resources as $resource) {
-                $path = dirname($reflection->getFilename()).$resource->getResource();
-                if (is_dir($path)) {
-                    $this->directory->add(new DirectoryResource($path, $this->configuration->find($resource)));
-                } elseif (file_exists($path)) {
-                    $this->file->add(new FileResource($path, $this->configuration->find($resource)));
-                }
-            }
+            $this->extractAllResources($resources, $reflection->getFilename());
         }
 
         $this->postInitializeResources();
 
         return $this;
+    }
+
+    /**
+     * Extracts all resources to FileRegister, DirectoryRegister.
+     *
+     * @param array  $resources
+     * @param string $classPath
+     */
+    protected function extractAllResources(array $resources, $classPath)
+    {
+        foreach ($resources as $resource) {
+            $path = dirname($classPath).$resource->getResource();
+            if (is_dir($path)) {
+                $this->directory->add(new DirectoryResource($path, $this->configuration->find($resource)));
+            } elseif (file_exists($path)) {
+                $this->file->add(new FileResource($path, $this->configuration->find($resource)));
+            }
+        }
     }
 
     /**
