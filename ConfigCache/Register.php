@@ -22,10 +22,6 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface;
 
 /**
  * Register registers a cache service by some bundles.
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
- * @SuppressWarnings(PHPMD.TooManyMethods)
  */
 class Register
 {
