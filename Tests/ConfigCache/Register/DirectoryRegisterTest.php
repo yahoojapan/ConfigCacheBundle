@@ -13,6 +13,7 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Register;
 
 use Symfony\Component\Filesystem\Filesystem;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
 use YahooJapan\ConfigCacheBundle\Tests\ConfigCache\RegisterTestCase;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration;
 
@@ -48,12 +49,12 @@ class DirectoryRegisterTest extends RegisterTestCase
             }
         }
 
-        $register = $this->createRegisterMock();
-        $serviceRegister = $this->util->getProperty($register, 'directory');
+        $register  = $this->createRegisterMock();
+        $directory = $this->util->getProperty($register, 'directory');
         if (is_string($expected) && class_exists($expected)) {
             $this->setExpectedException($expected);
         }
-        $finder = $this->util->invoke($serviceRegister, 'findFiles', $resource, $excludes);
+        $finder = $this->util->invoke($directory, 'findFiles', $resource, $excludes);
 
         $results = array();
         foreach ($finder as $file) {
@@ -116,6 +117,30 @@ class DirectoryRegisterTest extends RegisterTestCase
                     $this->getTmpDir()."/testFindFilesByDirectory5",
                 ),
             ),
+        );
+    }
+
+    /**
+     * @dataProvider enabledProvider
+     */
+    public function testEnabled($resource, $expected)
+    {
+        $directory = $this->util->getProperty($this->createRegisterMock(), 'directory');
+        $this->assertSame($expected, $directory->enabled($resource));
+    }
+
+    /**
+     * @return array($resource, $expected)
+     */
+    public function enabledProvider()
+    {
+        return array(
+            // exists and is DirectoryResource
+            array(new DirectoryResource(__DIR__.'/../../Fixtures'), true),
+            // exists and is not DirectoryResource
+            array(new FileResource(__DIR__.'/../../Fixtures/test_service1.yml'), false),
+            // not exists
+            array(new DirectoryResource(__DIR__.'/no_exists'), false),
         );
     }
 }

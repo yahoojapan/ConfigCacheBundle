@@ -11,11 +11,36 @@
 
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Register;
 
+use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
 use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
 class FileRegisterTest extends TestCase
 {
+    /**
+     * @dataProvider enabledProvider
+     */
+    public function testEnabled($resource, $expected)
+    {
+        $file = $this->createFileRegisterMock();
+        $this->assertSame($expected, $file->enabled($resource));
+    }
+
+    /**
+     * @return array($resource, $expected)
+     */
+    public function enabledProvider()
+    {
+        return array(
+            // exists and is FileResource
+            array(new FileResource(__DIR__.'/../../Fixtures/test_service1.yml'), true),
+            // exists and is not FileResource
+            array(new DirectoryResource(__DIR__.'/../../Fixtures'), false),
+            // not exists
+            array(new FileResource('not_exists.yml'), false),
+        );
+    }
+
     /**
      * @dataProvider hasNoAliasProvider
      */
