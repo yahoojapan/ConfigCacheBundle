@@ -141,5 +141,4 @@ class ServiceRegisterTest extends RegisterTestCase
     ) {
         return new ServiceRegister($container, $idBuilder, $configuration);
     }
-
 }
