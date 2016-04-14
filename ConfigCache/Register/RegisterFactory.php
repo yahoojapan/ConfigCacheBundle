@@ -79,8 +79,6 @@ class RegisterFactory
     /**
      * Creates a FileRegister.
      *
-     * @param ContainerBuilder $container
-     *
      * @return FileRegister
      */
     public function createFileRegister()
@@ -90,8 +88,6 @@ class RegisterFactory
 
     /**
      * Creates a DirectoryRegister.
-     *
-     * @param ContainerBuilder $container
      *
      * @return DirectoryRegister
      */
