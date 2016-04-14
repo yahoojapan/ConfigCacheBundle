@@ -11,7 +11,6 @@
 
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Register;
 
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register\RegisterFactory as BaseRegisterFactory;
 
 /**
@@ -19,17 +18,5 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Register\RegisterFactory as BaseReg
  */
 class RegisterFactory extends BaseRegisterFactory
 {
-    /**
-     * {@inheritdoc}
-     */
-    public function createServiceRegister()
-    {
-        if (is_null($this->container)) {
-            throw new \RuntimeException('ContainerBuilder must be set.');
-        }
-        $idBuilder     = $this->idBuilder ?: $this->createIdBuilder();
-        $configuration = $this->configuration ?: $this->createConfigurationRegister();
-
-        return $this->serviceRegister = new ServiceRegister($this->container, $idBuilder, $configuration);
-    }
+    protected $serviceRegisterClass = 'YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Register\ServiceRegister';
 }

@@ -22,6 +22,7 @@ class RegisterFactory
     protected $idBuilder;
     protected $configuration;
     protected $serviceRegister;
+    protected $serviceRegisterClass = 'YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceRegister';
 
     /**
      * Sets a ContainerBuilder.
@@ -72,7 +73,7 @@ class RegisterFactory
         $idBuilder     = $this->idBuilder ?: $this->createIdBuilder();
         $configuration = $this->configuration ?: $this->createConfigurationRegister();
 
-        return $this->serviceRegister = new ServiceRegister($this->container, $idBuilder, $configuration);
+        return $this->serviceRegister = new $this->serviceRegisterClass($this->container, $idBuilder, $configuration);
     }
 
     /**
