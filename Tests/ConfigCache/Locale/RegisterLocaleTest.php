@@ -12,6 +12,7 @@
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Locale;
 
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Register\RegisterFactory;
 use YahooJapan\ConfigCacheBundle\Tests\ConfigCache\RegisterTestCase;
 
 class RegisterLocaleTest extends RegisterTestCase
@@ -68,5 +69,11 @@ class RegisterLocaleTest extends RegisterTestCase
             ->willReturnSelf()
             ;
         $register->registerAll();
+    }
+
+    public function testCreateRegisterFactory()
+    {
+        $register = $this->createRegisterMock();
+        $this->assertEquals(new RegisterFactory(), $this->util->invoke($register, 'createRegisterFactory'));
     }
 }

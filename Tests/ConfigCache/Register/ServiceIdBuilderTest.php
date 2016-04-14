@@ -87,4 +87,12 @@ class ServiceIdBuilderTest extends TestCase
             ),
         );
     }
+
+    public function testSetPrefix()
+    {
+        $builder = new ServiceIdBuilder();
+        $this->assertSame('config', $builder->getPrefix());
+        $builder->setPrefix($expected = 'zzz');
+        $this->assertSame($expected, $builder->getPrefix());
+    }
 }
