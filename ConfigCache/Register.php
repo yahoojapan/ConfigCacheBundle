@@ -12,25 +12,16 @@
 namespace YahooJapan\ConfigCacheBundle\ConfigCache;
 
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use Symfony\Component\Config\Resource\DirectoryResource as BaseDirectoryResource;
-use Symfony\Component\Config\Resource\FileResource as BaseFileResource;
-use Symfony\Component\DependencyInjection\Container;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
-use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
-use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\Finder\Finder;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\RegisterFactory;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Register\ServiceIdBuilder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\ResourceInterface;
 
 /**
  * Register registers a cache service by some bundles.
- *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
- * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
- * @SuppressWarnings(PHPMD.TooManyMethods)
  */
 class Register
 {
@@ -38,16 +29,11 @@ class Register
     protected $configuration;
     protected $container;
     protected $resources;
-    protected $excludes;
-    protected $dirs      = array();
-    protected $files     = array();
-    protected $appConfig = array();
-    // bundle ID
-    protected $bundleId;
-    // ConfigCache service ID
-    protected $cacheId = 'config';
-    // ConfigCache service tag
-    protected $tag;
+    protected $file;
+    protected $directory;
+    protected $idBuilder;
+    protected $serviceRegister;
+    protected $factory;
 
     /**
      * Constructor.
@@ -66,9 +52,8 @@ class Register
         $this->extension = $extension;
         $this->container = $container;
         $this->resources = $resources;
-        $this->excludes  = $excludes;
 
-        $this->initialize();
+        $this->initialize($excludes);
     }
 
     /**
@@ -102,7 +87,7 @@ class Register
      */
     public function setConfiguration(ConfigurationInterface $configuration)
     {
-        $this->configuration = $configuration;
+        $this->configuration->setConfiguration($configuration);
 
         return $this;
     }
@@ -116,7 +101,7 @@ class Register
      */
     public function setAppConfig(array $appConfig)
     {
-        $this->appConfig = $appConfig;
+        $this->serviceRegister->setAppConfig($appConfig);
 
         return $this;
     }
@@ -130,16 +115,25 @@ class Register
      */
     public function setTag($tag)
     {
-        $this->tag = $tag;
+        $this->serviceRegister->setTag($tag);
 
         return $this;
     }
 
     /**
-     * Initialize.
+     * Initializes.
+     *
+     * @param array $excludes
      */
-    protected function initialize()
+    protected function initialize(array $excludes = array())
     {
+        $this->factory         = $this->createRegisterFactory();
+        $this->idBuilder       = $this->factory->createIdBuilder();
+        $this->configuration   = $this->factory->createConfigurationRegister();
+        $this->serviceRegister = $this->factory->setContainer($this->container)->createServiceRegister();
+        $this->file            = $this->factory->createFileRegister();
+        $this->directory       = $this->factory->createDirectoryRegister()->setExcludes($excludes);
+
         // set bundleId, configuration based on extension
         $this->setBundleId();
         $this->setConfigurationByExtension();
@@ -154,57 +148,8 @@ class Register
      */
     protected function registerInternal()
     {
-        $cacheId = $this->buildId(array($this->bundleId));
-
-        foreach ($this->dirs as $resource) {
-            $this->container->addResource(new BaseDirectoryResource($resource->getResource()));
-
-            // private configuration definition, finally discarded because of private service
-            $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
-            $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
-
-            // find files under directories
-            $finder = $this->findFilesByDirectory($resource, $this->excludes);
-            foreach ($finder as $file) {
-                $this->container->findDefinition($cacheId)
-                    ->addMethodCall('addResource', array((string) $file, new Reference($privateId)))
-                    ;
-            }
-        }
-
-        foreach ($this->files as $resource) {
-            if ($resource->hasAlias()) {
-                $alias = $resource->getAlias();
-                $path  = $resource->getResource();
-                $standaloneCacheId = $this->buildId(array($this->bundleId, $alias));
-                if ($this->container->hasDefinition($standaloneCacheId)) {
-                    throw new \RuntimeException(
-                        "{$standaloneCacheId} is already registered. Maybe FileResource alias[{$alias}] is duplicated."
-                    );
-                }
-
-                $this->container->addResource(new BaseFileResource($path));
-                $this->setCacheDefinitionByAlias($alias);
-                $this->container->findDefinition($standaloneCacheId)
-                    ->addMethodCall('addResource', array((string) $path))
-                    ->addMethodCall('setStrict', array(false))
-                    ->addMethodCall('setKey', array($alias))
-                    ;
-            } else {
-                $this->container->addResource(new BaseFileResource($resource->getResource()));
-
-                // private configuration definition, finally discarded because of private service
-                $privateId = $this->buildConfigurationId($this->findConfigurationByResource($resource));
-                $this->setConfigurationDefinition($privateId, $this->findConfigurationByResource($resource));
-
-                $this->container->findDefinition($cacheId)
-                    ->addMethodCall(
-                        'addResource',
-                        array((string) $resource->getResource(), new Reference($privateId))
-                    )
-                    ;
-            }
-        }
+        $this->file->register();
+        $this->directory->register();
     }
 
     /**
@@ -215,12 +160,10 @@ class Register
     protected function initializeResources()
     {
         foreach ($this->resources as $resource) {
-            if ($resource->exists()) {
-                if ($resource instanceof DirectoryResource) {
-                    $this->addDirectory($resource);
-                } elseif ($resource instanceof FileResource) {
-                    $this->addFile($resource);
-                }
+            if ($this->file->enabled($resource)) {
+                $this->file->add($resource);
+            } elseif ($this->directory->enabled($resource)) {
+                $this->directory->add($resource);
             }
         }
 
@@ -241,8 +184,8 @@ class Register
         // extract resources without FileResource with alias
         $resources = array();
         foreach ($this->resources as $resource) {
-            if ($resource instanceof FileResource && $resource->hasAlias()) {
-                $this->addFile($resource);
+            if ($this->file->hasAlias($resource)) {
+                $this->file->add($resource);
             } else {
                 $resources[] = $resource;
             }
@@ -250,14 +193,7 @@ class Register
 
         foreach ($bundles as $fqcn) {
             $reflection = new \ReflectionClass($fqcn);
-            foreach ($resources as $resource) {
-                $path = dirname($reflection->getFilename()).$resource->getResource();
-                if (is_dir($path)) {
-                    $this->addDirectory(new DirectoryResource($path, $this->findConfigurationByResource($resource)));
-                } elseif (file_exists($path)) {
-                    $this->addFile(new FileResource($path, $this->findConfigurationByResource($resource)));
-                }
-            }
+            $this->extractAllResources($resources, $reflection->getFilename());
         }
 
         $this->postInitializeResources();
@@ -266,57 +202,31 @@ class Register
     }
 
     /**
+     * Extracts all resources to FileRegister, DirectoryRegister.
+     *
+     * @param array  $resources
+     * @param string $classPath
+     */
+    protected function extractAllResources(array $resources, $classPath)
+    {
+        foreach ($resources as $resource) {
+            $path = dirname($classPath).$resource->getResource();
+            if (is_dir($path)) {
+                $this->directory->add(new DirectoryResource($path, $this->configuration->find($resource)));
+            } elseif (file_exists($path)) {
+                $this->file->add(new FileResource($path, $this->configuration->find($resource)));
+            }
+        }
+    }
+
+    /**
      * Initializes resources postprocessing.
      */
     protected function postInitializeResources()
     {
-        if ($this->hasFileResourcesWithoutAlias() || count($this->dirs) > 0) {
-            $this->setCacheDefinition();
+        if ($this->file->hasNoAlias() || $this->directory->has()) {
+            $this->serviceRegister->registerConfigCache();
         }
-    }
-
-    /**
-     * Whether Register has a FileResource without alias or not.
-     *
-     * @return bool
-     */
-    protected function hasFileResourcesWithoutAlias()
-    {
-        foreach ($this->files as $resource) {
-            if (!$resource->hasAlias()) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Finds files by a directory.
-     *
-     * @param DirectoryResource $resource
-     * @param array             $excludes
-     *
-     * @return Finder
-     */
-    protected function findFilesByDirectory(DirectoryResource $resource, $excludes = array())
-    {
-        $finder = Finder::create()
-            ->files()
-            ->filter(function (\SplFileInfo $file) use ($excludes) {
-                foreach ($excludes as $exclude) {
-                    if (strpos($file->getRealPath(), $exclude) !== false) {
-                        return false;
-                    }
-                }
-
-                return true;
-            })
-            ->in((array) $resource->getResource())
-            ->sortByName()
-            ;
-
-        return $finder;
     }
 
     /**
@@ -326,7 +236,7 @@ class Register
      */
     protected function setBundleId()
     {
-        $this->bundleId = $this->extension->getAlias();
+        $this->idBuilder->setBundleId($this->extension->getAlias());
 
         return $this;
     }
@@ -342,104 +252,6 @@ class Register
         }
 
         return $this;
-    }
-
-    /**
-     * Sets a cache definition.
-     */
-    protected function setCacheDefinition()
-    {
-        $id         = $this->buildId(array($this->bundleId));
-        $definition = $this->createCacheDefinition();
-        $this->addConfigurationMethod($definition);
-        $this->container->setDefinition($id, $definition);
-    }
-
-    /**
-     * Sets a cache definition by alias (a service name).
-     *
-     * @param string $alias
-     */
-    protected function setCacheDefinitionByAlias($alias)
-    {
-        $id         = $this->buildId(array($this->bundleId, $alias));
-        $definition = $this->createCacheDefinition();
-        $this->container->setDefinition($id, $definition);
-    }
-
-    /**
-     * Creates a cache definition without Configuration Reference.
-     *
-     * @return Definition
-     */
-    protected function createCacheDefinition()
-    {
-        // doctrine/cache
-        $cache = new DefinitionDecorator('yahoo_japan_config_cache.php_file_cache');
-        // only replace cache directory
-        $cache->replaceArgument(0, $this->container->getParameter('kernel.cache_dir')."/{$this->bundleId}");
-        $cacheId = $this->buildId(array('doctrine', 'cache', $this->bundleId));
-        $this->container->setDefinition($cacheId, $cache);
-
-        // user cache
-        $definition = new DefinitionDecorator('yahoo_japan_config_cache.config_cache');
-        $definition
-            ->setPublic(true)
-            ->setArguments(array(
-                new Reference($cacheId),
-                new Reference('yahoo_japan_config_cache.delegating_loader'),
-                $this->appConfig,
-            ))
-            ->addTag(ConfigCache::TAG_CACHE_WARMER)
-            ;
-        if (!is_null($this->tag)) {
-            $definition->addTag($this->tag);
-        }
-
-        return $definition;
-    }
-
-    /**
-     * Adds a Configuration set method to Definition.
-     *
-     * @return Definition
-     */
-    protected function addConfigurationMethod(Definition $definition)
-    {
-        // master configuration
-        $configId = $this->buildConfigurationId($this->getInitializedConfiguration());
-        $this->setConfigurationDefinition($configId, $this->getInitializedConfiguration());
-        $definition->addMethodCall('setConfiguration', array(new Reference($configId)));
-
-        return $definition;
-    }
-
-    /**
-     * Sets a configuration definition.
-     *
-     * @param string                 $configId
-     * @param ConfigurationInterface $configuration
-     */
-    protected function setConfigurationDefinition($configId, ConfigurationInterface $configuration)
-    {
-        if (!$this->container->hasDefinition($configId)) {
-            $reflection       = new \ReflectionClass($configuration);
-            $configDefinition = new Definition($reflection->getName());
-            $configDefinition->setPublic(false);
-            $this->container->setDefinition($configId, $configDefinition);
-        }
-    }
-
-    /**
-     * Parses a service ID based on bundle name.
-     *
-     * @param string $name
-     *
-     * @return string
-     */
-    protected static function parseServiceId($name)
-    {
-        return Container::underscore(preg_replace('/Bundle$/', '', $name));
     }
 
     /**
@@ -469,10 +281,11 @@ class Register
     protected function validateCacheId()
     {
         foreach ($this->container->getParameter('kernel.bundles') as $className => $fqcn) {
-            $id = static::parseServiceId($className);
-            if ($this->cacheId === $id) {
+            $id = ServiceIdBuilder::parseServiceId($className);
+            $serviceIdPrefix = $this->idBuilder->getPrefix();
+            if ($serviceIdPrefix === $id) {
                 throw new \Exception(
-                    "Cache ID[{$this->cacheId}] and Service ID[{$id}] ".
+                    "Cache ID[{$serviceIdPrefix}] and Service ID[{$id}] ".
                     "based Bundle name[{$className}] are duplicated"
                 );
             }
@@ -480,88 +293,12 @@ class Register
     }
 
     /**
-     * Builds a cache service ID.
+     * Creates a RegisterFactory.
      *
-     * @param array $suffixes ex) array("yahoo_japan_config_cache")
-     *
-     * @return string ex) "config.yahoo_japan_config_cache"
+     * @return RegisterFactory
      */
-    protected function buildId(array $suffixes)
+    protected function createRegisterFactory()
     {
-        return implode('.', array_merge(array($this->cacheId), $suffixes));
-    }
-
-    /**
-     * Builds a configuration private service ID.
-     *
-     * @param ConfigurationInterface $configuration
-     *
-     * @return string
-     *
-     * @note before : Acme\DemoBundle\DependencyInjection\Configuration
-     *       after  : acme.demo_bundle.dependency_injection.configuration
-     */
-    protected function buildConfigurationId(ConfigurationInterface $configuration)
-    {
-        $reflection = new \ReflectionClass($configuration);
-        $configId   = Container::underscore(strtr($reflection->getName(), '\\', '_'));
-
-        return $this->buildId(array('configuration', $configId));
-    }
-
-    /**
-     * Finds a configuration by a resource.
-     *
-     * @param ResourceInterface $resource
-     *
-     * @return ConfigurationInterface
-     */
-    protected function findConfigurationByResource(ResourceInterface $resource)
-    {
-        return $resource->getConfiguration() ?: $this->getInitializedConfiguration();
-    }
-
-    /**
-     * Gets a initialized configuration.
-     *
-     * @return ConfigurationInterface
-     *
-     * @throws \Exception thrown if the configuration is not set.
-     */
-    protected function getInitializedConfiguration()
-    {
-        if (is_null($this->configuration)) {
-            throw new \Exception('The Configuration must be set.');
-        }
-
-        return $this->configuration;
-    }
-
-    /**
-     * Adds a directory resource.
-     *
-     * @param DirectoryResource $dir
-     *
-     * @return Register
-     */
-    protected function addDirectory(DirectoryResource $dir)
-    {
-        $this->dirs[] = $dir;
-
-        return $this;
-    }
-
-    /**
-     * Adds a file resource.
-     *
-     * @param FileResource $file
-     *
-     * @return Register
-     */
-    protected function addFile(FileResource $file)
-    {
-        $this->files[] = $file;
-
-        return $this;
+        return new RegisterFactory();
     }
 }

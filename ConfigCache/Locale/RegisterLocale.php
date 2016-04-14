@@ -11,7 +11,7 @@
 
 namespace YahooJapan\ConfigCacheBundle\ConfigCache\Locale;
 
-use Symfony\Component\DependencyInjection\Reference;
+use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Register\RegisterFactory;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Register;
 
 /**
@@ -19,8 +19,6 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Register;
  */
 class RegisterLocale extends Register
 {
-    protected $loaderId = 'yahoo_japan_config_cache.locale.yaml_file_loader';
-
     /**
      * Registers a service by a bundle with locale.
      *
@@ -50,44 +48,8 @@ class RegisterLocale extends Register
     /**
      * {@inheritdoc}
      */
-    protected function setCacheDefinition()
+    protected function createRegisterFactory()
     {
-        parent::setCacheDefinition();
-
-        $this->addLocaleMethods($this->buildId(array($this->bundleId)));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function setCacheDefinitionByAlias($alias)
-    {
-        parent::setCacheDefinitionByAlias($alias);
-
-        $this->addLocaleMethods($this->buildId(array($this->bundleId, $alias)));
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function createCacheDefinition()
-    {
-        $definition = parent::createCacheDefinition();
-        $definition->setClass('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache');
-
-        return $definition;
-    }
-
-    /**
-     * Adds a locale addMethodCall to a definition.
-     *
-     * @param string $id
-     */
-    protected function addLocaleMethods($id)
-    {
-        $this->container->getDefinition($id)
-            ->addMethodCall('setDefaultLocale', array($this->container->getParameter('kernel.default_locale')))
-            ->addMethodCall('setLoader', array(new Reference($this->loaderId)))
-            ;
+        return new RegisterFactory();
     }
 }
