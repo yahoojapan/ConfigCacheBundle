@@ -29,7 +29,7 @@ class DirectoryRegister
     /**
      * Constructor.
      *
-     * @param ServiceRegister $serviceRegister
+     * @param ServiceRegister $register
      */
     public function __construct(ServiceRegister $register)
     {
