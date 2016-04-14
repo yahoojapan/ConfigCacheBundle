@@ -29,7 +29,8 @@ class RegisterFactoryTest extends TestCase
     public function testCreateServiceRegister()
     {
         $serviceRegister = $this->createServiceRegister();
-        $this->assertEquals($serviceRegister, $this->factory->createServiceRegister($serviceRegister->getContainer()));
+        $this->factory->setContainer($serviceRegister->getContainer());
+        $this->assertEquals($serviceRegister, $this->factory->createServiceRegister());
     }
 
     protected function createServiceRegister()

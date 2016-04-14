@@ -43,39 +43,66 @@ class RegisterFactoryTest extends TestCase
     public function testCreateServiceRegister()
     {
         $serviceRegister = $this->createServiceRegister();
-        $this->assertEquals($serviceRegister, $this->factory->createServiceRegister($serviceRegister->getContainer()));
+        $this->factory->setContainer($serviceRegister->getContainer());
+        $this->assertEquals($serviceRegister, $this->factory->createServiceRegister());
     }
 
-    public function testCreateFileRegister()
+    /**
+     * @dataProvider createResourceRegisterProvider
+     */
+    public function testCreateFileRegister($setContainer, $expectedException)
     {
-        // not created ServiceRegister by factory (need the ContainerBuilder)
+        if ($expectedException) {
+            $this->setExpectedException($expectedException);
+        }
+        if ($setContainer) {
+            $this->factory->setContainer($this->createContainerBuilderMock());
+        }
         $serviceRegister = $this->createServiceRegister();
-        $container       = $serviceRegister->getContainer();
-        $this->assertEquals(new FileRegister($serviceRegister), $this->factory->createFileRegister($container));
-
-        // already created ServiceRegister (not need the ContainerBuilder)
-        $serviceRegister = $this->factory->createServiceRegister($container);
         $this->assertEquals(new FileRegister($serviceRegister), $this->factory->createFileRegister());
     }
 
-    public function testCreateDirectoryRegister()
+    /**
+     * createFileRegister, createDirectoryRegister shared
+     *
+     * @return array($setContainer, $expectedException)
+     */
+    public function createResourceRegisterProvider()
     {
-        // not created ServiceRegister by factory (need the ContainerBuilder)
-        $serviceRegister = $this->createServiceRegister();
-        $container       = $serviceRegister->getContainer();
-        $this->assertEquals(new DirectoryRegister($serviceRegister), $this->factory->createDirectoryRegister($container));
+        return array(
+            // normal
+            array(true, null),
+            // exception(container is not set)
+            array(false, '\RuntimeException'),
+        );
+    }
 
-        // already created ServiceRegister (not need the ContainerBuilder)
-        $serviceRegister = $this->factory->createServiceRegister($container);
+    /**
+     * @dataProvider createResourceRegisterProvider
+     */
+    public function testCreateDirectoryRegister($setContainer, $expectedException)
+    {
+        if ($expectedException) {
+            $this->setExpectedException($expectedException);
+        }
+        if ($setContainer) {
+            $this->factory->setContainer($this->createContainerBuilderMock());
+        }
+        $serviceRegister = $this->createServiceRegister();
         $this->assertEquals(new DirectoryRegister($serviceRegister), $this->factory->createDirectoryRegister());
     }
 
     protected function createServiceRegister()
     {
-        $container = $this->util->createMock('Symfony\Component\DependencyInjection\ContainerBuilder');
+        $container = $this->createContainerBuilderMock();
         $builder   = $this->factory->createIdBuilder();
         $configuration = $this->factory->createConfigurationRegister();
 
         return new ServiceRegister($container, $builder, $configuration);
+    }
+
+    protected function createContainerBuilderMock()
+    {
+        return $this->util->createMock('Symfony\Component\DependencyInjection\ContainerBuilder');
     }
 }
