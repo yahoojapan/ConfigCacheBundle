@@ -22,11 +22,14 @@ class RegisterFactory extends BaseRegisterFactory
     /**
      * {@inheritdoc}
      */
-    public function createServiceRegister(ContainerBuilder $container)
+    public function createServiceRegister()
     {
+        if (is_null($this->container)) {
+            throw new \RuntimeException('ContainerBuilder must be set.');
+        }
         $idBuilder     = $this->idBuilder ?: $this->createIdBuilder();
         $configuration = $this->configuration ?: $this->createConfigurationRegister();
 
-        return $this->serviceRegister = new ServiceRegister($container, $idBuilder, $configuration);
+        return $this->serviceRegister = new ServiceRegister($this->container, $idBuilder, $configuration);
     }
 }

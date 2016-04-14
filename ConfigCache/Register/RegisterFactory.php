@@ -18,9 +18,24 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  */
 class RegisterFactory
 {
+    protected $container;
     protected $idBuilder;
     protected $configuration;
     protected $serviceRegister;
+
+    /**
+     * Sets a ContainerBuilder.
+     *
+     * @param ContainerBuilder $container
+     *
+     * @return RegisterFactory
+     */
+    public function setContainer(ContainerBuilder $container)
+    {
+        $this->container = $container;
+
+        return $this;
+    }
 
     /**
      * Creates a service ID builder.
@@ -45,39 +60,42 @@ class RegisterFactory
     /**
      * Creates a ServiceRegister.
      *
-     * @param ContainerBuilder $container
-     *
      * @return ServiceRegister
+     *
+     * @throws \RuntimeException if $this->container is not set
      */
-    public function createServiceRegister(ContainerBuilder $container)
+    public function createServiceRegister()
     {
+        if (is_null($this->container)) {
+            throw new \RuntimeException('ContainerBuilder must be set.');
+        }
         $idBuilder     = $this->idBuilder ?: $this->createIdBuilder();
         $configuration = $this->configuration ?: $this->createConfigurationRegister();
 
-        return $this->serviceRegister = new ServiceRegister($container, $idBuilder, $configuration);
+        return $this->serviceRegister = new ServiceRegister($this->container, $idBuilder, $configuration);
     }
 
     /**
-     * Creates a FileRegister
+     * Creates a FileRegister.
      *
      * @param ContainerBuilder $container
      *
      * @return FileRegister
      */
-    public function createFileRegister(ContainerBuilder $container = null)
+    public function createFileRegister()
     {
-        return new FileRegister($this->serviceRegister ?: $this->createServiceRegister($container));
+        return new FileRegister($this->serviceRegister ?: $this->createServiceRegister());
     }
 
     /**
-     * Creates a DirectoryRegister
+     * Creates a DirectoryRegister.
      *
      * @param ContainerBuilder $container
      *
      * @return DirectoryRegister
      */
-    public function createDirectoryRegister(ContainerBuilder $container = null)
+    public function createDirectoryRegister()
     {
-        return new DirectoryRegister($this->serviceRegister ?: $this->createServiceRegister($container));
+        return new DirectoryRegister($this->serviceRegister ?: $this->createServiceRegister());
     }
 }

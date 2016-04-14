@@ -130,7 +130,7 @@ class Register
         $this->factory         = $this->createRegisterFactory();
         $this->idBuilder       = $this->factory->createIdBuilder();
         $this->configuration   = $this->factory->createConfigurationRegister();
-        $this->serviceRegister = $this->factory->createServiceRegister($this->container);
+        $this->serviceRegister = $this->factory->setContainer($this->container)->createServiceRegister();
         $this->file            = $this->factory->createFileRegister();
         $this->directory       = $this->factory->createDirectoryRegister()->setExcludes($excludes);
 
