@@ -181,6 +181,26 @@ class ConfigCache
     }
 
     /**
+     * Saves PHP cache file to the temporary directory.
+     *
+     * @throws \RuntimeException
+     */
+    public function save()
+    {
+        $this->findRestorableCache()->saveToTemp($this->findId());
+    }
+
+    /**
+     * Restores PHP cache file to the cache directory.
+     *
+     * @throws \RuntimeException
+     */
+    public function restore()
+    {
+        $this->findRestorableCache()->restore($this->findId());
+    }
+
+    /**
      * Creates PHP cache file internal processing.
      *
      * @return array
@@ -310,5 +330,21 @@ class ConfigCache
         } else {
             return $this->configuration->getConfigTreeBuilder()->buildTree();
         }
+    }
+
+    /**
+     * Finds a restorable cache object.
+     *
+     * @return RestorablePhpFileCache
+     *
+     * @throws \RuntimeException
+     */
+    protected function findRestorableCache()
+    {
+        if (!($this->cache instanceof RestorablePhpFileCache)) {
+            throw new \RuntimeException('RestorablePhpFileCache should be set to use save/restore method.');
+        }
+
+        return $this->cache;
     }
 }

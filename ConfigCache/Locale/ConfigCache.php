@@ -75,6 +75,26 @@ class ConfigCache extends BaseConfigCache implements ConfigCacheInterface
     }
 
     /**
+     * {@inheritdoc}
+     */
+    public function save()
+    {
+        foreach ($this->referableLocales as $locale) {
+            $this->findRestorableCache()->saveToTemp($this->findId($locale));
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function restore()
+    {
+        foreach ($this->referableLocales as $locale) {
+            $this->findRestorableCache()->restore($this->findId($locale));
+        }
+    }
+
+    /**
      * Creates PHP cache file internal processing.
      *
      * this method has a $locale argument for executing findAll() but no cache.
