@@ -23,6 +23,7 @@ class FileResource implements ResourceInterface
     protected $resource;
     protected $configuration;
     protected $alias;
+    protected $persistent;
 
     /**
      * Constructor.
@@ -30,12 +31,14 @@ class FileResource implements ResourceInterface
      * @param string                 $resource
      * @param ConfigurationInterface $configuration
      * @param string                 $alias
+     * @param bool                   $persistent
      */
-    public function __construct($resource, ConfigurationInterface $configuration = null, $alias = null)
+    public function __construct($resource, ConfigurationInterface $configuration = null, $alias = null, $persistent = false)
     {
         $this->resource      = $resource;
         $this->configuration = $configuration;
         $this->alias         = $alias;
+        $this->persistent    = $persistent;
     }
 
     /**
@@ -44,12 +47,13 @@ class FileResource implements ResourceInterface
      * @param string                 $resource
      * @param ConfigurationInterface $configuration
      * @param string                 $alias
+     * @param bool                   $persistent
      *
      * @return FileResource
      */
-    public static function create($resource, ConfigurationInterface $configuration = null, $alias = null)
+    public static function create($resource, ConfigurationInterface $configuration = null, $alias = null, $persistent = false)
     {
-        return new static($resource, $configuration, $alias);
+        return new static($resource, $configuration, $alias, $persistent);
     }
 
     /**
@@ -137,6 +141,30 @@ class FileResource implements ResourceInterface
     public function hasAlias()
     {
         return !is_null($this->alias) && $this->alias !== '';
+    }
+
+    /**
+     * Whether this resources is persistent or not.
+     *
+     * @return bool
+     */
+    public function isPersistent()
+    {
+        return $this->persistent ? true : false;
+    }
+
+    /**
+     * Sets persistent.
+     *
+     * @param bool $persistent
+     *
+     * @return FileResource
+     */
+    public function setPersistent($persistent)
+    {
+        $this->persistent = $persistent;
+
+        return $this;
     }
 
     /**
