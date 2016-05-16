@@ -265,15 +265,15 @@ class ConfigCacheTest extends ConfigCacheTestCase
     }
 
     /**
-     * @dataProvider getKeyProvider
+     * @dataProvider findIdProvider
      */
-    public function testGetKey($locale, $currentLocale, $expectedException, $expected)
+    public function testFindId($locale, $currentLocale, $expectedException, $expected)
     {
         self::$cache->setCurrentLocale($currentLocale);
         if ($expectedException) {
             $this->setExpectedException('\Exception');
         }
-        $key = $this->util->invoke(self::$cache, 'getKey', $locale);
+        $key = $this->util->invoke(self::$cache, 'findId', $locale);
 
         $this->assertSame($expected, $key);
     }
@@ -281,7 +281,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     /**
      * @return array ($locale, $currentLocale, $expectedException, $expected)
      */
-    public function getKeyProvider()
+    public function findIdProvider()
     {
         return array(
             // locale = null, currentLocale = null

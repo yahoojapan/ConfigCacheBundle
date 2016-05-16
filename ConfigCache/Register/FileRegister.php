@@ -138,7 +138,7 @@ class FileRegister
         $container->findDefinition($standaloneCacheId)
             ->addMethodCall('addResource', array((string) $path))
             ->addMethodCall('setStrict', array(false))
-            ->addMethodCall('setKey', array($alias))
+            ->addMethodCall('setId', array($alias))
             ;
     }
 

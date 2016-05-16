@@ -240,9 +240,9 @@ class ConfigCacheTest extends ConfigCacheTestCase
         );
     }
 
-    public function testGetKey()
+    public function testFindId()
     {
-        $this->assertSame('cache', $this->util->invoke(self::$cache, 'getKey'));
+        $this->assertSame('cache', $this->util->invoke(self::$cache, 'findId'));
     }
 
     /**
@@ -565,14 +565,14 @@ class ConfigCacheTest extends ConfigCacheTestCase
         );
     }
 
-    public function testSetKey()
+    public function testSetId()
     {
         // OK
-        self::$cache->setKey($expected = 'test');
-        $this->assertSame($expected, $this->util->getProperty(self::$cache, 'key'));
+        self::$cache->setId($expected = 'test');
+        $this->assertSame($expected, $this->util->getProperty(self::$cache, 'id'));
         // exception
         $this->setExpectedException('\RuntimeException');
-        self::$cache->setKey('zzz');
+        self::$cache->setId('zzz');
     }
 
     /**
