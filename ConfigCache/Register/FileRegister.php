@@ -134,7 +134,11 @@ class FileRegister
         }
 
         $container->addResource(new BaseFileResource($path));
-        $this->register->registerConfigCacheByAlias($alias);
+        if ($resource->isPersistent()) {
+            $this->register->registerPersistentConfigCache($alias);
+        } else {
+            $this->register->registerConfigCacheByAlias($alias);
+        }
         $container->findDefinition($standaloneCacheId)
             ->addMethodCall('addResource', array((string) $path))
             ->addMethodCall('setStrict', array(false))
