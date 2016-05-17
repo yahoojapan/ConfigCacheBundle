@@ -28,7 +28,9 @@ class FileResourceTest extends TestCase
         $this->assertNull($constructor->invoke(
             $resource,
             __DIR__.'/../../Fixtures/test_service1.yml',
-            new FileResourceConfiguration()
+            new FileResourceConfiguration(),
+            'test_alias',
+            true
         ));
     }
 
@@ -37,10 +39,11 @@ class FileResourceTest extends TestCase
         $path          = __DIR__.'/../../Fixtures/test_service1.yml';
         $configuration = new FileResourceConfiguration();
         $alias         = 'test_alias';
-        $resource      = FileResource::create($path, $configuration, $alias);
+        $resource      = FileResource::create($path, $configuration, $alias, true);
         $this->assertSame($path, $resource->getResource());
         $this->assertSame($configuration, $resource->getConfiguration());
         $this->assertSame($alias, $resource->getAlias());
+        $this->assertTrue($resource->isRestorable());
     }
 
     /**
@@ -123,6 +126,17 @@ class FileResourceTest extends TestCase
             array(false, '\InvalidArgumentException'),
             array(null, '\InvalidArgumentException'),
         );
+    }
+
+    /**
+     * Tests isRestorable() and setRestorable()
+     */
+    public function testRestorable()
+    {
+        $resource = $this->createFileResourceMock();
+        $this->assertFalse($resource->isRestorable());
+        $resource->setRestorable(true);
+        $this->assertTrue($resource->isRestorable());
     }
 
     protected function createFileResourceMock(array $methods = null)
