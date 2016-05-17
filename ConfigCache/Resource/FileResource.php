@@ -23,7 +23,7 @@ class FileResource implements ResourceInterface
     protected $resource;
     protected $configuration;
     protected $alias;
-    protected $persistent;
+    protected $restore;
 
     /**
      * Constructor.
@@ -31,14 +31,14 @@ class FileResource implements ResourceInterface
      * @param string                 $resource
      * @param ConfigurationInterface $configuration
      * @param string                 $alias
-     * @param bool                   $persistent
+     * @param bool                   $restore
      */
-    public function __construct($resource, ConfigurationInterface $configuration = null, $alias = null, $persistent = false)
+    public function __construct($resource, ConfigurationInterface $configuration = null, $alias = null, $restore = false)
     {
         $this->resource      = $resource;
         $this->configuration = $configuration;
         $this->alias         = $alias;
-        $this->persistent    = $persistent;
+        $this->restore       = $restore;
     }
 
     /**
@@ -47,13 +47,13 @@ class FileResource implements ResourceInterface
      * @param string                 $resource
      * @param ConfigurationInterface $configuration
      * @param string                 $alias
-     * @param bool                   $persistent
+     * @param bool                   $restore
      *
      * @return FileResource
      */
-    public static function create($resource, ConfigurationInterface $configuration = null, $alias = null, $persistent = false)
+    public static function create($resource, ConfigurationInterface $configuration = null, $alias = null, $restore = false)
     {
-        return new static($resource, $configuration, $alias, $persistent);
+        return new static($resource, $configuration, $alias, $restore);
     }
 
     /**
@@ -144,25 +144,25 @@ class FileResource implements ResourceInterface
     }
 
     /**
-     * Whether this resources is persistent or not.
+     * Whether this resources is restorable or not.
      *
      * @return bool
      */
-    public function isPersistent()
+    public function isRestorable()
     {
-        return $this->persistent ? true : false;
+        return $this->restore ? true : false;
     }
 
     /**
-     * Sets persistent.
+     * Sets restorable.
      *
-     * @param bool $persistent
+     * @param bool $restore
      *
      * @return FileResource
      */
-    public function setPersistent($persistent)
+    public function setRestorable($restore)
     {
-        $this->persistent = $persistent;
+        $this->restore = $restore;
 
         return $this;
     }

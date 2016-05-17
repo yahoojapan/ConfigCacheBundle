@@ -76,11 +76,11 @@ class ServiceRegister
      *
      * @param string $alias
      */
-    public function registerPersistentConfigCache($alias)
+    public function registerRestorableConfigCache($alias)
     {
         $arrayed    = array($alias);
         $id         = $this->idBuilder->buildCacheId($arrayed);
-        $definition = $this->createPersistentCacheDefinition($arrayed);
+        $definition = $this->createRestorableCacheDefinition($arrayed);
         $this->container->setDefinition($id, $definition);
     }
 
@@ -214,13 +214,13 @@ class ServiceRegister
     }
 
     /**
-     * Creates a cache definition with persistent cache.
+     * Creates a cache definition with restorable cache.
      *
      * @param array $suffix service ID suffix
      *
      * @return Definition
      */
-    protected function createPersistentCacheDefinition(array $suffix)
+    protected function createRestorableCacheDefinition(array $suffix)
     {
         return $this->createCacheDefinition('yahoo_japan_config_cache.restorable_php_file_cache', $suffix)
             ->addTag(RestorablePhpFileCache::TAG_RESTORABLE_CACHE)

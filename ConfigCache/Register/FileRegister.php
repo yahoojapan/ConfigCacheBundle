@@ -134,8 +134,8 @@ class FileRegister
         }
 
         $container->addResource(new BaseFileResource($path));
-        if ($resource->isPersistent()) {
-            $this->register->registerPersistentConfigCache($alias);
+        if ($resource->isRestorable()) {
+            $this->register->registerRestorableConfigCache($alias);
         } else {
             $this->register->registerConfigCacheByAlias($alias);
         }
