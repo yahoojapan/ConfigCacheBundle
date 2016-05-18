@@ -6,3 +6,6 @@ framework:
     templating:      { engines: ['php'] }
     default_locale:  en
     session:         { storage_id: session.storage.mock_file }
+
+yahoo_japan_config_cache:
+    cache_restore: true
