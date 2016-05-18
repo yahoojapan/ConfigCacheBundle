@@ -20,6 +20,7 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\YamlFileLoader as YamlFileTranslatingLoader;
 use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\SaveAreaBuilder;
 use YahooJapan\ConfigCacheBundle\Tests\ConfigCache\ConfigCacheTestCase;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheConfiguration;
 
@@ -426,10 +427,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
 
         $cacheDirectory = sys_get_temp_dir().'/yahoo_japan_config_cache/test_save';
         $phpFileCache   = new RestorablePhpFileCache($cacheDirectory, static::$extension);
-        $phpFileCache
-            ->setEnv('test')
-            ->setFilesystem(new Filesystem())
-            ;
+        $phpFileCache->setBuilder($this->createSaveAreaBuilder());
         $this->util->setProperty(self::$cache, 'cache', $phpFileCache);
         self::$cache
             ->addResource(__DIR__.'/../../Fixtures/test_service_trans.yml', new ConfigCacheConfiguration())
@@ -444,5 +442,10 @@ class ConfigCacheTest extends ConfigCacheTestCase
     protected function createLoaderMock()
     {
         return $this->findUtil()->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
+    }
+
+    protected function createSaveAreaBuilder()
+    {
+        return new SaveAreaBuilder('test', new Filesystem());
     }
 }

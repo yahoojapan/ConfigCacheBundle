@@ -13,11 +13,19 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
 use Symfony\Component\Filesystem\Filesystem;
 use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\SaveAreaBuilder;
 use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
 class RestorablePhpFileCacheTest extends TestCase
 {
-    protected $env = 'test';
+    protected $builder;
+
+    protected function setUp()
+    {
+        parent::setUp();
+
+        $this->builder = $this->createSaveAreaBuilder();
+    }
 
     protected function tearDown()
     {
@@ -25,7 +33,7 @@ class RestorablePhpFileCacheTest extends TestCase
 
         $filesystem = new Filesystem();
         $filesystem->remove($this->getRootCacheDirectory());
-        $filesystem->remove($this->getRootTemporaryDirectory());
+        $filesystem->remove($this->builder->buildPrefix());
     }
 
     /**
@@ -86,12 +94,6 @@ class RestorablePhpFileCacheTest extends TestCase
         $this->assertSame($contains, $cache->contains($id));
     }
 
-    public function testSetFilesystem()
-    {
-        $cache = $this->createPhpFileCache();
-        $this->assertEquals(new Filesystem(), $this->util->getProperty($cache, 'filesystem'));
-    }
-
     /**
      * @dataProvider booleanProvider
      */
@@ -126,12 +128,7 @@ class RestorablePhpFileCacheTest extends TestCase
         $this->util->invoke($cache, 'setDirectory', $directory);
         $this->util->invoke($cache, 'prepareTemporaryDirectory');
 
-        $expectedTempDirectory = sys_get_temp_dir()
-            .DIRECTORY_SEPARATOR
-            .RestorablePhpFileCache::TEMP_DIRECTORY_PREFIX
-            .$this->env
-            .$directory
-            ;
+        $expectedTempDirectory = $this->builder->buildPrefix().$directory;
         $this->assertSame($expectedTempDirectory, $cache->getDirectory());
         $filesystem = new Filesystem();
         $this->assertTrue($filesystem->exists($expectedTempDirectory));
@@ -144,15 +141,6 @@ class RestorablePhpFileCacheTest extends TestCase
         $this->util->invoke($cache, 'setRestoringDirectory', $directory);
         $this->util->invoke($cache, 'restoreDirectory');
         $this->assertSame($directory, $this->util->getProperty($cache, 'directory'));
-    }
-
-    protected function getRootTemporaryDirectory()
-    {
-        return sys_get_temp_dir()
-            .DIRECTORY_SEPARATOR
-            .RestorablePhpFileCache::TEMP_DIRECTORY_PREFIX
-            .$this->env
-            ;
     }
 
     protected function getRootCacheDirectory()
@@ -168,11 +156,13 @@ class RestorablePhpFileCacheTest extends TestCase
     protected function createPhpFileCache()
     {
         $cache = new RestorablePhpFileCache($this->getCacheDirectory(), '.php');
-        $cache
-            ->setEnv($this->env)
-            ->setFilesystem(new Filesystem())
-            ;
+        $cache->setBuilder($this->builder);
 
         return $cache;
+    }
+
+    protected function createSaveAreaBuilder()
+    {
+        return new SaveAreaBuilder('test', new Filesystem());
     }
 }
