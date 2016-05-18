@@ -79,7 +79,6 @@ class RestorablePhpFileCache extends PhpFileCache
     protected function setDirectory($directory)
     {
         $this->directory = realpath($directory);
-        $this->directoryStringLength = strlen($this->directory);
 
         return $this;
     }
