@@ -13,8 +13,10 @@ namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Filesystem\Filesystem;
+use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\DirectoryResource;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Resource\FileResource;
+use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\RegisterConfiguration;
 
 class RegisterTest extends RegisterTestCase
@@ -446,7 +448,8 @@ class RegisterTest extends RegisterTestCase
         $resources,
         $createFiles,
         array $expected,
-        $expectedException
+        $expectedException,
+        $restorable
     ) {
         list($register, $container) = $this->createRegisterMockAndContainer();
         $id = 'register_test';
@@ -498,11 +501,21 @@ class RegisterTest extends RegisterTestCase
                     }
                 }
             }
+
+            $this->assertTrue($definition->hasTag(ConfigCache::TAG_CACHE_WARMER));
+
+            if ($restorable) {
+                // first argument of ConfigCache will be RestorablePhpFileCache
+                $phpFileCacheId = (string) $container->getDefinition($serviceId)->getArgument(0);
+                $parent = $container->getDefinition($phpFileCacheId)->getParent();
+                $this->assertSame('yahoo_japan_config_cache.restorable_php_file_cache', $parent);
+                $this->assertTrue($definition->hasTag(RestorablePhpFileCache::TAG_RESTORABLE_CACHE));
+            }
         }
     }
 
     /**
-     * @return array($resources, $createFiles, $expected, $expectedException)
+     * @return array($resources, $createFiles, $expected, $expectedException, $restorable)
      */
     public function registerInternalWithAliasProvider()
     {
@@ -527,16 +540,17 @@ class RegisterTest extends RegisterTestCase
                         array('setArrayAccess' => array($arrayAccessId)),
                         array('addResource'    => array(__DIR__.'/../Fixtures/test_service1.yml')),
                         array('setStrict'      => array(false)),
-                        array('setKey'         => array($alias1)),
+                        array('setId'          => array($alias1)),
                     ),
                     "{$baseId}.{$alias2}" => array(
                         array('setArrayAccess' => array($arrayAccessId)),
                         array('addResource'    => array(__DIR__.'/../Fixtures/test_service2.yml')),
                         array('setStrict'      => array(false)),
-                        array('setKey'         => array($alias2)),
+                        array('setId'          => array($alias2)),
                     ),
                 ),
                 null,
+                false,
             ),
             // mixed FilesResource, FileResource with alias
             array(
@@ -553,13 +567,13 @@ class RegisterTest extends RegisterTestCase
                         array('setArrayAccess' => array($arrayAccessId)),
                         array('addResource'    => array(__DIR__.'/../Fixtures/test_service1.yml')),
                         array('setStrict'      => array(false)),
-                        array('setKey'         => array($alias1)),
+                        array('setId'          => array($alias1)),
                     ),
                     "{$baseId}.{$alias2}" => array(
                         array('setArrayAccess' => array($arrayAccessId)),
                         array('addResource'    => array(__DIR__.'/../Fixtures/test_service2.yml')),
                         array('setStrict'      => array(false)),
-                        array('setKey'         => array($alias2)),
+                        array('setId'          => array($alias2)),
                     ),
                     $baseId => array(
                         array('setArrayAccess'   => array($arrayAccessId)),
@@ -571,6 +585,7 @@ class RegisterTest extends RegisterTestCase
                     ),
                 ),
                 null,
+                false,
             ),
             // duplicated aliases
             array(
@@ -581,6 +596,26 @@ class RegisterTest extends RegisterTestCase
                 0,
                 array(),
                 '\RuntimeException',
+                false,
+            ),
+            // FileResource with alias and restorable
+            array(
+                array(
+                    new FileResource(__DIR__.'/../Fixtures/test_service1.yml', null, $alias1 = 'test_alias1', true),
+                ),
+                0,
+                array(
+                    // serviceId => calls
+                    "{$baseId}.{$alias1}" => array(
+                        // methodName => arguments
+                        array('setArrayAccess' => array($arrayAccessId)),
+                        array('addResource'    => array(__DIR__.'/../Fixtures/test_service1.yml')),
+                        array('setStrict'      => array(false)),
+                        array('setId'          => array($alias1)),
+                    ),
+                ),
+                null,
+                true,
             ),
         );
     }

@@ -61,6 +61,7 @@ Usage
 * [Merge files of all bundles](merge-files-of-all-bundles.md)
 * [Extend loaders](extend-loaders.md)
 * [Translations](translations.md)
+* [Restore caches](restore-caches.md)
 * [Generate Configurations](generate-configurations.md)
 
 Appendix

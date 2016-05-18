@@ -23,6 +23,7 @@ class FileResource implements ResourceInterface
     protected $resource;
     protected $configuration;
     protected $alias;
+    protected $restore;
 
     /**
      * Constructor.
@@ -30,12 +31,14 @@ class FileResource implements ResourceInterface
      * @param string                 $resource
      * @param ConfigurationInterface $configuration
      * @param string                 $alias
+     * @param bool                   $restore
      */
-    public function __construct($resource, ConfigurationInterface $configuration = null, $alias = null)
+    public function __construct($resource, ConfigurationInterface $configuration = null, $alias = null, $restore = false)
     {
         $this->resource      = $resource;
         $this->configuration = $configuration;
         $this->alias         = $alias;
+        $this->restore       = $restore;
     }
 
     /**
@@ -44,12 +47,13 @@ class FileResource implements ResourceInterface
      * @param string                 $resource
      * @param ConfigurationInterface $configuration
      * @param string                 $alias
+     * @param bool                   $restore
      *
      * @return FileResource
      */
-    public static function create($resource, ConfigurationInterface $configuration = null, $alias = null)
+    public static function create($resource, ConfigurationInterface $configuration = null, $alias = null, $restore = false)
     {
-        return new static($resource, $configuration, $alias);
+        return new static($resource, $configuration, $alias, $restore);
     }
 
     /**
@@ -137,6 +141,30 @@ class FileResource implements ResourceInterface
     public function hasAlias()
     {
         return !is_null($this->alias) && $this->alias !== '';
+    }
+
+    /**
+     * Whether this resources is restorable or not.
+     *
+     * @return bool
+     */
+    public function isRestorable()
+    {
+        return $this->restore ? true : false;
+    }
+
+    /**
+     * Sets restorable.
+     *
+     * @param bool $restore
+     *
+     * @return FileResource
+     */
+    public function setRestorable($restore)
+    {
+        $this->restore = $restore;
+
+        return $this;
     }
 
     /**

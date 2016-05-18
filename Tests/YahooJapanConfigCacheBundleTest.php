@@ -14,6 +14,7 @@ namespace YahooJapan\ConfigCacheBundle\Tests;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use YahooJapan\ConfigCacheBundle\DependencyInjection\Compiler\CacheWarmerPass;
 use YahooJapan\ConfigCacheBundle\DependencyInjection\Compiler\LocalePass;
+use YahooJapan\ConfigCacheBundle\DependencyInjection\Compiler\RestorableCachePass;
 use YahooJapan\ConfigCacheBundle\YahooJapanConfigCacheBundle;
 
 class YahooJapanConfigCacheBundleTest extends \PHPUnit_Framework_TestCase
@@ -24,6 +25,6 @@ class YahooJapanConfigCacheBundleTest extends \PHPUnit_Framework_TestCase
         $bundle    = new YahooJapanConfigCacheBundle();
         $bundle->build($container);
         $passes = $container->getCompilerPassConfig()->getBeforeOptimizationPasses();
-        $this->assertEquals(array(new CacheWarmerPass(), new LocalePass()), $passes);
+        $this->assertEquals(array(new CacheWarmerPass(), new LocalePass(), new RestorableCachePass()), $passes);
     }
 }

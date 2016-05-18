@@ -12,8 +12,11 @@
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache;
 
 use Symfony\Component\Config\Definition\NodeInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess;
+use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\SaveAreaBuilder;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheConfiguration;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheDeepConfiguration;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheMasterConfiguration;
@@ -173,6 +176,43 @@ class ConfigCacheTest extends ConfigCacheTestCase
         );
     }
 
+    public function testSave()
+    {
+        list($originalPhpFileCache, $phpFileCache) = $this->prepareSave();
+
+        self::$cache->save();
+
+        // store contains result
+        $contains = $phpFileCache->contains($this->util->invoke(self::$cache, 'findId'));
+        // restore PhpFileCache before asserting
+        $this->util->setProperty(self::$cache, 'cache', $originalPhpFileCache);
+        // assert
+        $this->assertTrue($contains);
+    }
+
+    public function testRestore()
+    {
+        list($originalPhpFileCache, $phpFileCache, $cacheDirectory) = $this->prepareSave();
+
+        // save to temporary directory
+        self::$cache->save();
+        // remove cache in cache directory
+        $finder = Finder::create()->files()->in((array) $cacheDirectory);
+        $filesystem = new Filesystem();
+        foreach ($finder as $file) {
+            $filesystem->remove((string) $file);
+        }
+        // restore cache
+        self::$cache->restore();
+
+        // store contains result
+        $contains = $phpFileCache->contains($this->util->invoke(self::$cache, 'findId'));
+        // restore PhpFileCache before asserting
+        $this->util->setProperty(self::$cache, 'cache', $originalPhpFileCache);
+        // assert
+        $this->assertTrue($contains);
+    }
+
     /**
      * @dataProvider createInternalProvider
      */
@@ -240,9 +280,9 @@ class ConfigCacheTest extends ConfigCacheTestCase
         );
     }
 
-    public function testGetKey()
+    public function testFindId()
     {
-        $this->assertSame('cache', $this->util->invoke(self::$cache, 'getKey'));
+        $this->assertSame('cache', $this->util->invoke(self::$cache, 'findId'));
     }
 
     /**
@@ -565,14 +605,14 @@ class ConfigCacheTest extends ConfigCacheTestCase
         );
     }
 
-    public function testSetKey()
+    public function testSetId()
     {
         // OK
-        self::$cache->setKey($expected = 'test');
-        $this->assertSame($expected, $this->util->getProperty(self::$cache, 'key'));
+        self::$cache->setId($expected = 'test');
+        $this->assertSame($expected, $this->util->getProperty(self::$cache, 'id'));
         // exception
         $this->setExpectedException('\RuntimeException');
-        self::$cache->setKey('zzz');
+        self::$cache->setId('zzz');
     }
 
     /**
@@ -585,8 +625,48 @@ class ConfigCacheTest extends ConfigCacheTestCase
         $this->assertFalse($this->util->invoke(self::$cache, 'isStrict'));
     }
 
+    /**
+     * @dataProvider findRestorableCacheProvider
+     */
+    public function testFindRestorableCache($class, $expectedException)
+    {
+        $this->setExpectedException($expectedException);
+        $cache = $this->util->createMock($class);
+        $this->util->setProperty(self::$cache, 'cache', $cache);
+        // thrown if the cache is not RestorablePhpFileCache
+        $actual = $this->util->invoke(self::$cache, 'findRestorableCache');
+
+        $this->assertSame($cache, $actual);
+    }
+
+    public function findRestorableCacheProvider()
+    {
+        return array(
+            array('Doctrine\Common\Cache\PhpFileCache', '\RuntimeException'),
+            array('YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache', null),
+        );
+    }
+
+    protected function prepareSave()
+    {
+        $originalPhpFileCache = $this->util->getProperty(self::$cache, 'cache');
+
+        $cacheDirectory = sys_get_temp_dir().'/yahoo_japan_config_cache/test_save';
+        $phpFileCache   = new RestorablePhpFileCache($cacheDirectory, static::$extension);
+        $phpFileCache->setBuilder($this->createSaveAreaBuilder());
+        $this->util->setProperty(self::$cache, 'cache', $phpFileCache);
+        self::$cache->addResource(__DIR__.'/../Fixtures/test_service1.yml', new ConfigCacheConfiguration())->create();
+
+        return array($originalPhpFileCache, $phpFileCache, $cacheDirectory);
+    }
+
     protected function createConfigCacheMock(array $methods = null)
     {
         return $this->util->createMock('YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache', $methods);
+    }
+
+    protected function createSaveAreaBuilder()
+    {
+        return new SaveAreaBuilder('test', new Filesystem());
     }
 }

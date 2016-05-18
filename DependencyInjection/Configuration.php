@@ -33,6 +33,7 @@ class Configuration implements ConfigurationInterface
         $rootNode
             ->children()
                 ->booleanNode('cache_warmup')->defaultValue(true)->end()
+                ->booleanNode('cache_restore')->defaultValue(false)->end()
                 ->arrayNode('locale')
                     ->children()
                         ->booleanNode('enabled')->defaultValue(false)->end()

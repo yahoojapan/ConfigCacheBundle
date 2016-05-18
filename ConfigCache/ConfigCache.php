@@ -24,7 +24,7 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccessInterface;
  */
 class ConfigCache
 {
-    const DEFAULT_KEY      = 'cache';
+    const DEFAULT_ID       = 'cache';
     const TAG_CACHE_WARMER = 'config_cache.warmer';
 
     protected $cache;
@@ -33,7 +33,8 @@ class ConfigCache
     protected $arrayAccess;
     protected $configuration;
     protected $resources = array();
-    protected $key;
+    // doctrine cache ID
+    protected $id;
     protected $strict = true;
 
     /**
@@ -108,21 +109,21 @@ class ConfigCache
     }
 
     /**
-     * Sets a key (only once).
+     * Sets a doctrine cache ID (only once).
      *
-     * @param string $key
+     * @param string $id
      *
      * @return ConfigCache
      *
      * @throws \RuntimeException
      */
-    public function setKey($key)
+    public function setId($id)
     {
-        if (!is_null($this->key)) {
+        if (!is_null($this->id)) {
             throw new \RuntimeException('The key must not be set if already set.');
         }
 
-        $this->key = $key;
+        $this->id = $id;
 
         return $this;
     }
@@ -161,7 +162,7 @@ class ConfigCache
      */
     public function findAll()
     {
-        $data = $this->cache->fetch($this->getKey());
+        $data = $this->cache->fetch($this->findId());
         if (!$data) {
             $data = $this->createInternal();
         }
@@ -174,9 +175,29 @@ class ConfigCache
      */
     public function create()
     {
-        if (!$this->cache->contains($this->getKey())) {
+        if (!$this->cache->contains($this->findId())) {
             $this->createInternal();
         }
+    }
+
+    /**
+     * Saves PHP cache file to the temporary directory.
+     *
+     * @throws \RuntimeException
+     */
+    public function save()
+    {
+        $this->findRestorableCache()->saveToTemp($this->findId());
+    }
+
+    /**
+     * Restores PHP cache file to the cache directory.
+     *
+     * @throws \RuntimeException
+     */
+    public function restore()
+    {
+        $this->findRestorableCache()->restore($this->findId());
     }
 
     /**
@@ -187,19 +208,19 @@ class ConfigCache
     protected function createInternal()
     {
         $data = $this->load();
-        $this->cache->save($this->getKey(), $data);
+        $this->cache->save($this->findId(), $data);
 
         return $data;
     }
 
     /**
-     * Gets a key.
+     * Finds a doctrine cache ID.
      *
      * @return string
      */
-    protected function getKey()
+    protected function findId()
     {
-        return $this->key ?: static::DEFAULT_KEY;
+        return $this->id ?: static::DEFAULT_ID;
     }
 
     /**
@@ -309,5 +330,21 @@ class ConfigCache
         } else {
             return $this->configuration->getConfigTreeBuilder()->buildTree();
         }
+    }
+
+    /**
+     * Finds a restorable cache object.
+     *
+     * @return RestorablePhpFileCache
+     *
+     * @throws \RuntimeException
+     */
+    protected function findRestorableCache()
+    {
+        if (!($this->cache instanceof RestorablePhpFileCache)) {
+            throw new \RuntimeException('RestorablePhpFileCache should be set to use save/restore method.');
+        }
+
+        return $this->cache;
     }
 }

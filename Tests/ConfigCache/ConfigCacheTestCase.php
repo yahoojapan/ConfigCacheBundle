@@ -55,7 +55,7 @@ abstract class ConfigCacheTestCase extends TestCase
             ->setProperty(self::$cache, 'config', array())
             ->setProperty(self::$cache, 'configuration', null)
             ->setProperty(self::$cache, 'arrayAccess', null)
-            ->setProperty(self::$cache, 'key', null)
+            ->setProperty(self::$cache, 'id', null)
             ->setProperty(self::$cache, 'strict', true)
             ;
 

@@ -44,9 +44,11 @@ class ServiceRegister extends BaseServiceRegister
     /**
      * {@inheritdoc}
      */
-    protected function createCacheDefinition()
-    {
-        $definition = parent::createCacheDefinition();
+    protected function createCacheDefinition(
+        $cacheService = 'yahoo_japan_config_cache.php_file_cache',
+        array $suffix = array()
+    ) {
+        $definition = parent::createCacheDefinition($cacheService, $suffix);
         $definition->setClass('YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache');
 
         return $definition;

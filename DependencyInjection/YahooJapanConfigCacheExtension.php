@@ -37,6 +37,10 @@ class YahooJapanConfigCacheExtension extends Extension
         if (!$config['cache_warmup']) {
             $container->removeDefinition('yahoo_japan_config_cache.cache_warmer');
         }
+        if (!$config['cache_restore']) {
+            $container->removeDefinition('yahoo_japan_config_cache.cache_restorer');
+            $container->removeDefinition('yahoo_japan_config_cache.cache_cleanup');
+        }
 
         if (isset($config['locale']) && $this->isConfigEnabled($container, $config['locale'])) {
             $container->setParameter('yahoo_japan_config_cache.locales', $config['locale']['locales']);

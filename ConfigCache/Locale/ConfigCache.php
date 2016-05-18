@@ -67,10 +67,30 @@ class ConfigCache extends BaseConfigCache implements ConfigCacheInterface
         }
 
         foreach ($this->referableLocales as $locale) {
-            if (!$this->cache->contains($this->getKey($locale))) {
+            if (!$this->cache->contains($this->findId($locale))) {
                 $this->loader->setLocale($locale);
                 $this->createInternal($locale);
             }
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function save()
+    {
+        foreach ($this->referableLocales as $locale) {
+            $this->findRestorableCache()->saveToTemp($this->findId($locale));
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function restore()
+    {
+        foreach ($this->referableLocales as $locale) {
+            $this->findRestorableCache()->restore($this->findId($locale));
         }
     }
 
@@ -86,13 +106,13 @@ class ConfigCache extends BaseConfigCache implements ConfigCacheInterface
     protected function createInternal($locale = null)
     {
         $data = $this->load();
-        $this->cache->save($this->getKey($locale), $data);
+        $this->cache->save($this->findId($locale), $data);
 
         return $data;
     }
 
     /**
-     * Gets key with locale.
+     * Finds a doctrine cache ID with locale.
      *
      * $locale argument has the potential to become null when findAll().
      *
@@ -100,7 +120,7 @@ class ConfigCache extends BaseConfigCache implements ConfigCacheInterface
      *
      * @return string
      */
-    protected function getKey($locale = null)
+    protected function findId($locale = null)
     {
         if (is_null($locale)) {
             $locale = $this->getLocale();
@@ -112,7 +132,7 @@ class ConfigCache extends BaseConfigCache implements ConfigCacheInterface
             }
         }
 
-        return parent::getKey().".{$locale}";
+        return parent::findId().".{$locale}";
     }
 
     /**

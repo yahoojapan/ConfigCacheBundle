@@ -12,12 +12,15 @@
 namespace YahooJapan\ConfigCacheBundle\Tests\ConfigCache\Locale;
 
 use Symfony\Bundle\FrameworkBundle\Translation\Translator;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Translation\MessageCatalogue;
 use Symfony\Component\Translation\MessageSelector;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\ArrayLoader;
 use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\YamlFileLoader as YamlFileTranslatingLoader;
+use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\SaveAreaBuilder;
 use YahooJapan\ConfigCacheBundle\Tests\ConfigCache\ConfigCacheTestCase;
 use YahooJapan\ConfigCacheBundle\Tests\Fixtures\ConfigCacheConfiguration;
 
@@ -162,6 +165,47 @@ class ConfigCacheTest extends ConfigCacheTestCase
         );
     }
 
+    public function testSave()
+    {
+        list($originalPhpFileCache, $phpFileCache, $locales) = $this->prepareSave();
+
+        self::$cache->save();
+
+        foreach ($locales as $locale) {
+            // store contains result
+            $contains = $phpFileCache->contains($this->util->invokeArgs(self::$cache, 'findId', array($locale)));
+            // restore PhpFileCache before asserting
+            $this->util->setProperty(self::$cache, 'cache', $originalPhpFileCache);
+            // assert
+            $this->assertTrue($contains);
+        }
+    }
+
+    public function testRestore()
+    {
+        list($originalPhpFileCache, $phpFileCache, $locales, $cacheDirectory) = $this->prepareSave();
+
+        // save to temporary directory
+        self::$cache->save();
+        // remove caches in cache directory
+        $finder = Finder::create()->files()->in((array) $cacheDirectory);
+        $filesystem = new Filesystem();
+        foreach ($finder as $file) {
+            $filesystem->remove((string) $file);
+        }
+        // restore cache
+        self::$cache->restore();
+
+        foreach ($locales as $locale) {
+            // store contains result
+            $contains = $phpFileCache->contains($this->util->invokeArgs(self::$cache, 'findId', array($locale)));
+            // restore PhpFileCache before asserting
+            $this->util->setProperty(self::$cache, 'cache', $originalPhpFileCache);
+            // assert
+            $this->assertTrue($contains);
+        }
+    }
+
     /**
      * @dataProvider createInternalProvider
      */
@@ -265,15 +309,15 @@ class ConfigCacheTest extends ConfigCacheTestCase
     }
 
     /**
-     * @dataProvider getKeyProvider
+     * @dataProvider findIdProvider
      */
-    public function testGetKey($locale, $currentLocale, $expectedException, $expected)
+    public function testFindId($locale, $currentLocale, $expectedException, $expected)
     {
         self::$cache->setCurrentLocale($currentLocale);
         if ($expectedException) {
             $this->setExpectedException('\Exception');
         }
-        $key = $this->util->invoke(self::$cache, 'getKey', $locale);
+        $key = $this->util->invoke(self::$cache, 'findId', $locale);
 
         $this->assertSame($expected, $key);
     }
@@ -281,7 +325,7 @@ class ConfigCacheTest extends ConfigCacheTestCase
     /**
      * @return array ($locale, $currentLocale, $expectedException, $expected)
      */
-    public function getKeyProvider()
+    public function findIdProvider()
     {
         return array(
             // locale = null, currentLocale = null
@@ -377,8 +421,31 @@ class ConfigCacheTest extends ConfigCacheTestCase
         return $catalogue;
     }
 
+    protected function prepareSave()
+    {
+        $originalPhpFileCache = $this->util->getProperty(self::$cache, 'cache');
+
+        $cacheDirectory = sys_get_temp_dir().'/yahoo_japan_config_cache/test_save';
+        $phpFileCache   = new RestorablePhpFileCache($cacheDirectory, static::$extension);
+        $phpFileCache->setBuilder($this->createSaveAreaBuilder());
+        $this->util->setProperty(self::$cache, 'cache', $phpFileCache);
+        self::$cache
+            ->addResource(__DIR__.'/../../Fixtures/test_service_trans.yml', new ConfigCacheConfiguration())
+            ->setLoader($this->getTranslationLoader())
+            ->setReferableLocales($locales = array('ja', 'en'))
+            ->create()
+            ;
+
+        return array($originalPhpFileCache, $phpFileCache, $locales, $cacheDirectory);
+    }
+
     protected function createLoaderMock()
     {
         return $this->findUtil()->createInterfaceMock('Symfony\Component\Config\Loader\LoaderInterface');
+    }
+
+    protected function createSaveAreaBuilder()
+    {
+        return new SaveAreaBuilder('test', new Filesystem());
     }
 }

@@ -18,6 +18,13 @@ use YahooJapan\ConfigCacheBundle\Tests\Functional\KernelTestCase;
  */
 class RegisterFunctionalTest extends KernelTestCase
 {
+    protected function tearDown()
+    {
+        parent::tearDown();
+
+        $this->deleteTmpDir();
+    }
+
     public function testRegister()
     {
         $cache    = static::$kernel->getContainer()->get('config.register.sample');

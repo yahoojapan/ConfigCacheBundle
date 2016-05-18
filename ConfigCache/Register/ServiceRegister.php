@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Reference;
 use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
 
 /**
  * ServiceRegister mainly registers services of the cache and the configuration by ContainerBuilder::setDefinition().
@@ -67,6 +68,19 @@ class ServiceRegister
     {
         $id         = $this->idBuilder->buildCacheId(array($alias));
         $definition = $this->createCacheDefinition();
+        $this->container->setDefinition($id, $definition);
+    }
+
+    /**
+     * Registers a ConfigCache service with RestorablePhpFileCache to keep the cache.
+     *
+     * @param string $alias
+     */
+    public function registerRestorableConfigCache($alias)
+    {
+        $arrayed    = array($alias);
+        $id         = $this->idBuilder->buildCacheId($arrayed);
+        $definition = $this->createRestorableCacheDefinition($arrayed);
         $this->container->setDefinition($id, $definition);
     }
 
@@ -164,16 +178,21 @@ class ServiceRegister
     /**
      * Creates a cache definition without Configuration Reference.
      *
+     * @param string $cacheService
+     * @param array  $suffix       service ID suffix
+     *
      * @return Definition
      */
-    protected function createCacheDefinition()
-    {
+    protected function createCacheDefinition(
+        $cacheService = 'yahoo_japan_config_cache.php_file_cache',
+        array $suffix = array()
+    ) {
         // doctrine/cache
-        $cache = new DefinitionDecorator('yahoo_japan_config_cache.php_file_cache');
+        $cache = new DefinitionDecorator($cacheService);
         // only replace cache directory
         $bundleId = $this->idBuilder->getBundleId();
         $cache->replaceArgument(0, $this->container->getParameter('kernel.cache_dir')."/{$bundleId}");
-        $cacheId = $this->idBuilder->buildId(array('doctrine', 'cache', $bundleId));
+        $cacheId = $this->idBuilder->buildId(array_merge(array('doctrine', 'cache', $bundleId), $suffix));
         $this->container->setDefinition($cacheId, $cache);
 
         // user cache
@@ -192,5 +211,19 @@ class ServiceRegister
         }
 
         return $definition;
+    }
+
+    /**
+     * Creates a cache definition with restorable cache.
+     *
+     * @param array $suffix service ID suffix
+     *
+     * @return Definition
+     */
+    protected function createRestorableCacheDefinition(array $suffix)
+    {
+        return $this->createCacheDefinition('yahoo_japan_config_cache.restorable_php_file_cache', $suffix)
+            ->addTag(RestorablePhpFileCache::TAG_RESTORABLE_CACHE)
+            ;
     }
 }
