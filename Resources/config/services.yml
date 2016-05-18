@@ -27,7 +27,7 @@ services:
         class: YahooJapan\ConfigCacheBundle\CacheWarmer\CacheCleanup
         arguments:
             - '@yahoo_japan_config_cache.save_area_builder'
-            - '@yahoo_japan_config_cache.filesystem'
+            - '@filesystem'
         tags:
             - { name: kernel.cache_warmer, priority: -1 }
 
@@ -62,10 +62,7 @@ services:
         class: YahooJapan\ConfigCacheBundle\ConfigCache\SaveAreaBuilder
         arguments:
             - '%kernel.environment%'
-            - '@yahoo_japan_config_cache.filesystem'
-
-    yahoo_japan_config_cache.filesystem:
-        class: Symfony\Component\Filesystem\Filesystem
+            - '@filesystem'
 
     yahoo_japan_config_cache.array_access:
         class: YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccess
