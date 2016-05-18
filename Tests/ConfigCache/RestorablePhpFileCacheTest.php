@@ -17,12 +17,15 @@ use YahooJapan\ConfigCacheBundle\Tests\Functional\TestCase;
 
 class RestorablePhpFileCacheTest extends TestCase
 {
+    protected $env = 'test';
+
     protected function tearDown()
     {
         parent::tearDown();
 
         $filesystem = new Filesystem();
-        $filesystem->remove($this->getRootDirectory());
+        $filesystem->remove($this->getRootCacheDirectory());
+        $filesystem->remove($this->getRootTemporaryDirectory());
     }
 
     /**
@@ -126,6 +129,7 @@ class RestorablePhpFileCacheTest extends TestCase
         $expectedTempDirectory = sys_get_temp_dir()
             .DIRECTORY_SEPARATOR
             .RestorablePhpFileCache::TEMP_DIRECTORY_PREFIX
+            .$this->env
             .$directory
             ;
         $this->assertSame($expectedTempDirectory, $cache->getDirectory());
@@ -142,20 +146,32 @@ class RestorablePhpFileCacheTest extends TestCase
         $this->assertSame($directory, $this->util->getProperty($cache, 'directory'));
     }
 
-    protected function getRootDirectory()
+    protected function getRootTemporaryDirectory()
+    {
+        return sys_get_temp_dir()
+            .DIRECTORY_SEPARATOR
+            .RestorablePhpFileCache::TEMP_DIRECTORY_PREFIX
+            .$this->env
+            ;
+    }
+
+    protected function getRootCacheDirectory()
     {
         return sys_get_temp_dir().'/yahoo_japan_config_cache';
     }
 
     protected function getCacheDirectory()
     {
-        return $this->getRootDirectory().'/restorable_php_file_cache_test';
+        return $this->getRootCacheDirectory().'/restorable_php_file_cache_test';
     }
 
     protected function createPhpFileCache()
     {
         $cache = new RestorablePhpFileCache($this->getCacheDirectory(), '.php');
-        $cache->setFilesystem(new Filesystem());
+        $cache
+            ->setEnv($this->env)
+            ->setFilesystem(new Filesystem())
+            ;
 
         return $cache;
     }

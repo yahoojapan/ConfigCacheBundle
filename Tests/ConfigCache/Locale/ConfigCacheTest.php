@@ -426,7 +426,10 @@ class ConfigCacheTest extends ConfigCacheTestCase
 
         $cacheDirectory = sys_get_temp_dir().'/yahoo_japan_config_cache/test_save';
         $phpFileCache   = new RestorablePhpFileCache($cacheDirectory, static::$extension);
-        $phpFileCache->setFilesystem(new Filesystem());
+        $phpFileCache
+            ->setEnv('test')
+            ->setFilesystem(new Filesystem())
+            ;
         $this->util->setProperty(self::$cache, 'cache', $phpFileCache);
         self::$cache
             ->addResource(__DIR__.'/../../Fixtures/test_service_trans.yml', new ConfigCacheConfiguration())

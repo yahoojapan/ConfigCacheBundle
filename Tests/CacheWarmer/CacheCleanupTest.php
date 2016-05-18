@@ -26,12 +26,16 @@ class CacheCleanupTest extends TestCase
         parent::setUp();
 
         $this->filesystem = new Filesystem();
-        $this->cleanup    = new CacheCleanup($this->filesystem);
+        $this->cleanup    = new CacheCleanup('test', $this->filesystem);
     }
 
     public function testWarmUp()
     {
-        $tempDirectory = sys_get_temp_dir().DIRECTORY_SEPARATOR.RestorablePhpFileCache::TEMP_DIRECTORY_PREFIX;
+        $tempDirectory = sys_get_temp_dir()
+            .DIRECTORY_SEPARATOR
+            .RestorablePhpFileCache::TEMP_DIRECTORY_PREFIX
+            .$this->util->getProperty($this->cleanup, 'env')
+            ;
         $this->filesystem->mkdir($tempDirectory);
         $this->assertTrue($this->filesystem->exists($tempDirectory));
         $this->cleanup->warmUp(__DIR__);
