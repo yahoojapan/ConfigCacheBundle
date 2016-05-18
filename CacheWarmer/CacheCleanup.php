@@ -20,15 +20,18 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
  */
 class CacheCleanup implements CacheWarmerInterface
 {
+    protected $env;
     protected $filesystem;
 
     /**
      * Constructor.
      *
+     * @param string     $env
      * @param Filesystem $filesystem
      */
-    public function __construct(Filesystem $filesystem)
+    public function __construct($env, Filesystem $filesystem)
     {
+        $this->env        = $env;
         $this->filesystem = $filesystem;
     }
 
@@ -53,6 +56,11 @@ class CacheCleanup implements CacheWarmerInterface
      */
     public function cleanUp()
     {
-        $this->filesystem->remove(sys_get_temp_dir().DIRECTORY_SEPARATOR.RestorablePhpFileCache::TEMP_DIRECTORY_PREFIX);
+        $temporaryDirectory = sys_get_temp_dir()
+            .DIRECTORY_SEPARATOR
+            .RestorablePhpFileCache::TEMP_DIRECTORY_PREFIX
+            .$this->env
+            ;
+        $this->filesystem->remove($temporaryDirectory);
     }
 }

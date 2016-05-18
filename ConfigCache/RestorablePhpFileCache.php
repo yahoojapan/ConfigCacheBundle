@@ -20,8 +20,9 @@ use Doctrine\Common\Cache\PhpFileCache;
 class RestorablePhpFileCache extends PhpFileCache
 {
     const TAG_RESTORABLE_CACHE  = 'config_cache.restorable';
-    const TEMP_DIRECTORY_PREFIX = 'yahoo_japan_config_cache';
+    const TEMP_DIRECTORY_PREFIX = 'yahoo_japan_config_cache_';
 
+    protected $env;
     protected $restoringDirectory;
     protected $filesystem;
 
@@ -55,6 +56,20 @@ class RestorablePhpFileCache extends PhpFileCache
         } else {
             $this->restoreDirectory();
         }
+    }
+
+    /**
+     * Sets an environment.
+     *
+     * @param string $env
+     *
+     * @return RestorablePhpFileCache
+     */
+    public function setEnv($env)
+    {
+        $this->env = $env;
+
+        return $this;
     }
 
     /**
@@ -113,6 +128,7 @@ class RestorablePhpFileCache extends PhpFileCache
         $temporaryDirectory = sys_get_temp_dir()
             .DIRECTORY_SEPARATOR
             .self::TEMP_DIRECTORY_PREFIX
+            .$this->env
             .$currentDirectory
             ;
 
