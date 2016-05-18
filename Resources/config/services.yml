@@ -26,7 +26,7 @@ services:
     yahoo_japan_config_cache.cache_cleanup:
         class: YahooJapan\ConfigCacheBundle\CacheWarmer\CacheCleanup
         arguments:
-            - '%kernel.environment%'
+            - '@yahoo_japan_config_cache.save_area_builder'
             - '@yahoo_japan_config_cache.filesystem'
         tags:
             - { name: kernel.cache_warmer, priority: -1 }
@@ -56,8 +56,13 @@ services:
         class: YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache
         parent: yahoo_japan_config_cache.php_file_cache
         calls:
-            - [setEnv, ['%kernel.environment%']]
-            - [setFilesystem, ['@yahoo_japan_config_cache.filesystem']]
+            - [setBuilder, ['@yahoo_japan_config_cache.save_area_builder']]
+
+    yahoo_japan_config_cache.save_area_builder:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\SaveAreaBuilder
+        arguments:
+            - '%kernel.environment%'
+            - '@yahoo_japan_config_cache.filesystem'
 
     yahoo_japan_config_cache.filesystem:
         class: Symfony\Component\Filesystem\Filesystem

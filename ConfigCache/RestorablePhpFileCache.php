@@ -11,7 +11,6 @@
 
 namespace YahooJapan\ConfigCacheBundle\ConfigCache;
 
-use Symfony\Component\Filesystem\Filesystem;
 use Doctrine\Common\Cache\PhpFileCache;
 
 /**
@@ -19,12 +18,10 @@ use Doctrine\Common\Cache\PhpFileCache;
  */
 class RestorablePhpFileCache extends PhpFileCache
 {
-    const TAG_RESTORABLE_CACHE  = 'config_cache.restorable';
-    const TEMP_DIRECTORY_PREFIX = 'yahoo_japan_config_cache_';
+    const TAG_RESTORABLE_CACHE = 'config_cache.restorable';
 
-    protected $env;
+    protected $builder;
     protected $restoringDirectory;
-    protected $filesystem;
 
     /**
      * Saves the cache to the temporary directory.
@@ -59,29 +56,15 @@ class RestorablePhpFileCache extends PhpFileCache
     }
 
     /**
-     * Sets an environment.
+     * Sets a SaveAreaBuilder.
      *
-     * @param string $env
-     *
-     * @return RestorablePhpFileCache
-     */
-    public function setEnv($env)
-    {
-        $this->env = $env;
-
-        return $this;
-    }
-
-    /**
-     * Sets a Filesystem.
-     *
-     * @param Filesystem $filesystem
+     * @param SaveAreaBuilder $builder
      *
      * @return RestorablePhpFileCache
      */
-    public function setFilesystem(Filesystem $filesystem)
+    public function setBuilder(SaveAreaBuilder $builder)
     {
-        $this->filesystem = $filesystem;
+        $this->builder = $builder;
 
         return $this;
     }
@@ -125,15 +108,8 @@ class RestorablePhpFileCache extends PhpFileCache
         $currentDirectory = $this->getDirectory();
         $this->setRestoringDirectory($currentDirectory);
 
-        $temporaryDirectory = sys_get_temp_dir()
-            .DIRECTORY_SEPARATOR
-            .self::TEMP_DIRECTORY_PREFIX
-            .$this->env
-            .$currentDirectory
-            ;
-
         // mkdir before setDirectory()
-        $this->filesystem->mkdir($temporaryDirectory);
+        $temporaryDirectory = $this->builder->build($currentDirectory);
 
         return $this->setDirectory($temporaryDirectory);
     }

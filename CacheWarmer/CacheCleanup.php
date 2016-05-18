@@ -13,25 +13,25 @@ namespace YahooJapan\ConfigCacheBundle\CacheWarmer;
 
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpKernel\CacheWarmer\CacheWarmerInterface;
-use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\SaveAreaBuilder;
 
 /**
  * The CacheCleanup is to clear the temporary directory.
  */
 class CacheCleanup implements CacheWarmerInterface
 {
-    protected $env;
+    protected $builder;
     protected $filesystem;
 
     /**
      * Constructor.
      *
-     * @param string     $env
-     * @param Filesystem $filesystem
+     * @param SaveAreaBuilder $builder
+     * @param Filesystem      $filesystem
      */
-    public function __construct($env, Filesystem $filesystem)
+    public function __construct(SaveAreaBuilder $builder, Filesystem $filesystem)
     {
-        $this->env        = $env;
+        $this->builder    = $builder;
         $this->filesystem = $filesystem;
     }
 
@@ -56,11 +56,6 @@ class CacheCleanup implements CacheWarmerInterface
      */
     public function cleanUp()
     {
-        $temporaryDirectory = sys_get_temp_dir()
-            .DIRECTORY_SEPARATOR
-            .RestorablePhpFileCache::TEMP_DIRECTORY_PREFIX
-            .$this->env
-            ;
-        $this->filesystem->remove($temporaryDirectory);
+        $this->filesystem->remove($this->builder->buildPrefix());
     }
 }
