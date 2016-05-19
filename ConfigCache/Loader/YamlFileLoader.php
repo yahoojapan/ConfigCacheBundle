@@ -41,13 +41,7 @@ class YamlFileLoader extends Loader
      */
     protected function loadFile($file)
     {
-        if (!stream_is_local($file)) {
-            throw new \InvalidArgumentException(sprintf('This is not a local file "%s".', $file));
-        }
-
-        if (!file_exists($file)) {
-            throw new \InvalidArgumentException(sprintf('The service file "%s" is not valid.', $file));
-        }
+        $this->validateArgument($file);
 
         try {
             $array = Yaml::parse(file_get_contents($file));
@@ -60,5 +54,23 @@ class YamlFileLoader extends Loader
         }
 
         return $array;
+    }
+
+    /**
+     * Validates a file argument.
+     *
+     * @param string $file
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected function validateArgument($file)
+    {
+        if (!stream_is_local($file)) {
+            throw new \InvalidArgumentException(sprintf('This is not a local file "%s".', $file));
+        }
+
+        if (!file_exists($file)) {
+            throw new \InvalidArgumentException(sprintf('The service file "%s" is not valid.', $file));
+        }
     }
 }

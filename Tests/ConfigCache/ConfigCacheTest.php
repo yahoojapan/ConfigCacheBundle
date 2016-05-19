@@ -616,13 +616,13 @@ class ConfigCacheTest extends ConfigCacheTestCase
     }
 
     /**
-     * test setStrict(), isStrict()
+     * test setStrict(), getStrict()
      */
     public function testStrict()
     {
-        $this->assertTrue($this->util->invoke(self::$cache, 'isStrict'));
+        $this->assertTrue($this->util->invoke(self::$cache, 'getStrict'));
         self::$cache->setStrict(false);
-        $this->assertFalse($this->util->invoke(self::$cache, 'isStrict'));
+        $this->assertFalse($this->util->invoke(self::$cache, 'getStrict'));
     }
 
     /**
