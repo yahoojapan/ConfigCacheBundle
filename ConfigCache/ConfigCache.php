@@ -182,8 +182,6 @@ class ConfigCache
 
     /**
      * Saves PHP cache file to the temporary directory.
-     *
-     * @throws \RuntimeException
      */
     public function save()
     {
@@ -192,8 +190,6 @@ class ConfigCache
 
     /**
      * Restores PHP cache file to the cache directory.
-     *
-     * @throws \RuntimeException
      */
     public function restore()
     {
@@ -224,13 +220,23 @@ class ConfigCache
     }
 
     /**
+     * Gets a strict mode.
+     *
+     * @return bool
+     */
+    protected function getStrict()
+    {
+        return $this->strict;
+    }
+
+    /**
      * Whether the mode is strict or not.
      *
      * @return bool
      */
     protected function isStrict()
     {
-        return $this->strict;
+        return !$this->getStrict() && count($this->resources) === 1;
     }
 
     /**
@@ -263,7 +269,7 @@ class ConfigCache
         if ($this->resources === array()) {
             throw new \Exception('No added resources.');
         }
-        if (!$this->isStrict() && count($this->resources) === 1) {
+        if ($this->isStrict()) {
             return $this->loadOne();
         }
 

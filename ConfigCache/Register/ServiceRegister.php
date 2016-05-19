@@ -187,7 +187,24 @@ class ServiceRegister
         $cacheService = 'yahoo_japan_config_cache.php_file_cache',
         array $suffix = array()
     ) {
-        // doctrine/cache
+        // doctrine/cache ID
+        $doctrineCacheId = $this->registerDoctrineCache($cacheService, $suffix);
+        // ConfigCache Definition
+        $definition      = $this->createConfigCacheDefinition($doctrineCacheId);
+
+        return $definition;
+    }
+
+    /**
+     * Registers a doctrine cache definition.
+     *
+     * @param string $cacheService
+     * @param array  $suffix
+     *
+     * @return string
+     */
+    protected function registerDoctrineCache($cacheService, array $suffix)
+    {
         $cache = new DefinitionDecorator($cacheService);
         // only replace cache directory
         $bundleId = $this->idBuilder->getBundleId();
@@ -195,12 +212,23 @@ class ServiceRegister
         $cacheId = $this->idBuilder->buildId(array_merge(array('doctrine', 'cache', $bundleId), $suffix));
         $this->container->setDefinition($cacheId, $cache);
 
-        // user cache
+        return $cacheId;
+    }
+
+    /**
+     * Creates a ConfigCache definition.
+     *
+     * @param string $doctrineCacheId
+     *
+     * @return Definition
+     */
+    protected function createConfigCacheDefinition($doctrineCacheId)
+    {
         $definition = new DefinitionDecorator('yahoo_japan_config_cache.config_cache');
         $definition
             ->setPublic(true)
             ->setArguments(array(
-                new Reference($cacheId),
+                new Reference($doctrineCacheId),
                 new Reference('yahoo_japan_config_cache.delegating_loader'),
                 $this->appConfig,
             ))
