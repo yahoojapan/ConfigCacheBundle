@@ -38,6 +38,7 @@ class YahooJapanConfigCacheExtension extends Extension
             $container->removeDefinition('yahoo_japan_config_cache.cache_warmer');
         }
         if (!$config['cache_restore']) {
+            $container->removeDefinition('yahoo_japan_config_cache.cache_saver');
             $container->removeDefinition('yahoo_japan_config_cache.cache_restorer');
             $container->removeDefinition('yahoo_japan_config_cache.cache_cleanup');
         }
