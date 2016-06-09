@@ -63,7 +63,11 @@ class ConfigCache extends BaseConfigCache implements ConfigCacheInterface
     public function create()
     {
         if (!($this->loader instanceof TranslationLoaderInterface)) {
-            throw new \Exception('Loader must be a translation loader interface');
+            throw new \Exception(sprintf(
+                '%s: Loader [%s] must be a translation loader interface',
+                __CLASS__,
+                get_class($this->loader)
+            ));
         }
 
         foreach ($this->referableLocales as $locale) {
