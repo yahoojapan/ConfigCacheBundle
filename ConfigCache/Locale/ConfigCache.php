@@ -19,7 +19,7 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Locale\Loader\TranslationLoaderInte
  */
 class ConfigCache extends BaseConfigCache implements ConfigCacheInterface
 {
-    const TAG_LOCALE = 'config.locale';
+    const TAG_LOCALE = 'config_cache.locale';
 
     // for createing cache
     protected $referableLocales = array();
