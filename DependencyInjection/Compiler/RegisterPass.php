@@ -70,6 +70,8 @@ class RegisterPass implements CompilerPassInterface
      * @param string           $bundleName
      *
      * @return ExtensionInterface
+     *
+     * @throws \InvalidArgumentException
      */
     protected function findExtension(ContainerBuilder $container, $bundleName)
     {
@@ -89,6 +91,8 @@ class RegisterPass implements CompilerPassInterface
      * @param array $attributes
      *
      * @return string
+     *
+     * @throws \InvalidArgumentException
      */
     protected function findResource(array $attributes)
     {
@@ -106,6 +110,8 @@ class RegisterPass implements CompilerPassInterface
      * @param string             $resource
      *
      * @return string
+     *
+     * @throws \InvalidArgumentException
      */
     protected function findPath(ExtensionInterface $extension, $resource)
     {
