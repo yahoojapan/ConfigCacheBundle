@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 use Symfony\Component\DependencyInjection\Reference;
 use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
 use YahooJapan\ConfigCacheBundle\DependencyInjection\Compiler\RegisterPass;
 use YahooJapan\ConfigCacheBundle\DependencyInjection\YahooJapanConfigCacheExtension;
 use YahooJapan\ConfigCacheBundle\Tests\Functional\Bundle\RegisterBundle\DependencyInjection\RegisterExtension;
@@ -145,18 +146,40 @@ class RegisterPassTest extends TestCase
         );
     }
 
-    public function testRegisterDoctrineCache()
+    /**
+     * @dataProvider registerDoctrineCacheProvider
+     */
+    public function testRegisterDoctrineCache($isRestorable, $expectedParent)
     {
         $container = new ContainerBuilder(new ParameterBag(array(
             'kernel.cache_dir' => $cacheDir = 'test_cache_dir',
         )));
-        $serviceId       = 'yahoo_japan_config_cache.test';
-        $bundleName      = 'yahoo_japan_config_cache';
+        $serviceId  = 'yahoo_japan_config_cache.test';
+        $bundleName = 'yahoo_japan_config_cache';
+        if ($isRestorable) {
+            $definition = new Definition();
+            $definition->addTag(RestorablePhpFileCache::TAG_RESTORABLE_CACHE);
+            $container->setDefinition($serviceId, $definition);
+        }
         $doctrineCacheId = $this->util->invoke($this->pass, 'registerDoctrineCache', $container, $serviceId, $bundleName);
 
         $this->assertTrue($container->hasDefinition($doctrineCacheId));
         $definition = $container->findDefinition($doctrineCacheId);
+        $this->assertSame($expectedParent, $definition->getParent());
         $this->assertSame($cacheDir."/{$bundleName}", $definition->getArgument(0));
+    }
+
+    /**
+     * @return array($isRestorable, $expectedParent)
+     */
+    public function registerDoctrineCacheProvider()
+    {
+        return array(
+            // is not restorable cache
+            array(false, 'yahoo_japan_config_cache.php_file_cache'),
+            // is restorable cache
+            array(true, 'yahoo_japan_config_cache.restorable_php_file_cache'),
+        );
     }
 
     public function testRegisterConfigCache()

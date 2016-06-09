@@ -18,6 +18,7 @@ use Symfony\Component\DependencyInjection\DefinitionDecorator;
 use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
 use Symfony\Component\DependencyInjection\Reference;
 use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
+use YahooJapan\ConfigCacheBundle\ConfigCache\RestorablePhpFileCache;
 
 /**
  * Registers ConfigCache services by services.yml.
@@ -138,7 +139,13 @@ class RegisterPass implements CompilerPassInterface
      */
     protected function registerDoctrineCache(ContainerBuilder $container, $serviceId, $bundleName)
     {
-        $doctrineCache = new DefinitionDecorator('yahoo_japan_config_cache.php_file_cache');
+        $restorableCacheIds = $container->findTaggedServiceIds(RestorablePhpFileCache::TAG_RESTORABLE_CACHE);
+        if (array_key_exists($serviceId, $restorableCacheIds)) {
+            $decoratingId = 'yahoo_japan_config_cache.restorable_php_file_cache';
+        } else {
+            $decoratingId = 'yahoo_japan_config_cache.php_file_cache';
+        }
+        $doctrineCache = new DefinitionDecorator($decoratingId);
         $doctrineCache->replaceArgument(0, $container->getParameter('kernel.cache_dir')."/{$bundleName}");
         $doctrineCacheId = "yahoo_japan_config_cache.doctrine.cache.{$serviceId}";
         $container->setDefinition($doctrineCacheId, $doctrineCache);
