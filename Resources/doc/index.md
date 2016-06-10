@@ -61,7 +61,7 @@ Usage
 * [Extend loaders](extend-loaders.md)
 * [Translations](translations.md)
 * [Restore caches](restore-caches.md)
-* [Generate Configurations](generate-configurations.md)
+* [Generate configurations](generate-configurations.md)
 
 Appendix
 --------
