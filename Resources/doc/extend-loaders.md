@@ -44,7 +44,29 @@ services:
             - [addLoader, ['@acme_demo.array_loader']]
 ```
 
-Replace `YamlFileLoader` before creating a cache in `AcmeDemoBundle`:
+If you use the services.yml introduced in [Basic usage](basic-usage.md), add the `setLoader` method call:
+
+```yml
+# src/Acme/DemoBundle/Resources/config/services.yml
+services:
+    acme_demo.array_loader:
+        class: Acme\DemoBundle\Loader\ArrayLoader
+
+    acme_demo.yaml_file_loader:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\Loader\YamlFileLoader
+        calls:
+            - [addLoader, ['@acme_demo.array_loader']]
+
+    acme_demo.config:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
+        # add method calls
+        calls:
+            - [setLoader, ['@acme_demo.yaml_file_loader']]
+        tags:
+            - { name: config_cache.register, resource: sample.yml }
+```
+
+If you use the `Register`, replace `YamlFileLoader` before creating a cache in `AcmeDemoBundle`:
 
 ```php
 <?php
@@ -66,7 +88,7 @@ class AcmeDemoBundle extends Bundle
 }
 ```
 
-As a result, the `config.acme_demo.sample` service has a content that is replaced by `ArrayLoader`:
+As a result, the `ConfigCache` service has a content that is replaced by `ArrayLoader`:
 
 ```php
 <?php
@@ -80,7 +102,8 @@ class WelcomeController extends Controller
 {
     public function indexAction()
     {
-        $cache = $this->get('config.acme_demo.sample');
+        // or config.acme_demo.sample
+        $cache = $this->get('acme_demo.config');
 
         /**
          * array(

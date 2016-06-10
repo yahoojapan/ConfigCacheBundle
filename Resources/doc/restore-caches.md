@@ -17,8 +17,18 @@ yahoo_japan_config_cache:
     cache_restore: true
 ```
 
-Enable the `FileResource` setting on the Extension class.  
-Set the fourth argument true:
+Register the `ConfigCache` service by using services.yml or the `Register`:
+
+```yml
+# src/Acme/DemoBundle/Resources/config/services.yml
+services:
+    acme_demo.config:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
+        tags:
+            - { name: config_cache.register, resource: sample.yml }
+            # add a restorable tag
+            - { name: config_cache.restorable }
+```
 
 ```php
 <?php
@@ -51,6 +61,7 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
+If you use the `Register`, set the `FileResource` fourth argument true to enable the restoring setting on the Extension class.  
 This is enabled only if you use the `FileResource` and specify an alias (the third argument).
 
 Finally, create the cache and clear with the Symfony console:

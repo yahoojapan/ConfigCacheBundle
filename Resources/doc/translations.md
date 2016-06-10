@@ -91,9 +91,22 @@ yahoo_japan_config_cache:
 
 Describe all locales as a "locales" key.
 
-##### Extension
+##### Register the ConfigCache service
 
-Create `RegisterLocale` in `AcmeDemoExtension`:
+Register the `ConfigCache` service by using services.yml or `RegisterLocale` in `AcmeDemoExtension`:
+
+```yml
+# src/Acme/DemoBundle/Resources/config/services.yml
+services:
+    acme_demo.config:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\Locale\ConfigCache
+        calls:
+            - [setDefaultLocale, [%kernel.default_locale%]]
+            - [setLoader, ['@yahoo_japan_config_cache.locale.yaml_file_loader']]
+        tags:
+            - { name: config_cache.register, resource: sample.yml }
+            - { name: config_cache.locale }
+```
 
 ```php
 <?php
@@ -143,7 +156,9 @@ class WelcomeController extends Controller
     public function indexAction()
     {
         // ConfigCache
-        $cache = $this->get('config.acme_demo.sample');
+        $cache = $this->get('acme_demo.config');
+        // or config.acme_demo.sample if you use RegisterLocale
+        //$cache = $this->get('config.acme_demo.sample');
 
         // 'Chris' if _locale is en
         // 'クリス' if _locale is ja
