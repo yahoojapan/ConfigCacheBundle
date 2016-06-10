@@ -55,7 +55,6 @@ Usage
 -----
 
 * [Basic usage](basic-usage.md)
-* [Specify files](specify-files.md)
 * [Merge files](merge-files.md)
 * [Specify directories](specify-directories.md)
 * [Merge files of all bundles](merge-files-of-all-bundles.md)
