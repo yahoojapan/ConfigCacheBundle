@@ -6,7 +6,7 @@ The ConfigCacheBundle is a bundle that handles configuration file caches.
 Features
 --------
 
-* Create a cache from [configuration files](about-config.md)  
+* Create a cache from configuration files  
 A file cache is created separately from caches the Symfony creates as a service container.
 * Register cache objects to the Symfony service container
 * Merge and validate configuration files
@@ -62,8 +62,3 @@ Usage
 * [Translations](translations.md)
 * [Restore caches](restore-caches.md)
 * [Generate configurations](generate-configurations.md)
-
-Appendix
---------
-
-* [About configuration files](about-config.md)
