@@ -45,6 +45,17 @@ services:
             - { name: config_cache.register, resource: sample.yml }
 ```
 
+If you name the service ID without dependence on the bundle name, set the bundle attribute of the tag:
+
+```yml
+# src/Acme/DemoBundle/Resources/config/services.yml
+services:
+    any_service_id:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
+        tags:
+            - { name: config_cache.register, resource: sample.yml, bundle: acme_demo }
+```
+
 ##### Create a cache
 
 Create a cache with the Symfony console:
@@ -204,7 +215,7 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-In this case of registering the service with `Register`, the service ID `config.acme_demo.sample` is generated automatically.  
+In this case, the service ID `config.acme_demo.sample` is generated automatically.  
 If a bundle name is "AcmeDemoBundle" and `FileResource` alias is "sample", the service name is `config.acme_demo.sample`.
 
 Some features that are described below like merging files, specifying directory, and so on are available only by using `Register`.
