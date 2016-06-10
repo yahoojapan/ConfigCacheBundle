@@ -25,6 +25,7 @@ use YahooJapan\ConfigCacheBundle\ConfigCache\Util\ArrayAccessInterface;
 class ConfigCache
 {
     const DEFAULT_ID       = 'cache';
+    const TAG_REGISTER     = 'config_cache.register';
     const TAG_CACHE_WARMER = 'config_cache.warmer';
 
     protected $cache;

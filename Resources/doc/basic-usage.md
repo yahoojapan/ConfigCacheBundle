@@ -32,9 +32,155 @@ bill-to:
     family : Dumars
 ```
 
-##### Extension
+##### services.yml
 
-Add a service definition in `DependencyInjection/AcmeDemoExtension.php`:
+Add a service definition with tags in services.yml:
+
+```yml
+# src/Acme/DemoBundle/Resources/config/services.yml
+services:
+    acme_demo.config:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
+        tags:
+            - { name: config_cache.register, resource: sample.yml }
+```
+
+If you name the service ID without dependence on the bundle name, set the bundle attribute of the tag:
+
+```yml
+# src/Acme/DemoBundle/Resources/config/services.yml
+services:
+    any_service_id:
+        class: YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
+        tags:
+            - { name: config_cache.register, resource: sample.yml, bundle: acme_demo }
+```
+
+##### Create a cache
+
+Create a cache with the Symfony console:
+
+```sh
+# Symfony 2.x
+$ app/console cache:warmup
+# Symfony 3.x
+$ bin/console cache:warmup
+```
+
+In this way, a cache object `ConfigCache` is registered as a service:
+
+```sh
+# Symfony 2.x
+$ app/console debug:container acme_demo.config
+# Symfony 3.x
+$ bin/console debug:container acme_demo.config
+[container] Information for service acme_demo.config
+Service Id       acme_demo.config
+Class            YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
+Tags             -
+Scope            container
+Public           yes
+Synthetic        no
+Lazy             yes
+Synchronized     no
+Abstract         no
+```
+
+A cache file is created and set under the Symfony cache directory:
+
+```sh
+// Symfony 2.x : app/cache/dev/acme_demo/75/5b73616d706c655d5b315d.php
+// Symfony 3.x : var/cache/dev/acme_demo/75/5b73616d706c655d5b315d.php
+<?php return array (
+  'lifetime' => 0,
+  'data' =>
+  array (
+    'invoice' => 34843,
+    'date' => '2001-01-23',
+    'bill-to' =>
+    array (
+      'given' => 'Chris',
+      'family' => 'Dumars',
+    )
+  )
+);
+```
+
+##### Use the service
+
+Getting the service container directly or defining in services.yml, you can use the `ConfigCache` service named `acme_demo.config`:
+
+```php
+<?php
+
+// src/Acme/DemoBundle/Controller/WelcomeController.php
+namespace Acme\DemoBundle\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+
+class WelcomeController extends Controller
+{
+    public function indexAction()
+    {
+        // ConfigCache
+        $cache = $this->get('acme_demo.config');
+
+        // 34843
+        $cache->find('invoice');
+
+        // 'Chris'
+        $cache->find('bill-to.given');
+
+        // array('invoice' => 34843, 'date' => '2001-01-23', 'bill-to' => array('given' => 'Chris', 'family' => 'Dumars'))
+        $cache->findAll();
+
+        // ...
+    }
+}
+```
+
+```yml
+# src/Acme/DemoBundle/Resources/config/services.yml
+services:
+    acme_demo.sample_model:
+        class: Acme\DemoBundle\SampleModel
+        arguments:
+            - '@acme_demo.config'
+```
+
+```php
+<?php
+
+// src/Acme/DemoBundle/SampleModel.php
+namespace Acme\DemoBundle;
+
+use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
+
+class SampleModel
+{
+    protected $config;
+
+    public function __construct(ConfigCache $config)
+    {
+        $this->config = $config;
+    }
+
+    public function sampleMethod()
+    {
+        // 34843
+        $this->config->find('invoice');
+
+        // 'Chris'
+        $this->config->find('bill-to.given');
+
+        // ...
+    }
+}
+```
+
+##### Register services with Extension
+
+Instead of services.yml, you can also register services with `Register` in `AcmeDemoExtension` class:
 
 ```php
 <?php
@@ -69,127 +215,7 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-##### Create a cache
-
-Create a cache with the Symfony console:
-
-```sh
-# Symfony 2.x
-$ app/console cache:warmup
-# Symfony 3.x
-$ bin/console cache:warmup
-```
-
-In this way, a cache object `ConfigCache` is registered as a service:
-
-```sh
-# Symfony 2.x
-$ app/console debug:container config.acme_demo.sample
-# Symfony 3.x
-$ bin/console debug:container config.acme_demo.sample
-[container] Information for service config.acme_demo.sample
-Service Id       config.acme_demo.sample
-Class            YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache
-Tags             -
-Scope            container
-Public           yes
-Synthetic        no
-Lazy             yes
-Synchronized     no
-Abstract         no
-```
-
-This service ID `config.acme_demo.sample` is generated automatically based on an alias you specify in `FileResource` and the bundle name "AcmeDemoBundle".  
+In this case, the service ID `config.acme_demo.sample` is generated automatically.  
 If a bundle name is "AcmeDemoBundle" and `FileResource` alias is "sample", the service name is `config.acme_demo.sample`.
 
-A cache file is created and set under the Symfony cache directory:
-
-```sh
-// Symfony 2.x : app/cache/dev/acme_demo/75/5b73616d706c655d5b315d.php
-// Symfony 3.x : var/cache/dev/acme_demo/75/5b73616d706c655d5b315d.php
-<?php return array (
-  'lifetime' => 0,
-  'data' =>
-  array (
-    'invoice' => 34843,
-    'date' => '2001-01-23',
-    'bill-to' =>
-    array (
-      'given' => 'Chris',
-      'family' => 'Dumars',
-    )
-  )
-);
-```
-
-##### Use the service
-
-Getting the service container directly or defining in services.yml, you can use the `ConfigCache` service named `config.acme_demo.sample`:
-
-```php
-<?php
-
-// src/Acme/DemoBundle/Controller/WelcomeController.php
-namespace Acme\DemoBundle\Controller;
-
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-
-class WelcomeController extends Controller
-{
-    public function indexAction()
-    {
-        // ConfigCache
-        $cache = $this->get('config.acme_demo.sample');
-
-        // 34843
-        $cache->find('invoice');
-
-        // 'Chris'
-        $cache->find('bill-to.given');
-
-        // array('invoice' => 34843, 'date' => '2001-01-23', 'bill-to' => array('given' => 'Chris', 'family' => 'Dumars'))
-        $cache->findAll();
-
-        // ...
-    }
-}
-```
-
-```yml
-# src/Acme/DemoBundle/Resources/config/services.yml
-services:
-    acme_demo.sample_model:
-        class: Acme\DemoBundle\SampleModel
-        arguments:
-            - '@config.acme_demo.sample'
-```
-
-```php
-<?php
-
-// src/Acme/DemoBundle/SampleModel.php
-namespace Acme\DemoBundle;
-
-use YahooJapan\ConfigCacheBundle\ConfigCache\ConfigCache;
-
-class SampleModel
-{
-    protected $config;
-
-    public function __construct(ConfigCache $config)
-    {
-        $this->config = $config;
-    }
-
-    public function sampleMethod()
-    {
-        // 34843
-        $this->config->find('invoice');
-
-        // 'Chris'
-        $this->config->find('bill-to.given');
-
-        // ...
-    }
-}
-```
+Some features that are described below like merging files, specifying directory, and so on are available only by using `Register`.
