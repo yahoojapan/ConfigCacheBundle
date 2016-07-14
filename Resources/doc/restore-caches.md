@@ -7,7 +7,7 @@ Save the caches temporarily before clearing, and restore them while re-creating.
 This feature is especially effective when the config file is large size.  
 Creating the cache is faster than usual with the help of skipping the parsing config file process.
 
-##### Setup
+### Setup
 
 First, enable the restoring setting on `app/config/config.yml`:
 
@@ -78,7 +78,7 @@ $ bin/console cache:clear --no-warmup
 
 After the second time, creating the cache is faster.
 
-##### Clean-up the cache
+### Clean-up the cache
 
 If you would like to initialize the cache state by removing all the caches Symfony and this bundle create, run the following command:
 

@@ -8,7 +8,7 @@ However, some conditions below are required to merge files:
 * Implement a `Configuration` class
 * Don't specify `FileResource` aliases
 
-##### Fix a top-level key of configuration files
+### Fix a top-level key of configuration files
 
 You need to match a top-level key of configuration files and a bundle name.  
 For example, if the bundle name is "AcmeDemoBundle", the top-level key is `acme_demo`:
@@ -31,7 +31,7 @@ acme_demo:
         family : Yahoo
 ```
 
-##### Implement a Configuration class
+### Implement a Configuration class
 
 Implement the `DependencyInjection/Configuration.php`:
 
@@ -84,7 +84,7 @@ class Configuration implements ConfigurationInterface
 
 If you would like to generate this `Configuration` automatically, you can use [Configuration generator](generate-configurations.md).
 
-##### Don't specify FileResource aliases
+### Don't specify FileResource aliases
 
 When you define `Register` arguments, you don't have to specify the third argument aliases:
 

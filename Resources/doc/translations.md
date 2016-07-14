@@ -45,7 +45,7 @@ This service creates the same number of caches as locales and gets a setting val
 The following is a sample implementation for translations.
 
 <a id="sample_config">
-##### Configuration files
+### Configuration files
 
 Define a configuration file in AcmeDemoBundle.  
 The leaf nodes of the content are translated:
@@ -74,7 +74,7 @@ id.001: クリス
 id.002: デュマース
 ```
 
-##### app/config/config.yml
+### app/config/config.yml
 
 Add a description in `app/config/config.yml`:
 
@@ -91,7 +91,7 @@ yahoo_japan_config_cache:
 
 Describe all locales as a "locales" key.
 
-##### Register the ConfigCache service
+### Register the ConfigCache service
 
 Register the `ConfigCache` service by using services.yml or `RegisterLocale` in `AcmeDemoExtension`:
 
@@ -139,7 +139,7 @@ class AcmeDemoExtension extends Extension
 }
 ```
 
-##### Use the service
+### Use the service
 
 You can get translated contents if you set the current locale as described [below](#the-current-locale):
 
@@ -169,7 +169,7 @@ class WelcomeController extends Controller
 }
 ```
 
-##### The current locale
+### The current locale
 
 When you use a `ConfigCache` service of translations, you need the current locale setting.  
 The reason is to use the cache according to the locale any one of created caches.
@@ -179,13 +179,13 @@ For this setting, you need some processes:
 * Set the current locale to the `ConfigCache` service
 * Set the Symfony Request::locale the `LocaleListener` refers to
 
-##### Set the current locale to the ConfigCache service
+### Set the current locale to the ConfigCache service
 
 The `LocaleListener` this bundle provides sets the current locale to the `ConfigCache` service.  
 If [app/config/config.yml](#appconfigconfigyml) is enabled, this listener is registered automatically.
 This listener refers to the Symfony `Request::locale` and sets it.
 
-##### Set the Symfony Request::locale the LocaleListener refers to
+### Set the Symfony Request::locale the LocaleListener refers to
 
 This bundle doesn't set the Symfony `Request::locale`, so you need to implement additionally.  
 There are some solutions to implement:
