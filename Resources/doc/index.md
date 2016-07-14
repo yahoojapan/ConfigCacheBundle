@@ -25,13 +25,13 @@ See the [composer.json](../../composer.json) for details.
 Installation
 ------------
 
-##### Get the bundle
+### Get the bundle
 
 ```sh
 $ composer require yahoojapan/config-cache-bundle
 ```
 
-##### Enable the bundle
+### Enable the bundle
 
 Add the ConfigCacheBundle in `app/AppKernel.php`:
 

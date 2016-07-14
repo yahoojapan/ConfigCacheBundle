@@ -14,7 +14,7 @@ Generated file $ROOT_DIR/src/Acme/DemoBundle/DependencyInjection/Configuration.p
 
 The console command generates `Configuration.php` as described [above](merge-files.md#implement-a-configuration-class).
 
-##### Generated Configuration
+### Generated Configuration
 
 Generated `Configuration` is a skeleton, so the validation of configuration files is not strict.  
 For more details of the validation, see the Symfony [documentation](http://symfony.com/doc/current/components/config/definition.html).

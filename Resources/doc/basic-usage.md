@@ -3,12 +3,12 @@ Basic usage
 
 The following is a procedure to create a cache as an example of setting sample.yml in AcmeDemoBundle.
 
-##### Setup Symfony
+### Setup Symfony
 
 This bundle requires the Symfony framework.
 See the Symfony [documentation](http://symfony.com/doc/current/book/installation.html) for setup Symfony.
 
-##### Generate AcmeDemoBundle
+### Generate AcmeDemoBundle
 
 Prepare a Symfony sample bundle beforehand:
 
@@ -19,7 +19,7 @@ $ app/console generate:bundle --namespace=Acme/DemoBundle --format=yml
 $ bin/console generate:bundle --namespace=Acme/DemoBundle --format=yml
 ```
 
-##### Configuration file
+### Configuration file
 
 Set a configuration file on `Resources/config`:
 
@@ -32,7 +32,7 @@ bill-to:
     family : Dumars
 ```
 
-##### services.yml
+### services.yml
 
 Add a service definition with tags in services.yml:
 
@@ -56,7 +56,7 @@ services:
             - { name: config_cache.register, resource: sample.yml, bundle: acme_demo }
 ```
 
-##### Create a cache
+### Create a cache
 
 Create a cache with the Symfony console:
 
@@ -106,7 +106,7 @@ A cache file is created and set under the Symfony cache directory:
 );
 ```
 
-##### Use the service
+### Use the service
 
 Getting the service container directly or defining in services.yml, you can use the `ConfigCache` service named `acme_demo.config`:
 
@@ -178,7 +178,7 @@ class SampleModel
 }
 ```
 
-##### Register services with Extension
+### Register services with Extension
 
 Instead of services.yml, you can also register services with `Register` in `AcmeDemoExtension` class:
 
