@@ -32,6 +32,8 @@ class FileResource implements ResourceInterface
      * @param ConfigurationInterface $configuration
      * @param string                 $alias
      * @param bool                   $restore
+     *
+     * @deprecated The third and fourth arguments are deprecated since version 1.2 and will be removed in 2.0.
      */
     public function __construct($resource, ConfigurationInterface $configuration = null, $alias = null, $restore = false)
     {
@@ -48,6 +50,8 @@ class FileResource implements ResourceInterface
      * @param ConfigurationInterface $configuration
      * @param string                 $alias
      * @param bool                   $restore
+     *
+     * @deprecated The third and fourth arguments are deprecated since version 1.2 and will be removed in 2.0.
      *
      * @return FileResource
      */
