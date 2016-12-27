@@ -1,0 +1,16 @@
+<?php
+
+$rules = array(
+    '@PSR2'  => true,
+    'braces' => false,
+);
+$excludes = array('vendor', 'Resources', 'Tests');
+
+return PhpCsFixer\Config::create()
+    ->setRules($rules)
+    ->setFinder(
+        PhpCsFixer\Finder::create()
+            ->in(__DIR__)
+            ->exclude($excludes)
+    )
+    ;
